@@ -1,0 +1,96 @@
+# ─── FLUTTER ─────────────────────────────────────────────
+# Archivos generados automáticamente
+/frontend/.dart_tool/
+/frontend/.idea/
+/frontend/.vscode/
+/frontend/build/
+/frontend/.packages
+/frontend/pubspec.lock
+/frontend/flutter_*.png
+/frontend/generated_plugin_registrant.dart
+# ─── ARCHIVOS DE IMAGEN Y MULTIMEDIA ─────────────────────
+# Ignorar imágenes, íconos y recursos gráficos innecesarios
+
+# Imágenes y multimedia
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.ico
+*.icns
+*.webp
+*.bmp
+*.tiff
+*.psd
+*.ai
+*.eps
+*.pdf
+web/icons/
+frontend/Assets.xcassets/
+frontend/Base.lproj/
+frontend/Assets/
+frontend/images/
+frontend/img/
+web/favicon.*
+web/manifest.json
+ios/Runner/Assets.xcassets/
+ios/Runner/Base.lproj/
+macos/Runner/Assets.xcassets/
+macos/Runner/Base.lproj/
+
+# Ignorar archivos y carpetas generados por Flutter/Dart en todas las plataformas
+
+# Archivos y carpetas generados (compatibles con Windows)
+.dart_tool/
+.idea/
+.vscode/
+build/
+.packages
+pubspec.lock
+flutter_*.png
+generated_plugin_registrant.dart
+.DS_Store
+Thumbs.db
+.env
+ephemeral/
+*.iml
+*.lock
+*.log
+*.tmp
+*.bak
+*.orig
+*.swp
+*.swo
+dist/
+node_modules/
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# ─── NODE.JS ─────────────────────────────────────────────
+# Dependencias y archivos temporales
+/backend/node_modules/
+/backend/.env
+/backend/npm-debug.log*
+/backend/yarn-debug.log*
+/backend/yarn-error.log*
+
+# Ignorar node_modules y .env en cualquier subcarpeta
+node_modules/
+.env
+
+# ─── GENERAL ─────────────────────────────────────────────
+# Archivos de sistema y editor
+*.log
+*.swp
+*.swo
+*.tmp
+*.bak
+*.lock
+*.orig
+
+# Carpetas de compilación o entorno virtual
+/dist/
+/.env
