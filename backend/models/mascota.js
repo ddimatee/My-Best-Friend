@@ -38,8 +38,8 @@ const mascotaSchema = new mongoose.Schema({
     required: true
   },
   cuidador: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'usuario'
+  type: mongoose.Schema.Types.ObjectId,
+  ref: 'Usuario'
   }
 }, {
   timestamps: true
