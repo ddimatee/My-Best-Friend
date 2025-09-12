@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'widgets/snackbars.dart';
 
 class RegisterScreen3 extends StatefulWidget {
   final String nombre;
@@ -32,22 +33,12 @@ class _RegisterScreen3State extends State<RegisterScreen3> {
       await Future.delayed(const Duration(milliseconds: 500));
       
       // Mostrar mensaje de éxito y navegar a la pantalla principal
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('¡Registro exitoso!'),
-          backgroundColor: Colors.green,
-        ),
-      );
+  showSuccessSnackBar(context, '¡Registro exitoso!');
       
       // Navegar de vuelta al login o a la pantalla principal
       Navigator.popUntil(context, (route) => route.isFirst);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Por favor, ingresa el código de verificación'),
-          backgroundColor: Colors.red,
-        ),
-      );
+  showErrorSnackBar(context, 'Por favor, ingresa el código de verificación');
     }
   }
 

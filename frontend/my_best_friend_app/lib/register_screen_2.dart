@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'register_screen_3.dart';
+import 'widgets/snackbars.dart';
 
 class RegisterScreen2 extends StatefulWidget {
   final String nombre;
@@ -38,12 +39,7 @@ class _RegisterScreen2State extends State<RegisterScreen2> {
         ),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Por favor, completa el número de celular y la contraseña'),
-          backgroundColor: Colors.red,
-        ),
-      );
+  showErrorSnackBar(context, 'Por favor, completa el número de celular y la contraseña');
     }
   }
 

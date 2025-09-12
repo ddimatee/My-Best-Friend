@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'register_screen_2.dart';
+import 'widgets/snackbars.dart';
 
 class RegisterScreen1 extends StatefulWidget {
   @override
@@ -26,12 +27,7 @@ class _RegisterScreen1State extends State<RegisterScreen1> {
         ),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Por favor, completa todos los campos'),
-          backgroundColor: Colors.red,
-        ),
-      );
+  showErrorSnackBar(context, 'Por favor, completa todos los campos');
     }
   }
 

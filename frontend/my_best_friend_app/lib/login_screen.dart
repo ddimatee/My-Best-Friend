@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'register_screen_1.dart';
+import 'recover_password_email.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -47,7 +48,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 Align(
                   alignment: Alignment.topRight,
                   child: TextButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const RecoverPasswordEmailScreen()),
+                      );
+                    },
                     child: const Text(
                       '¿Olvidaste tu\ncontraseña?',
                       style: TextStyle(
