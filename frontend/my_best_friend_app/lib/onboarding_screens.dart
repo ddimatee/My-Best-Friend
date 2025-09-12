@@ -317,6 +317,23 @@ class _OnboardingScreensState extends State<OnboardingScreens> {
               ),
             ),
           ),
+          SizedBox(height: 12),
+          TextButton(
+            onPressed: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => LoginScreen()),
+              );
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.white,
+              textStyle: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            child: Text('Iniciar sesión'),
+          ),
           SizedBox(height: 100),
         ],
       ),
