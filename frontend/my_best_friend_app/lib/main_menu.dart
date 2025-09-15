@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'screens/add_pet_screen.dart';
+import 'pet_form/pet_form_flow.dart';
 import 'screens/calendar_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/feature_placeholder.dart';
@@ -22,7 +22,8 @@ class _MainMenuState extends State<MainMenu> {
   }
 
   void _openAddPet() {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => const AddPetScreen()));
+    final st = PetFormState();
+    Navigator.push(context, MaterialPageRoute(builder: (_) => PetFormSituationScreen(state: st)));
   }
 
   Widget _buildTopBar() {
