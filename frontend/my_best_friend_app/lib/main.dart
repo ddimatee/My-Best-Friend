@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'pantallas/introduccion.dart';
 
 // Punto de entrada de la aplicación My Best Friend.
-// Arranca en la pantalla de inicio de sesión y utiliza el tema verde de la app.
+
 void main() {
   runApp(const MyApp());
 }

@@ -19,10 +19,11 @@ class _LoginScreenState extends State<LoginScreen> {
 	final contrasenaController = TextEditingController();
 	bool recordar = false;
 
-	// Simulación de login. Reemplazar por AuthService cuando exista backend.
+	// Simulación de login para pruebas - acepta cualquier credencial.
+	// Reemplazar por AuthService cuando exista backend.
 	Future<String?> loginUsuario(String nombre, String contrasena) async {
 		await Future.delayed(const Duration(milliseconds: 200));
-		return null; // Retorna token cuando se integre backend
+		return "test_token"; // Simula token exitoso para cualquier credencial en pruebas
 	}
 
 	Future<void> iniciarSesion() async {

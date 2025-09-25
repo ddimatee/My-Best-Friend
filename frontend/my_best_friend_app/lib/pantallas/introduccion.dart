@@ -79,23 +79,14 @@ class _OnboardingScreensState extends State<OnboardingScreens> {
 					const SizedBox(height: 20),
 					Expanded(
 						child: Center(
-							child: FractionallySizedBox(
-								widthFactor: 2.5,
-								child: LayoutBuilder(
-									builder: (context, constraints) {
-										final double shiftX = constraints.maxWidth * 0.20;
-										return ClipRect(
-											child: Transform.translate(
-												offset: Offset(shiftX, 0),
-												child: Image.asset(
-													'assets/images/video_perro.gif',
-													fit: BoxFit.contain,
-													alignment: Alignment.center,
-													filterQuality: FilterQuality.high,
-												),
-											),
-										);
-									},
+							child: SizedBox(
+								width: 500,
+								height: 500,
+								child: Image.asset(
+									'assets/images/perro_logo2.png',
+									fit: BoxFit.contain,
+									alignment: Alignment.center,
+									filterQuality: FilterQuality.high,
 								),
 							),
 						),

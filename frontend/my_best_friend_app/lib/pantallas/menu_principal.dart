@@ -6,6 +6,7 @@ import 'calendario.dart';
 import 'ajustes.dart';
 import 'placeholder_funcion.dart';
 import 'buscar.dart';
+import 'peso.dart';
 
 class MenuPrincipal extends StatefulWidget {
   const MenuPrincipal({Key? key}) : super(key: key);
@@ -48,6 +49,7 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
                     BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 3)),
                   ],
                 ),
+                //OPCIONES DE VISIBLE/OCULTO
                 width: 220,
                 height: 40,
                 child: Row(
@@ -76,6 +78,7 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
     );
   }
 
+// Franja decorativa con patrón de iconos.
   Widget _buildPatternStrip() {
     return Container(
       height: 56,
@@ -101,6 +104,7 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
     );
   }
 
+// Tarjeta de mascota con foto, nombre, edad y botones de función.
   Widget _buildPetCard() {
     return Container(
       decoration: BoxDecoration(
@@ -128,6 +132,7 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
             padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8),
             child: Column(
               children: [
+                // Fila de botones de función
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -155,10 +160,17 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
   }
 
   void _openFeature(String title) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => PlaceholderFuncionPantalla(title: title)),
-    );
+    if (title == 'Peso') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const PesoPantalla()),
+      );
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => PlaceholderFuncionPantalla(title: title)),
+      );
+    }
   }
 
   Widget _buildContentForTab() {
