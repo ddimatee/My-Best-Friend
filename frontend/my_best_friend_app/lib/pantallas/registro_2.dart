@@ -1,34 +1,43 @@
 import 'package:flutter/material.dart';
-import 'register_screen_2.dart';
-import 'widgets/snackbars.dart';
+// Registro 2/3: celular, ¿cómo llegaste?, contraseña
+import '../formularios/formulario_mascota.dart'; // MascotaPasoSituacionPantalla, PetFormState
+import '../componentes/avisos.dart';
 
-class RegisterScreen1 extends StatefulWidget {
+class RegisterScreen2 extends StatefulWidget {
+  final String nombre;
+  final String apellido;
+  final String correo;
+
+  const RegisterScreen2({
+    Key? key,
+    required this.nombre,
+    required this.apellido,
+    required this.correo,
+  }) : super(key: key);
+
   @override
-  _RegisterScreen1State createState() => _RegisterScreen1State();
+  _RegisterScreen2State createState() => _RegisterScreen2State();
 }
 
-class _RegisterScreen1State extends State<RegisterScreen1> {
-  final nombreController = TextEditingController();
-  final apellidoController = TextEditingController();
-  final correoController = TextEditingController();
+class _RegisterScreen2State extends State<RegisterScreen2> {
+  final celularController = TextEditingController();
+  final comoLlegasteController = TextEditingController();
+  final contrasenaController = TextEditingController();
 
   void continuarRegistro() {
-    if (nombreController.text.isNotEmpty && 
-        apellidoController.text.isNotEmpty && 
-        correoController.text.isNotEmpty) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => RegisterScreen2(
-            nombre: nombreController.text,
-            apellido: apellidoController.text,
-            correo: correoController.text,
-          ),
-        ),
-      );
-    } else {
-  showErrorSnackBar(context, 'Por favor, completa todos los campos');
+    if (celularController.text.isEmpty || contrasenaController.text.isEmpty) {
+      showErrorSnackBar(context, 'Por favor, completa el número de celular y la contraseña');
+      return;
     }
+
+    // En lugar de pasar a verificación de código, iniciamos de una vez
+    // el formulario modular para registrar la mascota.
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MascotaPasoSituacionPantalla(estado: PetFormState()),
+      ),
+    );
   }
 
   @override
@@ -47,35 +56,66 @@ class _RegisterScreen1State extends State<RegisterScreen1> {
             ),
             child: Column(
               children: [
-                SizedBox(height: size.height * 0.05),
+                SizedBox(height: size.height * 0.02),
                 
-                // Título "Registrémonos" centrado
-                Center(
-                  child: Container(
-                    margin: EdgeInsets.only(bottom: size.height * 0.08),
-                    child: Text(
-                      'Registrémonos',
-                      style: TextStyle(
-                        fontSize: 36,
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.2,
-                        shadows: [
-                          Shadow(
-                            blurRadius: 3,
-                            color: Colors.white30,
-                            offset: Offset(0, 2),
+                Container(
+                  margin: EdgeInsets.only(bottom: size.height * 0.05),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          padding: EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.9),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.15),
+                                spreadRadius: 0,
+                                blurRadius: 8,
+                                offset: Offset(0, 4),
+                              ),
+                            ],
                           ),
-                        ],
+                          child: const Icon(
+                            Icons.arrow_back,
+                            color: Color(0xFF4CAF50),
+                            size: 24,
+                          ),
+                        ),
                       ),
-                    ),
+                      SizedBox(
+                        width: size.width * 0.35,
+                        height: 48,
+                        child: ElevatedButton(
+                          onPressed: continuarRegistro,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: const Color(0xFF4CAF50),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(25),
+                            ),
+                            elevation: 8,
+                            shadowColor: Colors.black.withOpacity(0.3),
+                          ),
+                          child: const Text(
+                            'Registrar',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 
-                // Campos de entrada
                 Column(
                   children: [
-                    // Campo "Nombre"
                     Container(
                       margin: EdgeInsets.only(bottom: size.height * 0.025),
                       child: Column(
@@ -84,7 +124,7 @@ class _RegisterScreen1State extends State<RegisterScreen1> {
                           Padding(
                             padding: EdgeInsets.only(left: 16, bottom: 8),
                             child: Text(
-                              'Nombre',
+                              'Número de celular',
                               style: TextStyle(
                                 fontSize: 16,
                                 color: Colors.black,
@@ -113,12 +153,13 @@ class _RegisterScreen1State extends State<RegisterScreen1> {
                               ],
                             ),
                             child: TextField(
-                              controller: nombreController,
+                              controller: celularController,
+                              keyboardType: TextInputType.phone,
                               style: const TextStyle(fontSize: 16, color: Colors.black87),
                               decoration: const InputDecoration(
                                 border: InputBorder.none,
                                 contentPadding: EdgeInsets.symmetric(horizontal: 24, vertical: 18),
-                                prefixIcon: Icon(Icons.person_outline, color: Colors.grey),
+                                prefixIcon: Icon(Icons.phone_outlined, color: Colors.grey),
                               ),
                             ),
                           ),
@@ -126,7 +167,6 @@ class _RegisterScreen1State extends State<RegisterScreen1> {
                       ),
                     ),
                     
-                    // Campo "Apellido"
                     Container(
                       margin: EdgeInsets.only(bottom: size.height * 0.025),
                       child: Column(
@@ -135,7 +175,7 @@ class _RegisterScreen1State extends State<RegisterScreen1> {
                           Padding(
                             padding: EdgeInsets.only(left: 16, bottom: 8),
                             child: Text(
-                              'Apellido',
+                              '¿Cómo llegaste a esta aplicación?',
                               style: TextStyle(
                                 fontSize: 16,
                                 color: Colors.black,
@@ -164,12 +204,12 @@ class _RegisterScreen1State extends State<RegisterScreen1> {
                               ],
                             ),
                             child: TextField(
-                              controller: apellidoController,
+                              controller: comoLlegasteController,
                               style: const TextStyle(fontSize: 16, color: Colors.black87),
                               decoration: const InputDecoration(
                                 border: InputBorder.none,
                                 contentPadding: EdgeInsets.symmetric(horizontal: 24, vertical: 18),
-                                prefixIcon: Icon(Icons.badge_outlined, color: Colors.grey),
+                                prefixIcon: Icon(Icons.explore_outlined, color: Colors.grey),
                               ),
                             ),
                           ),
@@ -177,16 +217,15 @@ class _RegisterScreen1State extends State<RegisterScreen1> {
                       ),
                     ),
                     
-                    // Campo "Correo electrónico"
                     Container(
-                      margin: EdgeInsets.only(bottom: size.height * 0.04),
+                      margin: EdgeInsets.only(bottom: size.height * 0.02),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Padding(
                             padding: EdgeInsets.only(left: 16, bottom: 8),
                             child: Text(
-                              'Correo electrónico',
+                              'Contraseña',
                               style: TextStyle(
                                 fontSize: 16,
                                 color: Colors.black,
@@ -215,13 +254,13 @@ class _RegisterScreen1State extends State<RegisterScreen1> {
                               ],
                             ),
                             child: TextField(
-                              controller: correoController,
-                              keyboardType: TextInputType.emailAddress,
+                              controller: contrasenaController,
+                              obscureText: true,
                               style: const TextStyle(fontSize: 16, color: Colors.black87),
                               decoration: const InputDecoration(
                                 border: InputBorder.none,
                                 contentPadding: EdgeInsets.symmetric(horizontal: 24, vertical: 18),
-                                prefixIcon: Icon(Icons.email_outlined, color: Colors.grey),
+                                prefixIcon: Icon(Icons.lock_outline, color: Colors.grey),
                               ),
                             ),
                           ),
@@ -231,41 +270,36 @@ class _RegisterScreen1State extends State<RegisterScreen1> {
                   ],
                 ),
                 
-                // Botón flecha de continuar
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: GestureDetector(
-                    onTap: continuarRegistro,
-                    child: Container(
-                      width: 70,
-                      height: 70,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            spreadRadius: 0,
-                            blurRadius: 15,
-                            offset: Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.arrow_forward,
-                        color: Color(0xFF4CAF50),
-                        size: 35,
-                      ),
+                Container(
+                  margin: EdgeInsets.symmetric(horizontal: 16),
+                  padding: EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    'Usa entre 8 y 20 caracteres, que sean\nnúmeros, letras y símbolos, ¡asegúrate de\nque sea difícil!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.white.withOpacity(0.9),
+                      height: 1.4,
+                      fontWeight: FontWeight.w400,
+                      shadows: [
+                        Shadow(
+                          blurRadius: 1,
+                          color: Colors.black26,
+                          offset: Offset(0, 1),
+                        ),
+                      ],
                     ),
                   ),
                 ),
                 
                 const Spacer(),
                 
-                // Footer
                 Column(
                   children: [
-                    // Imagen del perro
                     Container(
                       height: size.height * 0.15,
                       margin: EdgeInsets.only(bottom: size.height * 0.02),
@@ -275,7 +309,6 @@ class _RegisterScreen1State extends State<RegisterScreen1> {
                       ),
                     ),
                     
-                    // Texto "¿Ya tienes una cuenta?"
                     Container(
                       margin: EdgeInsets.only(bottom: 8),
                       child: Text(
@@ -297,7 +330,7 @@ class _RegisterScreen1State extends State<RegisterScreen1> {
                     
                     TextButton(
                       onPressed: () {
-                        Navigator.pop(context);
+                        Navigator.popUntil(context, (route) => route.isFirst);
                       },
                       style: TextButton.styleFrom(
                         padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),

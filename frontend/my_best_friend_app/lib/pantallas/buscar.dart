@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
-class SearchScreen extends StatelessWidget {
-  const SearchScreen({Key? key}) : super(key: key);
+// Wrapper en español para pantalla de búsqueda.
+class BuscarPantalla extends StatelessWidget {
+  const BuscarPantalla({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

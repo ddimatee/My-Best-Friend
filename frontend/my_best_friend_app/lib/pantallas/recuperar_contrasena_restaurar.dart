@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'login_screen.dart';
-import 'services/auth_service.dart';
-import 'widgets/snackbars.dart';
+import 'inicio_sesion.dart';
+import '../servicios/autenticacion_servicio.dart' show AuthService;
+import '../componentes/avisos.dart';
 
 class RecoverPasswordResetScreen extends StatefulWidget {
   final String email;
@@ -22,21 +22,21 @@ class _RecoverPasswordResetScreenState extends State<RecoverPasswordResetScreen>
   Future<void> _continue() async {
     if (_loading) return;
     if (_pass1.text.trim() != _pass2.text.trim()) {
-  showErrorSnackBar(context, 'Las contraseñas no coinciden');
+      showErrorSnackBar(context, 'Las contraseñas no coinciden');
       return;
     }
     setState(() => _loading = true);
     try {
       await AuthService.resetPassword(widget.email, widget.code, _pass1.text);
       if (!mounted) return;
-  showSuccessSnackBar(context, 'Contraseña actualizada');
+      showSuccessSnackBar(context, 'Contraseña actualizada');
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => LoginScreen()),
         (route) => false,
       );
     } catch (e) {
-  showErrorSnackBar(context, e.toString().replaceFirst('Exception: ', ''));
+      showErrorSnackBar(context, e.toString().replaceFirst('Exception: ', ''));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -72,7 +72,6 @@ class _RecoverPasswordResetScreenState extends State<RecoverPasswordResetScreen>
                       ),
                     ),
                     const SizedBox(height: 24),
-                    // New password
                     const Align(
                       alignment: Alignment.centerLeft,
                       child: Padding(
@@ -106,7 +105,6 @@ class _RecoverPasswordResetScreenState extends State<RecoverPasswordResetScreen>
                       ),
                     ),
                     const SizedBox(height: 16),
-                    // Confirm password
                     const Align(
                       alignment: Alignment.centerLeft,
                       child: Padding(
@@ -154,35 +152,6 @@ class _RecoverPasswordResetScreenState extends State<RecoverPasswordResetScreen>
                         ),
                         child: Text(_loading ? 'Guardando...' : 'Continuar',
                             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                      ),
-                    ),
-                  ],
-                ),
-                Column(
-                  children: [
-                    SizedBox(
-                      height: size.height * 0.18,
-                      child: Image.asset('assets/images/perro.png', fit: BoxFit.contain),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      '¿No tienes una cuenta?',
-                      style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => LoginScreen()));
-                      },
-                      child: const Text(
-                        'Regístrate',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          decoration: TextDecoration.underline,
-                          decorationColor: Colors.white,
-                          decorationThickness: 2,
-                        ),
                       ),
                     ),
                   ],

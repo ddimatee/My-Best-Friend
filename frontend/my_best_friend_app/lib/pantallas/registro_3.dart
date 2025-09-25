@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'widgets/snackbars.dart';
+import '../componentes/avisos.dart';
 
 class RegisterScreen3 extends StatefulWidget {
   final String nombre;
@@ -28,17 +28,11 @@ class _RegisterScreen3State extends State<RegisterScreen3> {
 
   Future<void> verificarCodigo() async {
     if (codigoController.text.isNotEmpty) {
-      // Aquí iría la lógica para verificar el código con el backend
-      // Por ahora simulamos una verificación exitosa
       await Future.delayed(const Duration(milliseconds: 500));
-      
-      // Mostrar mensaje de éxito y navegar a la pantalla principal
-  showSuccessSnackBar(context, '¡Registro exitoso!');
-      
-      // Navegar de vuelta al login o a la pantalla principal
+      showSuccessSnackBar(context, '¡Registro exitoso!');
       Navigator.popUntil(context, (route) => route.isFirst);
     } else {
-  showErrorSnackBar(context, 'Por favor, ingresa el código de verificación');
+      showErrorSnackBar(context, 'Por favor, ingresa el código de verificación');
     }
   }
 
@@ -60,7 +54,6 @@ class _RegisterScreen3State extends State<RegisterScreen3> {
               children: [
                 SizedBox(height: size.height * 0.02),
                 
-                // Botón de regresar mejorado
                 Container(
                   margin: EdgeInsets.only(bottom: size.height * 0.08),
                   child: Row(
@@ -89,12 +82,11 @@ class _RegisterScreen3State extends State<RegisterScreen3> {
                           ),
                         ),
                       ),
-                      Container(), // Espaciador
+                      Container(),
                     ],
                   ),
                 ),
                 
-                // Título mejorado y centrado
                 Container(
                   margin: EdgeInsets.only(bottom: size.height * 0.08),
                   padding: EdgeInsets.symmetric(horizontal: 20),
@@ -118,7 +110,6 @@ class _RegisterScreen3State extends State<RegisterScreen3> {
                   ),
                 ),
                 
-                // Campo "Código" mejorado
                 Container(
                   margin: EdgeInsets.only(bottom: size.height * 0.04),
                   child: Column(
@@ -180,7 +171,6 @@ class _RegisterScreen3State extends State<RegisterScreen3> {
                   ),
                 ),
                 
-                // Botón "Continuar" mejorado
                 Container(
                   margin: EdgeInsets.only(bottom: size.height * 0.04),
                   child: SizedBox(
@@ -211,10 +201,8 @@ class _RegisterScreen3State extends State<RegisterScreen3> {
                 
                 const Spacer(),
                 
-                // Footer mejorado
                 Column(
                   children: [
-                    // Imagen del perro
                     Container(
                       height: size.height * 0.15,
                       margin: EdgeInsets.only(bottom: size.height * 0.02),
@@ -224,7 +212,6 @@ class _RegisterScreen3State extends State<RegisterScreen3> {
                       ),
                     ),
                     
-                    // Texto "¿Ya tienes una cuenta?"
                     Container(
                       margin: EdgeInsets.only(bottom: 8),
                       child: Text(

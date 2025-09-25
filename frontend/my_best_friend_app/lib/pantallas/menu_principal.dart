@@ -1,29 +1,30 @@
 import 'package:flutter/material.dart';
 
-import 'pet_form/pet_form_flow.dart';
-import 'screens/calendar_screen.dart';
-import 'screens/settings_screen.dart';
-import 'screens/feature_placeholder.dart';
-import 'screens/search_screen.dart';
+// Menú principal con barra superior, tarjeta de mascota y navegación inferior.
+import '../formularios/formulario_mascota.dart';
+import 'calendario.dart';
+import 'ajustes.dart';
+import 'placeholder_funcion.dart';
+import 'buscar.dart';
 
-class MainMenu extends StatefulWidget {
-  const MainMenu({Key? key}) : super(key: key);
+class MenuPrincipal extends StatefulWidget {
+  const MenuPrincipal({Key? key}) : super(key: key);
   @override
-  State<MainMenu> createState() => _MainMenuState();
+  State<MenuPrincipal> createState() => _MenuPrincipalState();
 }
 
-class _MainMenuState extends State<MainMenu> {
+class _MenuPrincipalState extends State<MenuPrincipal> {
   final Color green = const Color(0xFF4CAF50);
   int _tabIndex = 0; // 0: Mascota, 1: Calendario, 2: Ajustes
   bool _visible = true; // segment Visible/Oculto
 
   void _openSearch() {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => const SearchScreen()));
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const BuscarPantalla()));
   }
 
   void _openAddPet() {
     final st = PetFormState();
-    Navigator.push(context, MaterialPageRoute(builder: (_) => PetFormSituationScreen(state: st)));
+    Navigator.push(context, MaterialPageRoute(builder: (_) => MascotaPasoSituacionPantalla(estado: st)));
   }
 
   Widget _buildTopBar() {
@@ -32,13 +33,10 @@ class _MainMenuState extends State<MainMenu> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Search icon (left)
           IconButton(
             onPressed: _openSearch,
             icon: const Icon(Icons.search, color: Colors.black, size: 28),
           ),
-
-          // Segmented control (center)
           Expanded(
             child: Center(
               child: Container(
@@ -69,8 +67,6 @@ class _MainMenuState extends State<MainMenu> {
               ),
             ),
           ),
-
-          // Add button (right)
           IconButton(
             onPressed: _openAddPet,
             icon: const Icon(Icons.add_circle_outline, color: Colors.black, size: 28),
@@ -81,7 +77,6 @@ class _MainMenuState extends State<MainMenu> {
   }
 
   Widget _buildPatternStrip() {
-    // Decorative band mimicking paw/bone pattern using icons
     return Container(
       height: 56,
       decoration: BoxDecoration(
@@ -162,7 +157,7 @@ class _MainMenuState extends State<MainMenu> {
   void _openFeature(String title) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => FeaturePlaceholderScreen(title: title)),
+      MaterialPageRoute(builder: (_) => PlaceholderFuncionPantalla(title: title)),
     );
   }
 
@@ -179,9 +174,9 @@ class _MainMenuState extends State<MainMenu> {
           ),
         );
       case 1:
-        return const CalendarScreen();
+        return const CalendarioPantalla();
       case 2:
-        return const SettingsScreen();
+        return const AjustesPantalla();
       default:
         return const SizedBox.shrink();
     }

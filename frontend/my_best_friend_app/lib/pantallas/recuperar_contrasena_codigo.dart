@@ -1,34 +1,30 @@
 import 'package:flutter/material.dart';
-import 'register_screen_1.dart';
-import 'recover_password_code.dart';
-import 'services/auth_service.dart';
-import 'widgets/snackbars.dart';
+import 'recuperar_contrasena_restaurar.dart';
 
-class RecoverPasswordEmailScreen extends StatefulWidget {
-  const RecoverPasswordEmailScreen({Key? key}) : super(key: key);
+class RecoverPasswordCodeScreen extends StatefulWidget {
+  final String email;
+  const RecoverPasswordCodeScreen({Key? key, required this.email}) : super(key: key);
 
   @override
-  State<RecoverPasswordEmailScreen> createState() => _RecoverPasswordEmailScreenState();
+  State<RecoverPasswordCodeScreen> createState() => _RecoverPasswordCodeScreenState();
 }
 
-class _RecoverPasswordEmailScreenState extends State<RecoverPasswordEmailScreen> {
-  final _emailCtrl = TextEditingController();
+class _RecoverPasswordCodeScreenState extends State<RecoverPasswordCodeScreen> {
+  final _codeCtrl = TextEditingController();
   bool _loading = false;
+
+  void _goBack() => Navigator.pop(context);
 
   Future<void> _continue() async {
     if (_loading) return;
     setState(() => _loading = true);
     try {
-      await AuthService.requestPasswordReset(_emailCtrl.text);
-      if (!mounted) return;
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => RecoverPasswordCodeScreen(email: _emailCtrl.text.trim()),
+          builder: (_) => RecoverPasswordResetScreen(email: widget.email, code: _codeCtrl.text.trim()),
         ),
       );
-    } catch (e) {
-  showErrorSnackBar(context, e.toString().replaceFirst('Exception: ', ''));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -50,47 +46,34 @@ class _RecoverPasswordEmailScreenState extends State<RecoverPasswordEmailScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.topLeft,
+                  child: IconButton(
+                    onPressed: _goBack,
+                    color: Colors.black,
+                    icon: const Icon(Icons.arrow_back),
+                  ),
+                ),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 8),
                     const Text(
-                      'Recupera tú\ncontraseña',
+                      'Se enviará un codigo de\nverificación al correo\nregistrado',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 34,
+                        fontSize: 20,
+                        color: Colors.black,
                         fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                        letterSpacing: 0.5,
-                        shadows: [
-                          Shadow(blurRadius: 3, color: Colors.black26, offset: Offset(0, 2)),
-                        ],
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Escribe tu correo para\nenviar un código de\nverificación',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                        height: 1.25,
-                        shadows: [
-                          Shadow(blurRadius: 1, color: Colors.black26, offset: Offset(0, 1)),
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: size.height * 0.05),
-
-                    // Label
+                    const SizedBox(height: 24),
                     const Align(
                       alignment: Alignment.centerLeft,
                       child: Padding(
                         padding: EdgeInsets.only(left: 12, bottom: 8),
                         child: Text(
-                          'Correo electrónico',
+                          'Escribe el código',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
@@ -99,7 +82,6 @@ class _RecoverPasswordEmailScreenState extends State<RecoverPasswordEmailScreen>
                         ),
                       ),
                     ),
-                    // Field
                     Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
@@ -113,19 +95,18 @@ class _RecoverPasswordEmailScreenState extends State<RecoverPasswordEmailScreen>
                         ],
                       ),
                       child: TextField(
-                        controller: _emailCtrl,
-                        keyboardType: TextInputType.emailAddress,
+                        controller: _codeCtrl,
+                        keyboardType: TextInputType.number,
+                        maxLength: 6,
                         decoration: const InputDecoration(
-                          hintText: 'Correo electrónico',
+                          counterText: '',
+                          hintText: '000000',
                           border: InputBorder.none,
                           contentPadding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                         ),
                       ),
                     ),
-
                     SizedBox(height: size.height * 0.04),
-
-                    // Continue button
                     SizedBox(
                       width: size.width * 0.6,
                       height: 48,
@@ -137,14 +118,12 @@ class _RecoverPasswordEmailScreenState extends State<RecoverPasswordEmailScreen>
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                           elevation: 6,
                         ),
-                        child: Text(_loading ? 'Enviando...' : 'Continuar',
+                        child: Text(_loading ? 'Verificando...' : 'Continuar',
                             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                       ),
                     ),
                   ],
                 ),
-
-                // Bottom image + footer
                 Column(
                   children: [
                     SizedBox(
@@ -153,24 +132,8 @@ class _RecoverPasswordEmailScreenState extends State<RecoverPasswordEmailScreen>
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      '¿No tienes una cuenta?',
+                      '¿Ya tienes una cuenta?',
                       style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (_) => RegisterScreen1()));
-                      },
-                      child: const Text(
-                        'Regístrate',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          decoration: TextDecoration.underline,
-                          decorationColor: Colors.white,
-                          decorationThickness: 2,
-                        ),
-                      ),
                     ),
                   ],
                 ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+// Helpers de SnackBars consistentes para éxito y error en toda la app.
 
 SnackBar _buildSnackBar({
   required Color background,

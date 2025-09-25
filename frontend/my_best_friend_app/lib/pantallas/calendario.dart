@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
-class CalendarScreen extends StatelessWidget {
-  const CalendarScreen({Key? key}) : super(key: key);
+// Wrapper en español para Calendario.
+class CalendarioPantalla extends StatelessWidget {
+  const CalendarioPantalla({Key? key}) : super(key: key);
   @override
   Widget build(BuildContext context) {
     return Center(

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
-class FeaturePlaceholderScreen extends StatelessWidget {
+// Wrapper en español para pantallas de funcionalidades aún no implementadas.
+class PlaceholderFuncionPantalla extends StatelessWidget {
   final String title;
-  const FeaturePlaceholderScreen({Key? key, required this.title}) : super(key: key);
+  const PlaceholderFuncionPantalla({Key? key, required this.title}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
