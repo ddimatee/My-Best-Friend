@@ -9,6 +9,7 @@ import 'buscar.dart';
 import 'peso.dart';
 import '../pantallas_vacunas/vacunas_pantalla.dart'; // NUEVO import
 import '../pantallas_eventos/eventos_pantalla.dart'; // NUEVO import
+import '../pantallas_calendario/calendario_modulo_pantalla.dart'; // NUEVO import calendario
 
 class MenuPrincipal extends StatefulWidget {
   const MenuPrincipal({Key? key}) : super(key: key);
@@ -176,6 +177,11 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const EventosPantalla()),
+      );
+    } else if (title == 'Calendario') { // NUEVO caso calendario
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const CalendarioModuloPantalla()),
       );
     } else {
       Navigator.push(

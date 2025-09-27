@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'pantallas/introduccion.dart';
 
 // Punto de entrada de la aplicación My Best Friend.
@@ -19,6 +20,17 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF4CAF50)),
       ),
+      // Configuración de localizaciones
+      localizationsDelegates: [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('es', 'ES'), // Español
+        Locale('en', 'US'), // Inglés
+      ],
+      locale: const Locale('es', 'ES'), // Idioma por defecto
       home: OnboardingScreens(),
     );
   }
