@@ -105,7 +105,38 @@ class _AlbumModuloPantallaState extends State<AlbumModuloPantalla> {
                 },
               ),
             ),
-      bottomNavigationBar: _buildBottomNavBar(),
+      // Bottom Navigation Bar
+      bottomNavigationBar: Container(
+        height: 64,
+        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade300,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: const [
+            BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 3)),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _BottomItem(
+              icon: Icons.pets,
+              selected: true,
+              onTap: () => Navigator.pop(context),
+            ),
+            _BottomItem(
+              icon: Icons.calendar_month,
+              selected: false,
+              onTap: () {},
+            ),
+            _BottomItem(
+              icon: Icons.settings,
+              selected: false,
+              onTap: () {},
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -264,43 +295,29 @@ class _AlbumModuloPantallaState extends State<AlbumModuloPantalla> {
     );
   }
 
-  Widget _buildBottomNavBar() {
-    return Container(
-      height: 80,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _buildNavItem(Icons.pets, false),
-          _buildNavItem(Icons.calendar_month, false),
-          _buildNavItem(Icons.settings, false),
-        ],
-      ),
-    );
-  }
+}
 
-  Widget _buildNavItem(IconData icon, bool isSelected) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: isSelected
-          ? BoxDecoration(
-              color: Colors.black,
-              borderRadius: BorderRadius.circular(20),
-            )
-          : null,
-      child: Icon(
-        icon,
-        color: Colors.black,
-        size: 28,
+class _BottomItem extends StatelessWidget {
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+  const _BottomItem({required this.icon, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: selected ? Colors.white : Colors.transparent,
+          shape: BoxShape.circle,
+          boxShadow: selected
+              ? const [BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2))]
+              : null,
+        ),
+        child: Icon(icon, size: 28, color: Colors.black),
       ),
     );
   }

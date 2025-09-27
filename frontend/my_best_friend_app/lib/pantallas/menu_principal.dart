@@ -11,6 +11,7 @@ import '../pantallas_vacunas/vacunas_pantalla.dart'; // NUEVO import
 import '../pantallas_eventos/eventos_pantalla.dart'; // NUEVO import
 import '../pantallas_calendario/calendario_modulo_pantalla.dart'; // NUEVO import calendario
 import '../pantallas_album/album_modulo_pantalla.dart'; // NUEVO import álbum
+import '../pantallas_dueno/dueno_modulo_pantalla.dart'; // NUEVO import dueño
 
 class MenuPrincipal extends StatefulWidget {
   const MenuPrincipal({Key? key}) : super(key: key);
@@ -188,6 +189,11 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const AlbumModuloPantalla()),
+      );
+    } else if (title == 'Dueño') { // NUEVO caso dueño
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const DuenoModuloPantalla()),
       );
     } else {
       Navigator.push(
