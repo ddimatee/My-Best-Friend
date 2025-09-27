@@ -10,6 +10,7 @@ import 'peso.dart';
 import '../pantallas_vacunas/vacunas_pantalla.dart'; // NUEVO import
 import '../pantallas_eventos/eventos_pantalla.dart'; // NUEVO import
 import '../pantallas_calendario/calendario_modulo_pantalla.dart'; // NUEVO import calendario
+import '../pantallas_album/album_modulo_pantalla.dart'; // NUEVO import álbum
 
 class MenuPrincipal extends StatefulWidget {
   const MenuPrincipal({Key? key}) : super(key: key);
@@ -182,6 +183,11 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const CalendarioModuloPantalla()),
+      );
+    } else if (title == 'Albúm') { // NUEVO caso álbum
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const AlbumModuloPantalla()),
       );
     } else {
       Navigator.push(
