@@ -7,6 +7,7 @@ import 'ajustes.dart';
 import 'placeholder_funcion.dart';
 import 'buscar.dart';
 import 'peso.dart';
+import '../pantallas_vacunas/vacunas_pantalla.dart'; // NUEVO import
 
 class MenuPrincipal extends StatefulWidget {
   const MenuPrincipal({Key? key}) : super(key: key);
@@ -164,6 +165,11 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const PesoPantalla()),
+      );
+    } else if (title == 'Vacunas') { // NUEVO caso
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const VacunasPantalla()),
       );
     } else {
       Navigator.push(

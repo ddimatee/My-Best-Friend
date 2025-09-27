@@ -12,9 +12,7 @@
 # Ignorar imágenes, íconos y recursos gráficos innecesarios
 
 # Imágenes y multimedia
-*.png
 *.jpg
-*.jpeg
 *.gif
 *.svg
 *.ico
@@ -27,9 +25,13 @@
 *.eps
 *.pdf
 web/icons/
+**/icons/*.png
 frontend/Assets.xcassets/
+**/Assets.xcassets/*.png
 frontend/Base.lproj/
+**/Base.lproj/*.png
 frontend/Assets/
+**/Assets/*.png
 frontend/images/
 frontend/img/
 web/favicon.*
@@ -38,7 +40,15 @@ ios/Runner/Assets.xcassets/
 ios/Runner/Base.lproj/
 macos/Runner/Assets.xcassets/
 macos/Runner/Base.lproj/
-
+**/AppIcon.appiconset/*.png
+**/LaunchImage.imageset/*.png
+**/android/main/res/mipmap-hdpi/*.png
+**/mipmap-hdpi/*.png
+**/mipmap-mdpi/*.png
+**/mipmap-xhdpi/*.png
+**/mipmap-xxhdpi/*.png
+**/mipmap-xxxhdpi/*.png
+**/web/
 # Ignorar archivos y carpetas generados por Flutter/Dart en todas las plataformas
 
 # Archivos y carpetas generados (compatibles con Windows)

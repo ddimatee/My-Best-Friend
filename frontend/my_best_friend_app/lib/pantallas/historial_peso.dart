@@ -295,21 +295,6 @@ class _HistorialPesoPantallaState extends State<HistorialPesoPantalla> {
                               children: [
                                 IconButton(
                                   icon: const Icon(
-                                    Icons.edit,
-                                    color: Colors.blue,
-                                    size: 20,
-                                  ),
-                                  onPressed: () {
-                                    // TODO: Implementar edición
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('Función de editar próximamente'),
-                                      ),
-                                    );
-                                  },
-                                ),
-                                IconButton(
-                                  icon: const Icon(
                                     Icons.delete,
                                     color: Colors.red,
                                     size: 20,
