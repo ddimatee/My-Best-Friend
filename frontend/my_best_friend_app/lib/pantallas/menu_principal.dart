@@ -8,6 +8,7 @@ import 'placeholder_funcion.dart';
 import 'buscar.dart';
 import 'peso.dart';
 import '../pantallas_vacunas/vacunas_pantalla.dart'; // NUEVO import
+import '../pantallas_eventos/eventos_pantalla.dart'; // NUEVO import
 
 class MenuPrincipal extends StatefulWidget {
   const MenuPrincipal({Key? key}) : super(key: key);
@@ -170,6 +171,11 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const VacunasPantalla()),
+      );
+    } else if (title == 'Eventos') { // NUEVO caso
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const EventosPantalla()),
       );
     } else {
       Navigator.push(
