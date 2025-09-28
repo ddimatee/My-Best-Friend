@@ -24,7 +24,7 @@ class MascotaPasoCoCuidadoPantalla extends StatelessWidget {
                   estado.coCare = true;
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (_) => const MascotaPasoCargandoPantalla()),
+                    MaterialPageRoute(builder: (_) => MascotaPasoCargandoPantalla(estado: estado)),
                   );
                 },
               ),
@@ -37,7 +37,7 @@ class MascotaPasoCoCuidadoPantalla extends StatelessWidget {
                   estado.coCare = false;
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (_) => const MascotaPasoCargandoPantalla()),
+                    MaterialPageRoute(builder: (_) => MascotaPasoCargandoPantalla(estado: estado)),
                   );
                 },
               ),

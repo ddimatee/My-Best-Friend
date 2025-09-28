@@ -138,7 +138,10 @@ class _CalendarioModuloPantallaState extends State<CalendarioModuloPantalla> {
             ),
             child: const Icon(Icons.arrow_back, color: Colors.black),
           ),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            // Regresar al menú principal (primera pantalla con bottom navigation)
+            Navigator.popUntil(context, (route) => route.isFirst);
+          },
         ),
         centerTitle: true,
         title: Container(

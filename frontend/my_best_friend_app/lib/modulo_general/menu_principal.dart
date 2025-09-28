@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
 // Menú principal con barra superior, tarjeta de mascota y navegación inferior.
-import 'formularios/formulario_mascota.dart';
+import 'crear_mascota_nueva_pantalla.dart';
 import '../modulo_calendario/calendario.dart';
-import 'ajustes.dart';
 import 'placeholder_funcion.dart';
 import 'buscar.dart';
 import '../modulo_peso/peso.dart';
@@ -12,28 +11,52 @@ import '../modulo_eventos/eventos_pantalla.dart'; // NUEVO import
 import '../modulo_calendario/calendario_modulo_pantalla.dart'; // NUEVO import calendario
 import '../modulo_album/album_modulo_pantalla.dart'; // NUEVO import álbum
 import '../modulo_dueno/dueno_modulo_pantalla.dart'; // NUEVO import dueño
+import '../modulo_configuracion/configuracion_modulo_pantalla.dart'; // NUEVO import configuración
+import 'datos/mascota_model.dart';
 
 class MenuPrincipal extends StatefulWidget {
-  const MenuPrincipal({Key? key}) : super(key: key);
+  final int initialTab; // 0 mascotas, 1 calendario, 2 configuración
+  const MenuPrincipal({Key? key, this.initialTab = 0}) : super(key: key);
+
   @override
   State<MenuPrincipal> createState() => _MenuPrincipalState();
 }
 
 class _MenuPrincipalState extends State<MenuPrincipal> {
   final Color green = const Color(0xFF4CAF50);
-  int _tabIndex = 0; // 0: Mascota, 1: Calendario, 2: Ajustes
+  late int _tabIndex; // 0: Mascota, 1: Calendario, 2: Ajustes
   bool _visible = true; // segment Visible/Oculto
+  final MascotasRepo _repo = MascotasRepo();
+
+  void _onRepoChange() => setState(() {});
+
+  @override
+  void initState() {
+    super.initState();
+    _tabIndex = widget.initialTab;
+    _repo.addListener(_onRepoChange);
+  }
+
+  @override
+  void dispose() {
+    _repo.removeListener(_onRepoChange);
+    super.dispose();
+  }
 
   void _openSearch() {
     Navigator.push(context, MaterialPageRoute(builder: (_) => const BuscarPantalla()));
   }
 
   void _openAddPet() {
-    final st = PetFormState();
-    Navigator.push(context, MaterialPageRoute(builder: (_) => MascotaPasoSituacionPantalla(estado: st)));
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const CrearMascotaNuevaPantalla()));
   }
 
   Widget _buildTopBar() {
+    // Solo mostrar la barra superior completa en la pestaña de mascotas (índice 0)
+    if (_tabIndex != 0) {
+      return const SizedBox(height: 8); // Espacio mínimo para las otras pestañas
+    }
+    
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8),
       child: Row(
@@ -109,27 +132,68 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
     );
   }
 
-// Tarjeta de mascota con foto, nombre, edad y botones de función.
-  Widget _buildPetCard() {
+  // Lista dinámica de tarjetas de mascotas (visibles u ocultas).
+  Widget _buildPetCardsList() {
+    final visibles = _repo.visibles;
+    final ocultas = _repo.ocultas;
+    final lista = _visible ? visibles : ocultas;
+
+    if (visibles.isEmpty && ocultas.isEmpty) {
+      return _emptyState('Aún no has agregado una mascota');
+    }
+    if (lista.isEmpty) {
+      return _emptyState(_visible ? 'No hay mascotas visibles' : 'No hay mascotas ocultas');
+    }
+    return Column(
+      children: lista.map((m) => _petCard(m)).toList(),
+    );
+  }
+
+  Widget _emptyState(String mensaje) {
     return Container(
+      padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.85),
         borderRadius: BorderRadius.circular(22),
-        boxShadow: const [
-          BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 4)),
+        boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 4))],
+      ),
+      child: Column(
+        children: [
+          Text(mensaje, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 12),
+          ElevatedButton(
+            onPressed: _openAddPet,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.black,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+            ),
+            child: const Text('Agregar Mascota'),
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _petCard(Mascota m) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 18),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.85),
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 4))],
       ),
       child: Column(
         children: [
           _buildPatternStrip(),
           const SizedBox(height: 12),
-          CircleAvatar(
+            CircleAvatar(
             radius: 36,
             backgroundColor: Colors.grey.shade300,
             backgroundImage: const AssetImage('assets/images/perro_logo.png'),
           ),
           const SizedBox(height: 8),
-          const Text('Mascota', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+          Text(m.nombre, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
           const SizedBox(height: 4),
           Text('0 días (0 meses)', style: TextStyle(color: Colors.grey.shade800, fontSize: 14)),
           const SizedBox(height: 12),
@@ -137,7 +201,6 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
             padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8),
             child: Column(
               children: [
-                // Fila de botones de función
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -157,6 +220,12 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
                 ),
               ],
             ),
+          ),
+          const SizedBox(height: 8),
+          TextButton.icon(
+            onPressed: () => _repo.toggleOculto(m.id),
+            icon: Icon(m.oculto ? Icons.visibility : Icons.visibility_off, color: Colors.black87),
+            label: Text(m.oculto ? 'Mostrar' : 'Ocultar', style: const TextStyle(color: Colors.black87)),
           ),
           const SizedBox(height: 12),
         ],
@@ -211,14 +280,14 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
           child: Column(
             children: [
               const SizedBox(height: 8),
-              _buildPetCard(),
+              _buildPetCardsList(),
             ],
           ),
         );
       case 1:
         return const CalendarioPantalla();
       case 2:
-        return const AjustesPantalla();
+        return const ConfiguracionModuloPantalla();
       default:
         return const SizedBox.shrink();
     }

@@ -4,6 +4,7 @@ import 'modelos/evento.dart';
 import 'servicios/evento_service.dart';
 import 'seleccion_categoria_evento.dart';
 import 'detalle_evento.dart';
+import 'formulario_evento.dart';
 
 class EventosPantalla extends StatefulWidget {
   const EventosPantalla({Key? key}) : super(key: key);
@@ -40,15 +41,25 @@ class _EventosPantallaState extends State<EventosPantalla> {
   }
 
   void _navegarASeleccionCategoria() async {
-    final resultado = await Navigator.push(
+    final String? categoria = await Navigator.push<String>(
       context,
       MaterialPageRoute(
         builder: (context) => const SeleccionCategoriaEvento(),
       ),
     );
 
-    if (resultado == true) {
-      _cargarEventos();
+    if (categoria != null) {
+      // Navegar al formulario de evento con la categoría seleccionada
+      final resultado = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => FormularioEvento(categoria: categoria),
+        ),
+      );
+      
+      if (resultado == true) {
+        _cargarEventos();
+      }
     }
   }
 

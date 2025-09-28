@@ -92,10 +92,12 @@ class _ConfirmacionFinalCalendarioState extends State<ConfirmacionFinalCalendari
 
       // Regresar al módulo calendario después de un breve delay
       Future.delayed(const Duration(seconds: 2), () {
-        // Navegar directamente al módulo calendario
-        Navigator.of(context).pushAndRemoveUntil(
+        // Usar pop múltiple para volver a la pantalla anterior (CalendarioModuloPantalla)
+        // Esto mantiene el stack de navegación intacto
+        Navigator.of(context).pop(); // Salir de confirmación
+        Navigator.of(context).pop(); // Salir del formulario
+        Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const CalendarioModuloPantalla()),
-          (route) => false, // Remover todas las rutas anteriores
         );
       });
 
