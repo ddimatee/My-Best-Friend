@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'widgets/calendario_selector.dart';
 
 class DetallePesoPantalla extends StatefulWidget {
   final Map<String, dynamic> registro;
@@ -21,19 +22,53 @@ class _DetallePesoPantallaState extends State<DetallePesoPantalla> {
   late TextEditingController _notasController;
   late DateTime _fechaMedicion;
   late DateTime _fechaCreacion;
+  String _pesoPreview = '';
 
   @override
   void initState() {
     super.initState();
     
-    final pesoGramos = double.tryParse(widget.registro['peso']) ?? 0;
-    final pesoKg = pesoGramos / 1000;
+    // Usar el valor numérico si existe, sino parsearlo del texto
+    final pesoKg = widget.registro.containsKey('pesoNumerico') 
+        ? widget.registro['pesoNumerico'] as double
+        : double.tryParse(widget.registro['peso']) ?? 0;
     
-    _pesoKgController = TextEditingController(text: pesoKg.toStringAsFixed(3));
-    _pesoGrController = TextEditingController(text: pesoGramos.toStringAsFixed(0));
+    _pesoKgController = TextEditingController(text: _formatearPeso(pesoKg));
+    _pesoGrController = TextEditingController(text: (pesoKg * 1000).toStringAsFixed(0));
     _notasController = TextEditingController(text: widget.registro['notas'] ?? '');
     _fechaMedicion = widget.registro['fecha'] as DateTime;
     _fechaCreacion = widget.registro['fecha'] as DateTime;
+    
+    // Inicializar preview
+    _pesoPreview = 'Peso de Mascota = ${_formatearPeso(pesoKg)} kg';
+  }
+
+  // Función para parsear peso inteligentemente
+  double _parseaPeso(String input) {
+    if (input.isEmpty) return 0;
+    
+    final numero = double.tryParse(input) ?? 0;
+    
+    // Si el número es mayor a 100 y no tiene punto decimal
+    if (numero >= 100 && !input.contains('.')) {
+      // Convertir 123 -> 12.3
+      return numero / 10;
+    }
+    
+    return numero;
+  }
+
+  // Función para formatear peso para mostrar
+  String _formatearPeso(double peso) {
+    if (peso == 0) return '';
+    
+    // Si el peso es un número entero, mostrarlo sin decimales
+    if (peso == peso.roundToDouble()) {
+      return peso.toInt().toString();
+    } else {
+      // Mostrar con decimales, eliminando ceros innecesarios
+      return peso.toStringAsFixed(1).replaceAll(RegExp(r'\.?0+$'), '');
+    }
   }
 
   String _formatearFechaCompleta(DateTime fecha) {
@@ -46,21 +81,11 @@ class _DetallePesoPantallaState extends State<DetallePesoPantalla> {
   }
 
   Future<void> _seleccionarFecha() async {
-    final DateTime? fechaSeleccionada = await showDatePicker(
+    final DateTime? fechaSeleccionada = await mostrarCalendarioPeso(
       context: context,
-      initialDate: _fechaMedicion,
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: Theme.of(context).colorScheme.copyWith(
-              primary: const Color(0xFF4CAF50),
-            ),
-          ),
-          child: child!,
-        );
-      },
+      fechaInicial: _fechaMedicion,
+      primeraFecha: DateTime(2020,1,1),
+      ultimaFecha: DateTime.now().add(const Duration(days: 30)),
     );
 
     if (fechaSeleccionada != null) {
@@ -94,10 +119,11 @@ class _DetallePesoPantallaState extends State<DetallePesoPantalla> {
   }
 
   void _actualizarPeso() {
-    final pesoGramos = double.tryParse(_pesoGrController.text) ?? 0;
+    final pesoKg = double.tryParse(_pesoKgController.text) ?? 0;
     
     final registroActualizado = {
-      'peso': pesoGramos.toString(),
+      'peso': _formatearPeso(pesoKg),
+      'pesoNumerico': pesoKg, // Guardamos el valor numérico exacto
       'fecha': _fechaMedicion,
       'notas': _notasController.text,
     };
@@ -169,6 +195,27 @@ class _DetallePesoPantallaState extends State<DetallePesoPantalla> {
                       color: Colors.black87,
                     ),
                   ),
+                  const SizedBox(height: 8),
+                  
+                  // Preview del peso
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.green.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.green.shade200),
+                    ),
+                    child: Text(
+                      _pesoPreview,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.green.shade700,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
                   const SizedBox(height: 16),
 
                   // Campo Peso en kg
@@ -192,10 +239,15 @@ class _DetallePesoPantallaState extends State<DetallePesoPantalla> {
                       ),
                       style: const TextStyle(fontSize: 16),
                       onChanged: (value) {
-                        final kg = double.tryParse(value) ?? 0;
-                        final gramos = kg * 1000;
+                        // Aplicar lógica inteligente de parsing
+                        final pesoParseado = _parseaPeso(value);
+                        final gramos = pesoParseado * 1000;
                         _pesoGrController.text = gramos.toStringAsFixed(0);
-                        setState(() {});
+                        
+                        // Actualizar preview
+                        setState(() {
+                          _pesoPreview = 'Peso de Mascota = ${value.isEmpty ? '0' : _formatearPeso(pesoParseado)} kg';
+                        });
                       },
                     ),
                   ),
@@ -231,10 +283,14 @@ class _DetallePesoPantallaState extends State<DetallePesoPantalla> {
                       ),
                       style: const TextStyle(fontSize: 16),
                       onChanged: (value) {
-                        final gramos = double.tryParse(value) ?? 0;
-                        final kg = gramos / 1000;
-                        _pesoKgController.text = kg.toStringAsFixed(3);
-                        setState(() {});
+                        // Aplicar lógica inteligente de parsing
+                        final pesoParseado = _parseaPeso(value);
+                        _pesoKgController.text = _formatearPeso(pesoParseado);
+                        
+                        // Actualizar preview
+                        setState(() {
+                          _pesoPreview = 'Peso de Mascota = ${value.isEmpty ? '0' : _formatearPeso(pesoParseado)} kg';
+                        });
                       },
                     ),
                   ),

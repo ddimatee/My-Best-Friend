@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'historial_peso.dart';
+import 'lista_pesos_pantalla.dart';
+import 'widgets/calendario_selector.dart';
 
 class PesoPantalla extends StatefulWidget {
   final List<Map<String, dynamic>>? registrosExistentes;
@@ -15,6 +16,8 @@ class _PesoPantallaState extends State<PesoPantalla> {
   final TextEditingController _pesoController = TextEditingController();
   final TextEditingController _notasController = TextEditingController();
   bool _showForm = false; // Controla si mostrar el formulario o el estado vacío
+  int _tabIndex = 0; // Índice para la barra de navegación inferior
+  DateTime _fechaMedicionNueva = DateTime.now();
   
   // Lista de registros de peso (inicialmente vacía)
   List<Map<String, dynamic>> _registrosPeso = [];
@@ -25,6 +28,41 @@ class _PesoPantallaState extends State<PesoPantalla> {
     // Cargar registros existentes si se proporcionan
     if (widget.registrosExistentes != null) {
       _registrosPeso = List.from(widget.registrosExistentes!);
+    }
+  }
+
+  // Función para convertir el peso ingresado
+  double _parseaPeso(String input) {
+    if (input.isEmpty) return 0.0;
+    
+    try {
+      // Si contiene punto decimal, lo toma como está
+      if (input.contains('.')) {
+        return double.parse(input);
+      } else {
+        // Si no tiene punto decimal, lo convierte automáticamente
+        // 123 → 12.3, 1234 → 123.4, etc.
+        if (input.length <= 2) {
+          // Números muy pequeños (1-99) se toman como gramos decimales
+          return double.parse(input) / 10;
+        } else {
+          // Números de 3+ dígitos: el último dígito es decimal
+          String parteEntera = input.substring(0, input.length - 1);
+          String parteDecimal = input.substring(input.length - 1);
+          return double.parse('$parteEntera.$parteDecimal');
+        }
+      }
+    } catch (e) {
+      return 0.0;
+    }
+  }
+
+  String _formatearPeso(double peso) {
+    // Formatear el peso para mostrarlo sin decimales innecesarios
+    if (peso == peso.roundToDouble()) {
+      return peso.toInt().toString();
+    } else {
+      return peso.toStringAsFixed(1);
     }
   }
 
@@ -39,10 +77,22 @@ class _PesoPantallaState extends State<PesoPantalla> {
       return;
     }
 
+    double pesoParseado = _parseaPeso(_pesoController.text);
+    if (pesoParseado <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Por favor ingresa un peso válido'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _registrosPeso.insert(0, {
-        'peso': _pesoController.text,
-        'fecha': DateTime.now(),
+        'peso': _formatearPeso(pesoParseado),
+        'pesoNumerico': pesoParseado, // Guardamos el valor numérico para cálculos
+        'fecha': _fechaMedicionNueva,
         'notas': _notasController.text.isEmpty ? '' : _notasController.text,
       });
     });
@@ -50,15 +100,21 @@ class _PesoPantallaState extends State<PesoPantalla> {
     _pesoController.clear();
     _notasController.clear();
 
-    // Navegar a la pantalla de historial
+    // Navegar a la pantalla de lista de pesos
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => HistorialPesoPantalla(
+        builder: (context) => ListaPesosPantalla(
           registrosPeso: _registrosPeso,
         ),
       ),
-    );
+    ).then((result) {
+      if (result != null && result is List<Map<String, dynamic>>) {
+        setState(() {
+          _registrosPeso = result;
+        });
+      }
+    });
   }
 
   String _getMonthName(int month) {
@@ -89,6 +145,37 @@ class _PesoPantallaState extends State<PesoPantalla> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      bottomNavigationBar: Container(
+        height: 64,
+        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade300,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: const [
+            BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 3)),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _BottomItem(
+              icon: Icons.pets,
+              selected: _tabIndex == 0,
+              onTap: () => setState(() => _tabIndex = 0),
+            ),
+            _BottomItem(
+              icon: Icons.calendar_month,
+              selected: _tabIndex == 1,
+              onTap: () => setState(() => _tabIndex = 1),
+            ),
+            _BottomItem(
+              icon: Icons.settings,
+              selected: _tabIndex == 2,
+              onTap: () => setState(() => _tabIndex = 2),
+            ),
+          ],
         ),
       ),
       body: Center(
@@ -273,23 +360,41 @@ class _PesoPantallaState extends State<PesoPantalla> {
                       border: Border.all(color: Colors.grey.shade300),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: TextField(
-                      controller: _pesoController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
+                    child: Column(
+                      children: [
+                        TextField(
+                          controller: _pesoController,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
+                          ],
+                          decoration: const InputDecoration(
+                            hintText: 'Ej: 12.3',
+                            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            border: InputBorder.none,
+                          ),
+                          style: const TextStyle(fontSize: 16),
+                          onChanged: (value) {
+                            setState(() {
+                              // Actualizar la UI cuando cambie el texto
+                            });
+                          },
+                        ),
+                        // Vista previa del peso interpretado
+                        if (_pesoController.text.isNotEmpty)
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                            child: Text(
+                              'Peso interpretado: ${_formatearPeso(_parseaPeso(_pesoController.text))} kg',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade600,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ),
                       ],
-                      decoration: const InputDecoration(
-                        hintText: 'Ingresa el peso en gramos',
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        border: InputBorder.none,
-                      ),
-                      style: const TextStyle(fontSize: 16),
-                      onChanged: (value) {
-                        setState(() {
-                          // Actualizar la UI cuando cambie el texto
-                        });
-                      },
                     ),
                   ),
                 ],
@@ -354,27 +459,53 @@ class _PesoPantallaState extends State<PesoPantalla> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            '${DateTime.now().day} ${_getMonthName(DateTime.now().month)} ${DateTime.now().year} ${DateTime.now().hour.toString().padLeft(2, '0')}:${DateTime.now().minute.toString().padLeft(2, '0')}',
-                            style: const TextStyle(fontSize: 16),
+                  GestureDetector(
+                    onTap: () async {
+                      final fecha = await mostrarCalendarioPeso(
+                        context: context,
+                        fechaInicial: _fechaMedicionNueva,
+                        primeraFecha: DateTime(2020,1,1),
+                        ultimaFecha: DateTime.now().add(const Duration(days: 365)),
+                      );
+                      if (fecha != null) {
+                        // Opcional: pedir también hora
+                        final hora = await showTimePicker(
+                          context: context,
+                          initialTime: TimeOfDay.fromDateTime(_fechaMedicionNueva),
+                        );
+                        setState(() {
+                          _fechaMedicionNueva = DateTime(
+                            fecha.year,
+                            fecha.month,
+                            fecha.day,
+                            hora?.hour ?? _fechaMedicionNueva.hour,
+                            hora?.minute ?? _fechaMedicionNueva.minute,
+                          );
+                        });
+                      }
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              '${_fechaMedicionNueva.day} ${_getMonthName(_fechaMedicionNueva.month)} ${_fechaMedicionNueva.year} ${_fechaMedicionNueva.hour.toString().padLeft(2, '0')}:${_fechaMedicionNueva.minute.toString().padLeft(2, '0')}',
+                              style: const TextStyle(fontSize: 16),
+                            ),
                           ),
-                        ),
-                        Icon(
-                          Icons.calendar_today,
-                          size: 20,
-                          color: Colors.grey.shade600,
-                        ),
-                      ],
+                          Icon(
+                            Icons.calendar_today,
+                            size: 20,
+                            color: Colors.grey.shade600,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
 
@@ -408,6 +539,37 @@ class _PesoPantallaState extends State<PesoPantalla> {
           ],
         ),
       ),
+      bottomNavigationBar: Container(
+        height: 64,
+        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade300,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: const [
+            BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 3)),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _BottomItem(
+              icon: Icons.pets,
+              selected: _tabIndex == 0,
+              onTap: () => setState(() => _tabIndex = 0),
+            ),
+            _BottomItem(
+              icon: Icons.calendar_month,
+              selected: _tabIndex == 1,
+              onTap: () => setState(() => _tabIndex = 1),
+            ),
+            _BottomItem(
+              icon: Icons.settings,
+              selected: _tabIndex == 2,
+              onTap: () => setState(() => _tabIndex = 2),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -416,5 +578,31 @@ class _PesoPantallaState extends State<PesoPantalla> {
     _pesoController.dispose();
     _notasController.dispose();
     super.dispose();
+  }
+}
+
+class _BottomItem extends StatelessWidget {
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+  const _BottomItem({required this.icon, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: selected ? Colors.white : Colors.transparent,
+          shape: BoxShape.circle,
+          boxShadow: selected
+              ? const [BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2))]
+              : null,
+        ),
+        child: Icon(icon, size: 28, color: Colors.black),
+      ),
+    );
   }
 }

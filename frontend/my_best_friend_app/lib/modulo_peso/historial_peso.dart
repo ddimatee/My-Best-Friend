@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'widgets/calendario_selector.dart';
 import 'detalle_peso.dart';
 import 'peso.dart';
 
@@ -17,12 +18,22 @@ class HistorialPesoPantalla extends StatefulWidget {
 class _HistorialPesoPantallaState extends State<HistorialPesoPantalla> {
   String _filtroSeleccionado = 'Hoy';
   late List<Map<String, dynamic>> _registrosFiltrados;
+  int _tabIndex = 0;
 
   @override
   void initState() {
     super.initState();
     _registrosFiltrados = widget.registrosPeso;
     _aplicarFiltro();
+  }
+
+  String _formatearPesoHistorial(double peso) {
+    // Formatear el peso para el historial sin decimales innecesarios
+    if (peso == peso.roundToDouble()) {
+      return peso.toInt().toString();
+    } else {
+      return peso.toStringAsFixed(1);
+    }
   }
 
   void _aplicarFiltro() {
@@ -198,7 +209,10 @@ class _HistorialPesoPantallaState extends State<HistorialPesoPantalla> {
                     itemCount: _registrosFiltrados.length,
                     itemBuilder: (context, index) {
                       final registro = _registrosFiltrados[index];
-                      final pesoKg = (double.tryParse(registro['peso']) ?? 0) / 1000;
+                      // Usar el valor numérico si existe, sino parsearlo
+                      final pesoKg = registro.containsKey('pesoNumerico') 
+                          ? registro['pesoNumerico'] as double
+                          : double.tryParse(registro['peso']) ?? 0;
                       
                       return GestureDetector(
                         onTap: () {
@@ -259,7 +273,7 @@ class _HistorialPesoPantallaState extends State<HistorialPesoPantalla> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    '${pesoKg.toStringAsFixed(3)} kg',
+                                    '${_formatearPesoHistorial(pesoKg)} kg',
                                     style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
@@ -311,6 +325,51 @@ class _HistorialPesoPantallaState extends State<HistorialPesoPantalla> {
                   ),
           ),
         ],
+      ),
+      bottomNavigationBar: Container(
+        height: 88,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(30),
+            topRight: Radius.circular(30),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _BottomItem(
+              icon: Icons.pets,
+              text: 'Mascotas',
+              selected: _tabIndex == 0,
+              onTap: () {
+                setState(() {
+                  _tabIndex = 0;
+                });
+              },
+            ),
+            _BottomItem(
+              icon: Icons.calendar_month,
+              text: 'Calendario',
+              selected: _tabIndex == 1,
+              onTap: () {
+                setState(() {
+                  _tabIndex = 1;
+                });
+              },
+            ),
+            _BottomItem(
+              icon: Icons.settings,
+              text: 'Configurar',
+              selected: _tabIndex == 2,
+              onTap: () {
+                setState(() {
+                  _tabIndex = 2;
+                });
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -400,21 +459,11 @@ class _FiltroPersonalizadoDialogState extends State<_FiltroPersonalizadoDialog> 
   DateTime? _fechaHasta;
 
   Future<void> _seleccionarFecha(bool esDesde) async {
-    final DateTime? fecha = await showDatePicker(
+    final DateTime? fecha = await mostrarCalendarioPeso(
       context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: Theme.of(context).colorScheme.copyWith(
-              primary: const Color(0xFF4CAF50),
-            ),
-          ),
-          child: child!,
-        );
-      },
+      fechaInicial: DateTime.now(),
+      primeraFecha: DateTime(2020,1,1),
+      ultimaFecha: DateTime.now().add(const Duration(days: 30)),
     );
 
     if (fecha != null) {
@@ -628,6 +677,54 @@ class _FiltroPersonalizadoDialogState extends State<_FiltroPersonalizadoDialog> 
                   ),
                 ),
               ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BottomItem extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _BottomItem({
+    required this.icon,
+    required this.text,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFF4CAF50) : Colors.transparent,
+          borderRadius: BorderRadius.circular(25),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: selected ? Colors.white : Colors.grey,
+              size: 24,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              text,
+              style: TextStyle(
+                color: selected ? Colors.white : Colors.grey,
+                fontSize: 12,
+                fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+              ),
             ),
           ],
         ),
