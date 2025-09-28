@@ -11,7 +11,7 @@ class SeleccionCategoriaCalendario extends StatefulWidget {
 }
 
 class _SeleccionCategoriaCalendarioState extends State<SeleccionCategoriaCalendario> {
-  final Color _greenColor = const Color(0xFF2196F3); // Azul más visible
+  final Color _greenColor = const Color(0xFF4CAF50); // Verde consistente con la app
   final Color _grayColor = const Color(0xFFE5E5E5);
   String? _categoriaSeleccionada;
 
@@ -199,12 +199,12 @@ class _CategoriaItem extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: seleccionada ? Colors.white : const Color(0xFF2196F3),
+                color: seleccionada ? Colors.white : const Color(0xFF4CAF50),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 categoria['icono'],
-                color: seleccionada ? const Color(0xFF2196F3) : Colors.white,
+                color: seleccionada ? const Color(0xFF4CAF50) : Colors.white,
                 size: 24,
               ),
             ),

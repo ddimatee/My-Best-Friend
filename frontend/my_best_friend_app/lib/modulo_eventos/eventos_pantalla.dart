@@ -164,74 +164,79 @@ class _EventosPantallaState extends State<EventosPantalla> {
   }
 
   Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Stack(
         children: [
-          // Imagen del perro con hueso
-          Container(
-            width: 400,
-            height: 400,
-            margin: const EdgeInsets.only(bottom: 24),
-            child: Image.asset(
-              'assets/images/perro_evento.png',
-              width: 400,
-              height: 400,
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) {
-                print('Error cargando imagen perro_evento.png: $error');
-                // Fallback a una imagen que sabemos funciona
-                return Image.asset(
-                  'assets/images/perro_evento.png',
-                  width: 300,
-                  height: 300,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error2, stackTrace2) {
-                    return Container(
-                      width: 300,
-                      height: 300,
-                      decoration: BoxDecoration(
-                        color: _greenColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(100),
-                      ),
-                      child: Icon(
-                        Icons.pets,
-                        size: 80,
-                        color: _greenColor,
-                      ),
-                    );
-                  },
-                );
-              },
+          // Contenido principal con texto y botón
+          Positioned(
+            left: 0,
+            right: 0,
+            top: 360,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'No se ha encontrado ningún\nevento, ¡créalo!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: _navegarASeleccionCategoria,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    elevation: 2,
+                  ),
+                  child: const Text(
+                    'Crear',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 24),
-          const Text(
-            'No se ha encontrado ningún\nevento, ¡créalo!',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
-          ),
-          const SizedBox(height: 32),
-          ElevatedButton(
-            onPressed: _navegarASeleccionCategoria,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: Colors.black,
-              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(25),
-              ),
-              elevation: 2,
-            ),
-            child: const Text(
-              'Crear',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
+
+          Positioned(
+            left: 0,
+            right: 0,
+            top: 200, 
+            child: Container(
+              width: 280,
+              height: 200,
+              child: Image.asset(
+                'assets/images/perro_evento.png',
+                width: 280,
+                height: 200,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  print('Error cargando imagen perro_evento.png: $error');
+                  return Container(
+                    width: 280,
+                    height: 200,
+                    decoration: BoxDecoration(
+                      color: _greenColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(100),
+                    ),
+                    child: Icon(
+                      Icons.pets,
+                      size: 60,
+                      color: _greenColor,
+                    ),
+                  );
+                },
               ),
             ),
           ),

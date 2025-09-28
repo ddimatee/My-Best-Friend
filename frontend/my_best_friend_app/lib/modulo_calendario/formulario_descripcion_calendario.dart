@@ -14,7 +14,7 @@ class _FormularioDescripcionCalendarioState extends State<FormularioDescripcionC
   final _formKey = GlobalKey<FormState>();
   final _descripcionController = TextEditingController();
   final _focusNode = FocusNode();
-  final Color _greenColor = const Color(0xFF2196F3); // Azul más visible
+  final Color _greenColor = const Color(0xFF4CAF50); // Verde consistente con la app
   final Color _grayColor = const Color(0xFFE5E5E5);
   
   late AnimationController _fadeController;
@@ -468,12 +468,12 @@ class _BottomItem extends StatelessWidget {
         curve: Curves.easeInOutCubic,
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFF2196F3) : Colors.transparent,
+          color: selected ? const Color(0xFF4CAF50) : Colors.transparent,
           shape: BoxShape.circle,
           boxShadow: selected
               ? [
                   BoxShadow(
-                    color: const Color(0xFF2196F3).withOpacity(0.3),
+                    color: const Color(0xFF4CAF50).withOpacity(0.3),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   )

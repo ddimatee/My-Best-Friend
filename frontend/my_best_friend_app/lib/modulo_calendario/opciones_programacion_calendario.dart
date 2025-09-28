@@ -16,7 +16,7 @@ class OpcionesProgramacionCalendario extends StatefulWidget {
 }
 
 class _OpcionesProgramacionCalendarioState extends State<OpcionesProgramacionCalendario> {
-  final Color _greenColor = const Color(0xFF2196F3); // Azul más visible
+  final Color _greenColor = const Color(0xFF4CAF50); // Verde consistente con la app
   final Color _grayColor = const Color(0xFFE5E5E5);
   String? _opcionSeleccionada;
 
@@ -24,31 +24,31 @@ class _OpcionesProgramacionCalendarioState extends State<OpcionesProgramacionCal
     {
       'id': 'una_vez',
       'titulo': 'Una sola vez',
-      'descripcion': 'Recordatorio único en fecha específica',
+      'descripcion': 'Te preguntaremos: ¿Para qué fecha específica quieres este recordatorio?',
       'icono': Icons.schedule,
     },
     {
       'id': 'diario',
       'titulo': 'Diario',
-      'descripcion': 'Todos los días a la misma hora',
+      'descripcion': 'Te preguntaremos: ¿A qué hora todos los días quieres el recordatorio?',
       'icono': Icons.today,
     },
     {
       'id': 'semanal',
       'titulo': 'Semanal',
-      'descripcion': 'Cada semana en días específicos',
+      'descripcion': 'Te preguntaremos: ¿Qué días de la semana y a qué hora?',
       'icono': Icons.view_week,
     },
     {
       'id': 'mensual',
       'titulo': 'Mensual',
-      'descripcion': 'Una vez al mes en fecha específica',
+      'descripcion': 'Te preguntaremos: ¿Qué día del mes y a qué hora cada mes?',
       'icono': Icons.calendar_view_month,
     },
     {
       'id': 'personalizado',
       'titulo': 'Personalizado',
-      'descripcion': 'Define tu propia frecuencia',
+      'descripcion': 'Te preguntaremos: ¿Cada cuántos días/semanas/meses y en qué rangos?',
       'icono': Icons.tune,
     },
   ];
@@ -115,11 +115,12 @@ class _OpcionesProgramacionCalendarioState extends State<OpcionesProgramacionCal
                   const SizedBox(height: 10),
                   
                   const Text(
-                    'Selecciona la frecuencia para tu recordatorio:',
+                    'Elige cómo quieres programar tu recordatorio.\nCada opción te pedirá información específica:',
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.black87,
                       fontWeight: FontWeight.w500,
+                      height: 1.4,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -243,12 +244,12 @@ class _OpcionItem extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: seleccionada ? Colors.white : const Color(0xFF2196F3),
+                color: seleccionada ? Colors.white : const Color(0xFF4CAF50),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 opcion['icono'],
-                color: seleccionada ? const Color(0xFF2196F3) : Colors.white,
+                color: seleccionada ? const Color(0xFF4CAF50) : Colors.white,
                 size: 28,
               ),
             ),

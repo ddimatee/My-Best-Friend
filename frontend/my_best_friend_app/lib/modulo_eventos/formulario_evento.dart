@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'modelos/evento.dart';
 import 'servicios/evento_service.dart';
+import '../modulo_peso/widgets/calendario_selector.dart';
+import 'seleccion_categoria_evento.dart';
 
 class FormularioEvento extends StatefulWidget {
   final String categoria;
@@ -21,11 +23,13 @@ class _FormularioEventoState extends State<FormularioEvento> {
   DateTime _fechaSeleccionada = DateTime.now();
   bool _crearRecordatorio = false;
   bool _isLoading = false;
+  String _categoriaSeleccionada = '';
   final Color _greenColor = const Color(0xFF4CAF50);
 
   @override
   void initState() {
     super.initState();
+    _categoriaSeleccionada = widget.categoria;
     if (widget.evento != null) {
       _tituloController.text = widget.evento!.titulo;
       _descripcionController.text = widget.evento!.descripcion;
@@ -42,27 +46,29 @@ class _FormularioEventoState extends State<FormularioEvento> {
   }
 
   Future<void> _seleccionarFecha() async {
-    final DateTime? fecha = await showDatePicker(
+    final DateTime? fecha = await mostrarCalendarioPeso(
       context: context,
-      initialDate: _fechaSeleccionada,
-      firstDate: DateTime.now().subtract(const Duration(days: 30)),
-      lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: _greenColor,
-              onPrimary: Colors.white,
-            ),
-          ),
-          child: child!,
-        );
-      },
+      fechaInicial: _fechaSeleccionada,
     );
 
     if (fecha != null) {
       setState(() {
         _fechaSeleccionada = fecha;
+      });
+    }
+  }
+
+  Future<void> _cambiarCategoria() async {
+    final String? nuevaCategoria = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const SeleccionCategoriaEvento(),
+      ),
+    );
+
+    if (nuevaCategoria != null) {
+      setState(() {
+        _categoriaSeleccionada = nuevaCategoria;
       });
     }
   }
@@ -76,7 +82,7 @@ class _FormularioEventoState extends State<FormularioEvento> {
       final evento = Evento(
         id: widget.evento?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
         titulo: _tituloController.text.trim(),
-        categoria: widget.categoria,
+        categoria: _categoriaSeleccionada,
         fecha: _fechaSeleccionada,
         descripcion: _descripcionController.text.trim(),
         tieneRecordatorio: _crearRecordatorio,
@@ -292,30 +298,41 @@ class _FormularioEventoState extends State<FormularioEvento> {
               
               const SizedBox(height: 16),
               
-              // Información de categoría
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.9),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      _getIconoCategoria(widget.categoria),
-                      color: _greenColor,
-                      size: 24,
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      'Categoría: ${widget.categoria}',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
+              // Botón para cambiar categoría
+              GestureDetector(
+                onTap: _cambiarCategoria,
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: _greenColor.withOpacity(0.3), width: 1),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        _getIconoCategoria(_categoriaSeleccionada),
+                        color: _greenColor,
+                        size: 24,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Categoría: $_categoriaSeleccionada',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ),
+                      Icon(
+                        Icons.edit,
+                        color: _greenColor,
+                        size: 20,
+                      ),
+                    ],
+                  ),
                 ),
               ),
               

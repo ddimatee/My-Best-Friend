@@ -13,7 +13,7 @@ class CalendarioModuloPantalla extends StatefulWidget {
 }
 
 class _CalendarioModuloPantallaState extends State<CalendarioModuloPantalla> {
-  final Color _greenColor = const Color(0xFF2196F3); // Azul más visible
+  final Color _greenColor = const Color(0xFF4CAF50); // Verde consistente con la app
   List<EventoCalendario> _recordatorios = [];
   bool _cargando = true;
 
@@ -95,16 +95,16 @@ class _CalendarioModuloPantallaState extends State<CalendarioModuloPantalla> {
 
   Color _obtenerColorCategoria(String categoria) {
     final colores = {
-      'vacunas': const Color(0xFF2196F3), // Azul
-      'medicamentos': const Color(0xFFFF5722), // Naranja rojizo
-      'alimentacion': const Color(0xFFFF9800), // Naranja
-      'ejercicio': const Color(0xFF9C27B0), // Morado
-      'citas_veterinario': const Color(0xFFE91E63), // Rosa
-      'aseo': const Color(0xFF00BCD4), // Cian
-      'juegos': const Color(0xFF8BC34A), // Verde claro
-      'otro': const Color(0xFF607D8B), // Gris azulado
+      'vacunas': const Color(0xFF1976D2), // Azul más oscuro para contraste
+      'medicamentos': const Color(0xFFD32F2F), // Rojo más oscuro
+      'alimentacion': const Color(0xFFFF8F00), // Ámbar oscuro
+      'ejercicio': const Color(0xFF7B1FA2), // Morado oscuro
+      'citas_veterinario': const Color(0xFFC2185B), // Rosa oscuro
+      'aseo': const Color(0xFF0097A7), // Cian oscuro
+      'juegos': const Color(0xFF689F38), // Verde oliva
+      'otro': const Color(0xFF455A64), // Gris azulado oscuro
     };
-    return colores[categoria] ?? const Color(0xFF757575);
+    return colores[categoria] ?? const Color(0xFF424242);
   }
 
   String _formatearFechaHora(DateTime fechaHora) {
@@ -218,9 +218,9 @@ class _CalendarioModuloPantallaState extends State<CalendarioModuloPantalla> {
           Container(
             width: 200,
             height: 200,
-            margin: const EdgeInsets.only(bottom: 40),
+            margin: const EdgeInsets.only(bottom: 20), // Reducido de 40 a 20
             child: Image.asset(
-              'assets/images/perro_evento.png',
+              'assets/images/perro_calendario.png', // Cambiado de perro_evento.png
               fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) {
                 return Container(

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'formulario_evento.dart';
 
 class SeleccionCategoriaEvento extends StatefulWidget {
   const SeleccionCategoriaEvento({Key? key}) : super(key: key);
@@ -23,7 +22,7 @@ class _SeleccionCategoriaEventoState extends State<SeleccionCategoriaEvento> {
     {'nombre': 'Descanso', 'icono': Icons.bed, 'color': Colors.brown},
   ];
 
-  void _navegarAFormulario() async {
+  void _seleccionarCategoria() {
     if (_categoriaSeleccionada == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -34,16 +33,7 @@ class _SeleccionCategoriaEventoState extends State<SeleccionCategoriaEvento> {
       return;
     }
 
-    final resultado = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => FormularioEvento(categoria: _categoriaSeleccionada!),
-      ),
-    );
-
-    if (resultado == true) {
-      Navigator.pop(context, true);
-    }
+    Navigator.pop(context, _categoriaSeleccionada);
   }
 
   Widget _buildCategoriaButton(Map<String, dynamic> categoria) {
@@ -135,7 +125,7 @@ class _SeleccionCategoriaEventoState extends State<SeleccionCategoriaEvento> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: _navegarAFormulario,
+                onPressed: _seleccionarCategoria,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: _greenColor,

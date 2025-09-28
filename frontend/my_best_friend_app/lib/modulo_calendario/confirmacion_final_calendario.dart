@@ -395,7 +395,7 @@ class _ResumenItem extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icono, size: 20, color: const Color(0xFF2196F3)),
+        Icon(icono, size: 20, color: const Color(0xFF4CAF50)),
         const SizedBox(width: 12),
         Expanded(
           child: Column(

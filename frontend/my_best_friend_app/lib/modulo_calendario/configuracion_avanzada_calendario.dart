@@ -28,7 +28,7 @@ class ConfiguracionAvanzadaCalendario extends StatefulWidget {
 }
 
 class _ConfiguracionAvanzadaCalendarioState extends State<ConfiguracionAvanzadaCalendario> {
-  final Color _greenColor = const Color(0xFF2196F3); // Azul más visible
+  final Color _greenColor = const Color(0xFF4CAF50); // Verde consistente con la app
   final Color _grayColor = const Color(0xFFE5E5E5);
   
   bool _sonidoActivado = true;
@@ -307,7 +307,7 @@ class _ConfiguracionCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icono, size: 24, color: const Color(0xFF2196F3)),
+              Icon(icono, size: 24, color: const Color(0xFF4CAF50)),
               const SizedBox(width: 8),
               Text(
                 titulo,
@@ -356,7 +356,7 @@ class _SwitchItem extends StatelessWidget {
           Switch(
             value: valor,
             onChanged: onChanged,
-            activeColor: const Color(0xFF2196F3),
+            activeColor: const Color(0xFF4CAF50),
           ),
         ],
       ),

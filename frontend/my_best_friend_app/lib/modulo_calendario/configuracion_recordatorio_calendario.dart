@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../modulo_peso/widgets/calendario_selector.dart';
 import 'configuracion_avanzada_calendario.dart';
 
 class ConfiguracionRecordatorioCalendario extends StatefulWidget {
@@ -18,7 +19,7 @@ class ConfiguracionRecordatorioCalendario extends StatefulWidget {
 }
 
 class _ConfiguracionRecordatorioCalendarioState extends State<ConfiguracionRecordatorioCalendario> {
-  final Color _greenColor = const Color(0xFF2196F3); // Azul más visible
+  final Color _greenColor = const Color(0xFF4CAF50); // Verde consistente con la app
   final Color _grayColor = const Color(0xFFE5E5E5);
   
   DateTime _fechaSeleccionada = DateTime.now();
@@ -28,11 +29,9 @@ class _ConfiguracionRecordatorioCalendarioState extends State<ConfiguracionRecor
   int _minutosAntes = 15;
 
   Future<void> _seleccionarFecha() async {
-    final DateTime? fecha = await showDatePicker(
+    final DateTime? fecha = await mostrarCalendarioPeso(
       context: context,
-      initialDate: _fechaSeleccionada,
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
+      fechaInicial: _fechaSeleccionada,
     );
     
     if (fecha != null) {
@@ -158,7 +157,7 @@ class _ConfiguracionRecordatorioCalendarioState extends State<ConfiguracionRecor
                       children: [
                         Row(
                           children: [
-                            const Icon(Icons.notifications, size: 24, color: Color(0xFF2196F3)),
+                            const Icon(Icons.notifications, size: 24, color: Color(0xFF4CAF50)),
                             const SizedBox(width: 12),
                             const Expanded(
                               child: Text(
@@ -176,7 +175,7 @@ class _ConfiguracionRecordatorioCalendarioState extends State<ConfiguracionRecor
                                   _notificacionActivada = value;
                                 });
                               },
-                              activeColor: const Color(0xFF2196F3),
+                              activeColor: const Color(0xFF4CAF50),
                             ),
                           ],
                         ),
@@ -340,7 +339,7 @@ class _ConfiguracionItem extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(icono, size: 24, color: const Color(0xFF2196F3)),
+            Icon(icono, size: 24, color: const Color(0xFF4CAF50)),
             const SizedBox(width: 12),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,

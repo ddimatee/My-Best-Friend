@@ -14,7 +14,7 @@ class DetalleRecordatorioCalendario extends StatefulWidget {
 }
 
 class _DetalleRecordatorioCalendarioState extends State<DetalleRecordatorioCalendario> {
-  final Color _greenColor = const Color(0xFF2196F3); // Azul más visible
+  final Color _greenColor = const Color(0xFF4CAF50); // Verde consistente con la app
 
   String _obtenerNombreCategoria(String categoria) {
     final categorias = {
@@ -46,7 +46,7 @@ class _DetalleRecordatorioCalendarioState extends State<DetalleRecordatorioCalen
 
   Color _obtenerColorCategoria(String categoria) {
     final colores = {
-      'vacunas': const Color(0xFF2196F3), // Azul
+      'vacunas': const Color(0xFF1976D2), // Azul más oscuro para contraste
       'medicamentos': const Color(0xFFFF5722), // Naranja rojizo
       'alimentacion': const Color(0xFFFF9800), // Naranja
       'ejercicio': const Color(0xFF9C27B0), // Morado
@@ -420,10 +420,10 @@ class _DetalleItem extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: const Color(0xFF2196F3).withOpacity(0.1),
+            color: const Color(0xFF4CAF50).withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icono, size: 20, color: const Color(0xFF2196F3)),
+          child: Icon(icono, size: 20, color: const Color(0xFF4CAF50)),
         ),
         const SizedBox(width: 12),
         Column(
