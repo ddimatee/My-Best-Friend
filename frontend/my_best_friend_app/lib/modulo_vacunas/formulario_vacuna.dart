@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'modelos/vacuna.dart';
 import 'servicios/vacuna_service.dart';
+import '../modulo_peso/widgets/calendario_selector.dart';
 
 class FormularioVacuna extends StatefulWidget {
   final Vacuna? vacuna; // Para editar una vacuna existente
@@ -44,22 +45,9 @@ class _FormularioVacunaState extends State<FormularioVacuna> {
   }
 
   Future<void> _seleccionarFecha() async {
-    final DateTime? fecha = await showDatePicker(
+    final DateTime? fecha = await mostrarCalendarioPeso(
       context: context,
-      initialDate: _fechaSeleccionada,
-      firstDate: DateTime.now().subtract(const Duration(days: 365)),
-      lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: _greenColor,
-              onPrimary: Colors.white,
-            ),
-          ),
-          child: child!,
-        );
-      },
+      fechaInicial: _fechaSeleccionada,
     );
 
     if (fecha != null) {
