@@ -19,10 +19,10 @@ class _MascotaPasoRazaPantallaState extends State<MascotaPasoRazaPantalla> {
       appBar: AppBar(backgroundColor: Colors.white, foregroundColor: Colors.black, elevation: 0),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('¿De qué raza es tu\nperro?', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900)),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
+          const Text('¿De qué raza es tu\nperro?', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900), textAlign: TextAlign.center),
           const SizedBox(height: 8),
-          const Text('Selecciona o introduce la raza', style: TextStyle(fontWeight: FontWeight.w600)),
+          const Text('Selecciona o introduce la raza', style: TextStyle(fontWeight: FontWeight.w600), textAlign: TextAlign.center),
           const SizedBox(height: 12),
           TextField(
             decoration: InputDecoration(

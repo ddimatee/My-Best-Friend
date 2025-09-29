@@ -35,10 +35,10 @@ class _MascotaPasoEstiloVidaPantallaState extends State<MascotaPasoEstiloVidaPan
       appBar: AppBar(backgroundColor: Colors.white, foregroundColor: Colors.black, elevation: 0),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('¿Qué hay con tu estilo de vida?', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900)),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
+          const Text('¿Qué hay con tu estilo de vida?', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900), textAlign: TextAlign.center),
           const SizedBox(height: 4),
-          const Text('Selecciona todas las que correspondan', style: TextStyle(fontWeight: FontWeight.w600)),
+          const Text('Selecciona todas las que correspondan', style: TextStyle(fontWeight: FontWeight.w600), textAlign: TextAlign.center),
           const SizedBox(height: 16),
           Wrap(
             spacing: 10,

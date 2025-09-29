@@ -21,8 +21,8 @@ class _MascotaPasoNombrePantallaState extends State<MascotaPasoNombrePantalla> {
       appBar: AppBar(backgroundColor: Colors.white, foregroundColor: Colors.black, elevation: 0),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('¿Cómo se llama tu\nperro?', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900)),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
+          const Text('¿Cómo se llama tu\nperro?', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900), textAlign: TextAlign.center),
           const SizedBox(height: 24),
           Container(
             decoration: BoxDecoration(

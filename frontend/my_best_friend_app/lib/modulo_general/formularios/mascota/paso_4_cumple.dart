@@ -28,8 +28,8 @@ class _MascotaPasoCumplePantallaState extends State<MascotaPasoCumplePantalla> {
       appBar: AppBar(backgroundColor: Colors.white, foregroundColor: Colors.black, elevation: 0),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('¿Cuándo es el\ncumpleaños de tu\nperro?', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900)),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
+          const Text('¿En qué año nació tu\nperro?', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900), textAlign: TextAlign.center),
           const SizedBox(height: 20),
           Center(
             child: ConstrainedBox(

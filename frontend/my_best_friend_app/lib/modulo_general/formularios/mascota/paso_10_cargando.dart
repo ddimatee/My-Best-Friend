@@ -26,6 +26,14 @@ class _MascotaPasoCargandoPantallaState extends State<MascotaPasoCargandoPantall
           id: DateTime.now().millisecondsSinceEpoch.toString(),
           nombre: nombre,
           creado: DateTime.now(),
+          cumpleanos: st.birthday,
+          situacion: st.situation,
+          sexo: st.sex,
+          raza: st.breed,
+          seguimiento: st.tracking,
+          estiloVida: st.lifestyle,
+          coCuidado: st.coCare,
+          rol: st.role,
         ));
       }
       // Ir al menú principal y limpiar el historial para que no vuelva al formulario.

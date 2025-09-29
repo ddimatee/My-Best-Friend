@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 
 // Menú principal con barra superior, tarjeta de mascota y navegación inferior.
 import 'crear_mascota_nueva_pantalla.dart';
@@ -13,6 +16,7 @@ import '../modulo_album/album_modulo_pantalla.dart'; // NUEVO import álbum
 import '../modulo_dueno/dueno_modulo_pantalla.dart'; // NUEVO import dueño
 import '../modulo_configuracion/configuracion_modulo_pantalla.dart'; // NUEVO import configuración
 import 'datos/mascota_model.dart';
+import 'editar_mascota_pantalla.dart';
 
 class MenuPrincipal extends StatefulWidget {
   final int initialTab; // 0 mascotas, 1 calendario, 2 configuración
@@ -49,6 +53,176 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
 
   void _openAddPet() {
     Navigator.push(context, MaterialPageRoute(builder: (_) => const CrearMascotaNuevaPantalla()));
+  }
+
+  Future<void> _cambiarFotoMascota(String mascotaId) async {
+    final ImagePicker picker = ImagePicker();
+    
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Cambiar foto de perfil',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _OpcionImagen(
+                      icon: Icons.photo_library,
+                      label: 'Galería',
+                      onTap: () async {
+                        Navigator.pop(context);
+                        final XFile? image = await picker.pickImage(
+                          source: ImageSource.gallery,
+                          maxWidth: 512,
+                          maxHeight: 512,
+                          imageQuality: 85,
+                        );
+                        if (image != null) {
+                          _repo.actualizarImagen(mascotaId, image.path);
+                        }
+                      },
+                    ),
+                    _OpcionImagen(
+                      icon: Icons.camera_alt,
+                      label: 'Cámara',
+                      onTap: () async {
+                        Navigator.pop(context);
+                        final XFile? image = await picker.pickImage(
+                          source: ImageSource.camera,
+                          maxWidth: 512,
+                          maxHeight: 512,
+                          imageQuality: 85,
+                        );
+                        if (image != null) {
+                          _repo.actualizarImagen(mascotaId, image.path);
+                        }
+                      },
+                    ),
+                    _OpcionImagen(
+                      icon: Icons.delete,
+                      label: 'Eliminar',
+                      onTap: () {
+                        Navigator.pop(context);
+                        _repo.actualizarImagen(mascotaId, null);
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _mostrarMenuMascota(Mascota mascota) async {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Opciones para ${mascota.nombre}',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                ListTile(
+                  leading: const Icon(Icons.edit, color: Color(0xFF4CAF50)),
+                  title: const Text('Editar información'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => EditarMascotaPantalla(mascotaId: mascota.id),
+                      ),
+                    );
+                  },
+                ),
+                ListTile(
+                  leading: Icon(
+                    mascota.oculto ? Icons.visibility : Icons.visibility_off,
+                    color: const Color(0xFF4CAF50),
+                  ),
+                  title: Text(mascota.oculto ? 'Mostrar mascota' : 'Ocultar mascota'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _repo.toggleOculto(mascota.id);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.delete_forever, color: Colors.red),
+                  title: const Text('Eliminar mascota', style: TextStyle(color: Colors.red)),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _confirmarEliminarMascota(mascota);
+                  },
+                ),
+                const SizedBox(height: 10),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _confirmarEliminarMascota(Mascota mascota) async {
+    final resultado = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Eliminar mascota'),
+          content: Text('¿Estás seguro de que quieres eliminar a ${mascota.nombre}? Esta acción no se puede deshacer.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('Eliminar'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (resultado == true) {
+      _repo.eliminar(mascota.id);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${mascota.nombre} ha sido eliminado')),
+      );
+    }
   }
 
   Widget _buildTopBar() {
@@ -187,15 +361,56 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
         children: [
           _buildPatternStrip(),
           const SizedBox(height: 12),
-            CircleAvatar(
-            radius: 36,
-            backgroundColor: Colors.grey.shade300,
-            backgroundImage: const AssetImage('assets/images/perro_logo.png'),
+          GestureDetector(
+            onTap: () => _cambiarFotoMascota(m.id),
+            child: Stack(
+              children: [
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.grey.shade300,
+                    image: _getImageDecoration(m),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 4,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                ),
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 4,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.camera_alt,
+                      size: 16,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 8),
           Text(m.nombre, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
           const SizedBox(height: 4),
-          Text('0 días (0 meses)', style: TextStyle(color: Colors.grey.shade800, fontSize: 14)),
+          Text(m.obtenerEdadFormateada(), style: TextStyle(color: Colors.grey.shade800, fontSize: 14)),
           const SizedBox(height: 12),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8),
@@ -223,9 +438,12 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
           ),
           const SizedBox(height: 8),
           TextButton.icon(
-            onPressed: () => _repo.toggleOculto(m.id),
-            icon: Icon(m.oculto ? Icons.visibility : Icons.visibility_off, color: Colors.black87),
-            label: Text(m.oculto ? 'Mostrar' : 'Ocultar', style: const TextStyle(color: Colors.black87)),
+            onPressed: () => _mostrarMenuMascota(m),
+            icon: const Icon(Icons.more_vert, color: Colors.black87, size: 18),
+            label: const Text('Opciones', style: TextStyle(color: Colors.black87, fontSize: 13)),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            ),
           ),
           const SizedBox(height: 12),
         ],
@@ -281,6 +499,7 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
             children: [
               const SizedBox(height: 8),
               _buildPetCardsList(),
+              const SizedBox(height: 80), // Espacio para evitar que la barra inferior tape el contenido
             ],
           ),
         );
@@ -353,6 +572,74 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
             _buildBottomNav(),
           ],
         ),
+      ),
+    );
+  }
+
+  // Método para obtener la decoración de imagen que funciona tanto en web como móvil
+  DecorationImage? _getImageDecoration(Mascota m) {
+    if (m.imagenPath != null) {
+      // Para móvil usa FileImage, para web usa NetworkImage con el path
+      if (kIsWeb) {
+        return DecorationImage(
+          image: NetworkImage(m.imagenPath!),
+          fit: BoxFit.cover,
+        );
+      } else {
+        return DecorationImage(
+          image: FileImage(File(m.imagenPath!)),
+          fit: BoxFit.cover,
+        );
+      }
+    } else {
+      // Imagen por defecto
+      return const DecorationImage(
+        image: AssetImage('assets/images/perro_logo.png'),
+        fit: BoxFit.cover,
+      );
+    }
+  }
+}
+
+class _OpcionImagen extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _OpcionImagen({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF4CAF50).withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              size: 32,
+              color: const Color(0xFF4CAF50),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }

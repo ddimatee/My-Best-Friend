@@ -13,9 +13,9 @@ class MascotaPasoSituacionPantalla extends StatelessWidget {
       appBar: AppBar(backgroundColor: Colors.white, foregroundColor: Colors.black, elevation: 0),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        child: Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
           const SizedBox(height: 12),
-          const Text('¿Qué es lo más se\nacomoda a tú\nsituación actual?', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900)),
+          const Text('¿Qué es lo más se\nacomoda a tú\nsituación actual?', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900), textAlign: TextAlign.center),
           const SizedBox(height: 28),
           BotonVerdeLleno(
             etiqueta: 'Acabo de tener un perro',

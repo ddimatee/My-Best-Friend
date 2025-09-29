@@ -29,100 +29,116 @@ class _CrearMascotaNuevaPantallaState extends State<CrearMascotaNuevaPantalla> {
       body: SafeArea(
         child: Stack(
           children: [
-            // Contenido principal centrado
-            Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Título
-                  const Text(
-                    'Crear una mascota nueva',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                    textAlign: TextAlign.center,
+            // Título independiente
+            Positioned(
+              top: 120, // Cambia este valor para mover el título verticalmente
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Text(
+                  'Crear una mascota nueva',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
                   ),
-                  const SizedBox(height: 12),
-                  // Subtítulo
-                  const Text(
-                    '¡Puedes crear muchas más\nmascotas!',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.black54,
-                    ),
-                    textAlign: TextAlign.center,
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+            // Subtítulo independiente
+            Positioned(
+              top: 180, // Cambia este valor para mover el subtítulo verticalmente
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Text(
+                  '¡Puedes crear muchas más\nmascotas!',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.black54,
                   ),
-                  const SizedBox(height: 60),
-                  // Imagen del perro
-                  Image.asset(
-                    'assets/images/perro_crear.png',
-                    width: 150,
-                    height: 150,
-                    errorBuilder: (context, error, stackTrace) {
-                      // Fallback si no se encuentra la imagen
-                      return Container(
-                        width: 150,
-                        height: 150,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.grey.shade300,
-                        ),
-                        child: const Icon(
-                          Icons.pets,
-                          size: 60,
-                          color: Color(0xFF4CAF50),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+            // Imagen independiente
+            Positioned(
+              top: 250, // Cambia este valor para mover la imagen verticalmente
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Image.asset(
+                  'assets/images/perro_crear.png',
+                  width: 250, // Cambia este valor para hacer la imagen más ancha
+                  height: 250, // Cambia este valor para hacer la imagen más alta
+                  errorBuilder: (context, error, stackTrace) {
+                    // Fallback si no se encuentra la imagen
+                    return Container(
+                      width: 150,
+                      height: 150,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.grey.shade300,
+                      ),
+                      child: const Icon(
+                        Icons.pets,
+                        size: 60,
+                        color: Color(0xFF4CAF50),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+            // Botón independiente
+            Positioned(
+              top: 500, // Cambia este valor para mover el botón verticalmente
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  width: 200,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(25),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 8,
+                        offset: Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: ElevatedButton(
+                    onPressed: () {
+                      // Navegar al formulario de creación de mascota
+                      final st = PetFormState();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => MascotaPasoSituacionPantalla(estado: st)
                         ),
                       );
                     },
-                  ),
-                  const SizedBox(height: 60),
-                  // Botón "Crear"
-                  Container(
-                    width: 200,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(25),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 8,
-                          offset: Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: ElevatedButton(
-                      onPressed: () {
-                        // Navegar al formulario de creación de mascota
-                        final st = PetFormState();
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => MascotaPasoSituacionPantalla(estado: st)
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.black,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(25),
-                        ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25),
                       ),
-                      child: const Text(
-                        'Crear',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                        ),
+                    ),
+                    child: const Text(
+                      'Crear',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
-                ],
+                ),
               ),
             ),
             // Barra de navegación inferior usando el código del menú principal
