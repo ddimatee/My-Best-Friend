@@ -32,21 +32,6 @@ router.get('/', protegerRuta, async (req, res) => {
   }
 })
 
-router.get('/test', (req, res) => {
-  res.send('Ruta de mascotas funcionando');
-});
-
-// Debug: mostrar resumen del stack del router antes de exportar
-try {
-  const resumen = router.stack ? router.stack.map((l) => ({
-    path: l.route ? l.route.path : undefined,
-    methods: l.route ? Object.keys(l.route.methods) : undefined,
-    name: l.name
-  })) : [];
-  console.log('Debug ruta_mascotas router.stack:', JSON.stringify(resumen, null, 2));
-} catch (e) {
-  console.log('Error debug ruta_mascotas:', e.message);
-}
 
 router.get('/:id', protegerRuta, async (req, res) => {
   try {
@@ -57,7 +42,7 @@ router.get('/:id', protegerRuta, async (req, res) => {
       return res.status(400).json({ error: 'Id inválido' });
     }
 
-    console.debug('GET /api/mascotas/:id -> id recibido:', id, 'usuario:', req.usuario?._id);
+  // id validado y autenticado
 
     // Buscar por id y poblar relaciones
     const mascota = await Mascota.findById(id)

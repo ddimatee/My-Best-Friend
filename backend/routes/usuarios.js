@@ -4,10 +4,9 @@ const Usuario = require('../models/usuario');
 const generarToken = require('../utils/generarToken');
 const protegerRuta = require('../middlewares/protegerRuta');
 const Mascota = require('../models/mascota');
-const { validarRegistroUsuario, validarLoginUsuario, validarId } = require('../middlewares/validaciones');
+const { validarRegistroUsuario, validarLoginUsuario } = require('../middlewares/validaciones');
 const crypto = require('crypto');
 const { enviarCodigoRecuperacion } = require('../services/emailService');
-const { verificarConexion } = require('../services/emailService');
 
 // Registro de usuario
 router.post('/registro', validarRegistroUsuario, async (req, res) => {
@@ -204,22 +203,5 @@ router.delete('/:id', protegerRuta, async (req, res) => {
   }
 });
 
-// Endpoint de prueba para verificar configuración de correo
-router.get('/password/test/email', async (req, res) => {
-  const estado = await verificarConexion();
-  res.json({ servicioCorreo: estado });
-});
-
-// Endpoint para forzar envío de prueba (no genera código de reset, solo email simple)
-router.post('/password/test/send', async (req, res) => {
-  const { correo } = req.body;
-  if (!correo) return res.status(400).json({ error: 'Correo requerido' });
-  try {
-    const resultado = await enviarCodigoRecuperacion({ correo, codigo: '123456' });
-    res.json({ envio: resultado });
-  } catch (e) {
-    res.status(500).json({ error: 'Fallo enviando correo', detalle: e.message });
-  }
-});
 
 module.exports = router;

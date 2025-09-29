@@ -1,5 +1,4 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
@@ -50,15 +49,15 @@ app.use(cors({
     // Localhost dinámico (cualquier puerto) en desarrollo
     if (process.env.NODE_ENV !== 'production' && isLocalhostOrigin(origin)) {
       if (!process.env.CORS_SILENCE_LOCALHOST) {
-        console.log(`ℹ️  CORS localhost permitido: ${origin}`);
+        console.log(`ℹCORS localhost permitido: ${origin}`);
       }
       return callback(null, true);
     }
 
-    // Otros orígenes en desarrollo: permitir pero avisar (se puede silenciar con CORS_ALLOW_ALL_DEV)
+    
     if (process.env.NODE_ENV !== 'production' && process.env.CORS_ALLOW_ALL_DEV === '1') {
       if (!process.env.CORS_SILENCE_LOCALHOST) {
-        console.warn(`⚠️  Origen no listado en CORS (${origin}) - permitido por CORS_ALLOW_ALL_DEV`);
+        console.warn(`Origen no listado en CORS (${origin}) - permitido por CORS_ALLOW_ALL_DEV`);
       }
       return callback(null, true);
     }
@@ -89,24 +88,23 @@ DatabaseService.configurarEventos();
 DatabaseService.conectar(process.env.MONGO_URI)
   .then(conectado => {
     if (conectado) {
-      console.log('✅ Base de datos inicializada correctamente');
+      console.log('Base de datos inicializada correctamente');
       
       // Solo iniciar el servidor si la BD está conectada
       const PORT = process.env.PORT || 3000;
       app.listen(PORT, () => {
-        console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
-        console.log(`📍 API disponible en: http://localhost:${PORT}`);
-        console.log(`📋 Endpoints disponibles en: http://localhost:${PORT}/api/utils/info`);
+        console.log(`Servidor corriendo en puerto ${PORT}`);
+        console.log(`API disponible en: http://localhost:${PORT}`);
+        console.log(`Endpoints disponibles en: http://localhost:${PORT}/api/utils/info`);
       });
     } else {
-      console.error('❌ Error al inicializar la base de datos');
-      console.error('💡 Revisa tu configuración de MongoDB en el archivo .env');
+      console.error('Error al inicializar la base de datos');
       console.error('📖 Lee el archivo MONGODB_SETUP.md para más información');
       process.exit(1);
     }
   })
   .catch(error => {
-    console.error('❌ Error crítico al conectar a la base de datos:', error.message);
+    console.error('Error crítico al conectar a la base de datos:', error.message);
     process.exit(1);
   });
 
@@ -130,14 +128,14 @@ app.use('/api/utils', utilsRoutes);
 // Ruta de prueba
 app.get('/', (req, res) => {
   res.json({
-    mensaje: '🐕 API My Best Friend funcionando correctamente',
+    mensaje: 'API My Best Friend funcionando correctamente',
     version: '1.0.0',
     estado: 'Activo',
     documentacion: '/api/utils/info'
   });
 });
 
-// Middleware para rutas no encontradas
+
 app.use('*', (req, res) => {
   res.status(404).json({
     error: 'Ruta no encontrada',
@@ -148,7 +146,7 @@ app.use('*', (req, res) => {
 
 // Middleware global de manejo de errores
 app.use((error, req, res, next) => {
-  console.error('❌ Error:', error);
+  console.error('Error:', error);
   res.status(error.status || 500).json({
     error: 'Error interno del servidor',
     mensaje: process.env.NODE_ENV === 'development' ? error.message : 'Algo salió mal'
