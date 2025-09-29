@@ -4,9 +4,10 @@ const Usuario = require('../models/usuario');
 const generarToken = require('../utils/generarToken');
 const protegerRuta = require('../middlewares/protegerRuta');
 const Mascota = require('../models/mascota');
+const { validarRegistroUsuario, validarLoginUsuario, validarId } = require('../middlewares/validaciones');
 
 // Registro de usuario
-router.post('/registro', async (req, res) => {
+router.post('/registro', validarRegistroUsuario, async (req, res) => {
   try {
     const nuevoUsuario = new Usuario(req.body);
     await nuevoUsuario.save();
@@ -17,7 +18,7 @@ router.post('/registro', async (req, res) => {
 });
 
 // Login de usuario
-router.post('/login', async (req, res) => {
+router.post('/login', validarLoginUsuario, async (req, res) => {
   const { correo, contraseña } = req.body;
   try {
     const usuario = await Usuario.findOne({ correo });

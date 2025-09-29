@@ -4,9 +4,10 @@ const Mascota = require('../models/mascota');
 const Usuario = require('../models/usuario');
 const mongoose = require('mongoose');
 const protegerRuta = require('../middlewares/protegerRuta');
+const { validarMascota, validarId } = require('../middlewares/validaciones');
 
 // Registrar nueva mascota
-router.post('/', protegerRuta, async (req, res) => {
+router.post('/', protegerRuta, validarMascota, async (req, res) => {
   try {
     const nuevaMascota = new Mascota({
       ...req.body,
