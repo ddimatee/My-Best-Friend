@@ -20,11 +20,65 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// Middlewares básicos
+// ---------------- CORS -----------------
+// Ampliamos CORS para desarrollo: permite múltiples orígenes dinámicamente.
+// Puedes definir CORS_ORIGINS en .env como lista separada por comas.
+const allowedOrigins = (process.env.CORS_ORIGINS || process.env.FRONTEND_URL || 'http://localhost:8080,http://localhost:3000,http://127.0.0.1:3000')
+  .split(',')
+  .map(o => o.trim())
+  .filter(o => o.length);
+
+// Helper para detectar cualquier localhost/127.0.0.1/10.0.2.2 en cualquier puerto
+const isLocalhostOrigin = origin => {
+  if (!origin) return false;
+  try {
+    const url = new URL(origin);
+    return ['localhost', '127.0.0.1', '10.0.2.2'].includes(url.hostname);
+  } catch {
+    return false;
+  }
+};
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:8080',
-  credentials: true
+  origin: (origin, callback) => {
+    // Sin origin (Postman, curl) -> permitir
+    if (!origin) return callback(null, true);
+
+    // Coincidencia exacta en lista
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+
+    // Localhost dinámico (cualquier puerto) en desarrollo
+    if (process.env.NODE_ENV !== 'production' && isLocalhostOrigin(origin)) {
+      if (!process.env.CORS_SILENCE_LOCALHOST) {
+        console.log(`ℹ️  CORS localhost permitido: ${origin}`);
+      }
+      return callback(null, true);
+    }
+
+    // Otros orígenes en desarrollo: permitir pero avisar (se puede silenciar con CORS_ALLOW_ALL_DEV)
+    if (process.env.NODE_ENV !== 'production' && process.env.CORS_ALLOW_ALL_DEV === '1') {
+      if (!process.env.CORS_SILENCE_LOCALHOST) {
+        console.warn(`⚠️  Origen no listado en CORS (${origin}) - permitido por CORS_ALLOW_ALL_DEV`);
+      }
+      return callback(null, true);
+    }
+
+    return callback(new Error('Origen no permitido por CORS: ' + origin));
+  },
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS']
 }));
+
+// Responder preflight rápidamente
+app.options('*', cors());
+
+// Logger simple de requests (evita agregar dependencia morgan)
+app.use((req, res, next) => {
+  console.log(`[REQ] ${req.method} ${req.originalUrl}`);
+  next();
+});
+// ----------------------------------------
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 

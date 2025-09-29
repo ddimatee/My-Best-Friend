@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 // Registro 2/3: celular, ¿cómo llegaste?, contraseña
-import '../modulo_general/formularios/formulario_mascota.dart'; // MascotaPasoSituacionPantalla, PetFormState
+// import removido (formulario mascota) - ya no se navega ahí directamente
 import '../modulo_general/componentes/avisos.dart';
+import '../providers/auth_provider.dart';
+import 'inicio_sesion.dart';
 
 class RegisterScreen2 extends StatefulWidget {
   final String nombre;
@@ -23,21 +26,61 @@ class _RegisterScreen2State extends State<RegisterScreen2> {
   final celularController = TextEditingController();
   final comoLlegasteController = TextEditingController();
   final contrasenaController = TextEditingController();
+  bool _isLoading = false;
 
-  void continuarRegistro() {
-    if (celularController.text.isEmpty || contrasenaController.text.isEmpty) {
-      showErrorSnackBar(context, 'Por favor, completa el número de celular y la contraseña');
+  String? _validarCelular(String value) {
+    if (value.isEmpty) return 'Celular requerido';
+    if (!RegExp(r'^\d{10}$').hasMatch(value)) return 'Debe tener 10 dígitos';
+    return null;
+  }
+
+  String? _validarPassword(String value) {
+    if (value.isEmpty) return 'Contraseña requerida';
+    if (value.length < 6) return 'Mínimo 6 caracteres';
+    final hasUpper = RegExp(r'[A-Z]').hasMatch(value);
+    final hasLower = RegExp(r'[a-z]').hasMatch(value);
+    final hasNum = RegExp(r'[0-9]').hasMatch(value);
+    if (!hasUpper || !hasLower || !hasNum) return 'Incluye mayúscula, minúscula y número';
+    return null;
+  }
+
+  Future<void> continuarRegistro() async {
+    final celularError = _validarCelular(celularController.text.trim());
+    final passError = _validarPassword(contrasenaController.text);
+    if (celularError != null) {
+      showErrorSnackBar(context, celularError);
+      return;
+    }
+    if (passError != null) {
+      showErrorSnackBar(context, passError);
       return;
     }
 
-    // En lugar de pasar a verificación de código, iniciamos de una vez
-    // el formulario modular para registrar la mascota.
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => MascotaPasoSituacionPantalla(estado: PetFormState()),
-      ),
-    );
+    setState(() { _isLoading = true; });
+    try {
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      final ok = await auth.registrarUsuario(
+        nombre: widget.nombre.trim(),
+        apellido: widget.apellido.trim(),
+        correo: widget.correo.trim(),
+        celular: celularController.text.trim(),
+        password: contrasenaController.text,
+      );
+
+      if (ok) {
+        showSuccessSnackBar(context, 'Registro exitoso. Inicia sesión.');
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => LoginScreen()),
+          (route) => false,
+        );
+      } else {
+        showErrorSnackBar(context, auth.errorMessage ?? 'Error al registrar');
+      }
+    } catch (e) {
+      showErrorSnackBar(context, 'Error: $e');
+    } finally {
+      if (mounted) setState(() { _isLoading = false; });
+    }
   }
 
   @override
@@ -90,7 +133,7 @@ class _RegisterScreen2State extends State<RegisterScreen2> {
                         width: size.width * 0.35,
                         height: 48,
                         child: ElevatedButton(
-                          onPressed: continuarRegistro,
+                          onPressed: _isLoading ? null : continuarRegistro,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,
                             foregroundColor: const Color(0xFF4CAF50),
@@ -100,14 +143,20 @@ class _RegisterScreen2State extends State<RegisterScreen2> {
                             elevation: 8,
                             shadowColor: Colors.black.withOpacity(0.3),
                           ),
-                          child: const Text(
-                            'Registrar',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
+                          child: _isLoading
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : const Text(
+                                  'Registrar',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
                         ),
                       ),
                     ],

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../modulo_autenticacion/inicio_sesion.dart';
+import '../../providers/auth_provider.dart';
 
 class CuentaSesionPantalla extends StatefulWidget {
   const CuentaSesionPantalla({Key? key}) : super(key: key);
@@ -56,17 +58,27 @@ class _CuentaSesionPantallaState extends State<CuentaSesionPantalla> {
               ),
               const SizedBox(height: 16),
               
-              _buildInfoTile(
-                'Usuario',
-                'Brayan Dimate',
-                Icons.person_outline,
-              ),
-              
-              _buildInfoTile(
-                'Email',
-                'bryandimate2023@gmail.com',
-                Icons.email_outlined,
-              ),
+              Builder(builder: (context) {
+                final auth = Provider.of<AuthProvider>(context, listen: true);
+                final nombre = auth.user != null
+                    ? '${auth.user!['nombre'] ?? ''} ${auth.user!['apellido'] ?? ''}'.trim()
+                    : 'No disponible';
+                final email = auth.user != null ? (auth.user!['correo'] ?? 'No definido') : 'No definido';
+                return Column(
+                  children: [
+                    _buildInfoTile(
+                      'Usuario',
+                      nombre.isEmpty ? 'Sin nombre' : nombre,
+                      Icons.person_outline,
+                    ),
+                    _buildInfoTile(
+                      'Email',
+                      email,
+                      Icons.email_outlined,
+                    ),
+                  ],
+                );
+              }),
               
               _buildInfoTile(
                 'Fecha de registro',
@@ -323,6 +335,7 @@ class _CuentaSesionPantallaState extends State<CuentaSesionPantalla> {
   }
 
   void _cerrarSesion() {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -333,10 +346,11 @@ class _CuentaSesionPantallaState extends State<CuentaSesionPantalla> {
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancelar'),
           ),
-          ElevatedButton(
-            onPressed: () {
+            ElevatedButton(
+            onPressed: () async {
               Navigator.pop(context); // cierra diálogo
-              // Reemplaza toda la navegación y vuelve al login
+              await auth.cerrarSesion();
+              if (!mounted) return;
               Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(builder: (_) => LoginScreen()),
                 (route) => false,

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'recuperar_contrasena_restaurar.dart';
+import 'servicios/autenticacion_servicio.dart';
+import '../modulo_general/componentes/avisos.dart';
 
 class RecoverPasswordCodeScreen extends StatefulWidget {
   final String email;
@@ -19,12 +21,16 @@ class _RecoverPasswordCodeScreenState extends State<RecoverPasswordCodeScreen> {
     if (_loading) return;
     setState(() => _loading = true);
     try {
+      await AuthService.verifyResetCode(widget.email, _codeCtrl.text.trim());
+      if (!mounted) return;
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (_) => RecoverPasswordResetScreen(email: widget.email, code: _codeCtrl.text.trim()),
         ),
       );
+    } catch (e) {
+      showErrorSnackBar(context, e.toString().replaceFirst('Exception: ', ''));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -59,7 +65,7 @@ class _RecoverPasswordCodeScreenState extends State<RecoverPasswordCodeScreen> {
                   children: [
                     const SizedBox(height: 8),
                     const Text(
-                      'Se enviará un codigo de\nverificación al correo\nregistrado',
+                      'Te enviamos un código\nRevisa tu correo electrónico',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 20,

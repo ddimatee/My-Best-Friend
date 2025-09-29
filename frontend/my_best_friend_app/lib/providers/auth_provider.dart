@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../services/api_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthProvider with ChangeNotifier {
   final ApiService _apiService = ApiService();
@@ -25,6 +26,16 @@ class AuthProvider with ChangeNotifier {
     final token = await _apiService.getToken();
     if (token != null) {
       await obtenerPerfil();
+      return;
+    }
+    // Intentar remember token
+    final prefs = await SharedPreferences.getInstance();
+    final remember = prefs.getString('remember_token');
+    final correo = prefs.getString('remember_correo');
+    final password = prefs.getString('remember_password');
+    if (remember != null && correo != null && password != null) {
+      // Intentar login silencioso
+      await iniciarSesion(correo: correo, password: password, recordar: true, silencioso: true);
     }
   }
 
@@ -67,28 +78,36 @@ class AuthProvider with ChangeNotifier {
   Future<bool> iniciarSesion({
     required String correo,
     required String password,
+    bool recordar = false,
+    bool silencioso = false,
   }) async {
     _setLoading(true);
-    _clearError();
+    if (!silencioso) _clearError();
 
     try {
       final result = await _apiService.iniciarSesion(
         correo: correo,
         password: password,
+        recordar: recordar,
       );
 
       if (result['success']) {
         _user = result['data']['usuario'];
         _isAuthenticated = true;
+        if (recordar) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('remember_correo', correo);
+          await prefs.setString('remember_password', password); // Nota: en producción usar cifrado
+        }
         _setLoading(false);
         return true;
       } else {
-        _setError(result['message']);
+        if (!silencioso) _setError(result['message']);
         _setLoading(false);
         return false;
       }
     } catch (e) {
-      _setError('Error de conexión: $e');
+      if (!silencioso) _setError('Error de conexión: $e');
       _setLoading(false);
       return false;
     }
@@ -124,6 +143,12 @@ class AuthProvider with ChangeNotifier {
   void _cerrarSesionLocal() {
     _isAuthenticated = false;
     _user = null;
+    // Limpiar datos remember
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.remove('remember_correo');
+      prefs.remove('remember_password');
+      // No borro remember_token para posible auditoría, pero se podría
+    });
     _clearError();
     notifyListeners();
   }

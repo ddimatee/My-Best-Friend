@@ -16,11 +16,12 @@ class _RecoverPasswordEmailScreenState extends State<RecoverPasswordEmailScreen>
   final _emailCtrl = TextEditingController();
   bool _loading = false;
 
+
   Future<void> _continue() async {
     if (_loading) return;
     setState(() => _loading = true);
     try {
-      await AuthService.requestPasswordReset(_emailCtrl.text);
+  await AuthService.requestPasswordReset(_emailCtrl.text);
       if (!mounted) return;
       Navigator.push(
         context,

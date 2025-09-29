@@ -14,6 +14,13 @@ class DatabaseService {
       return true;
     } catch (error) {
       console.error('❌ Error al conectar a MongoDB:', error.message);
+      if (error.reason && error.reason.code === 'ENOTFOUND') {
+        console.error('🔎 Posible problema DNS. Verifica que tu conexión a internet esté activa.');
+      }
+      // Información adicional para diagnósticos
+      console.error('📌 URI usada:', uri ? uri.split('@').pop() : 'No definida');
+      console.error('🛠  Node version:', process.version);
+      console.error('🕒 Hora local:', new Date().toISOString());
       return false;
     }
   }

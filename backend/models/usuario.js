@@ -34,6 +34,13 @@ const usuarioSchema = new mongoose.Schema({
   timestamps: true
 });
 
+// Campos adicionales para recuperación y recordar sesión
+usuarioSchema.add({
+  resetPasswordCode: { type: String, select: false },
+  resetPasswordExpira: { type: Date, select: false },
+  rememberToken: { type: String, select: false }
+});
+
 // Encriptar contraseña antes de guardar
 usuarioSchema.pre('save', async function (next) {
   if (!this.isModified('contraseña')) return next();

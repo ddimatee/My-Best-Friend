@@ -1,10 +1,30 @@
 import 'dart:convert';
+import 'dart:io' show Platform; // Ignorado en web si no se usa directamente allí
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  // URL base de tu backend - cambia por tu IP local si es necesario
-  static const String baseUrl = 'http://localhost:3000/api';
+  // Detectar plataforma para seleccionar host correcto (localhost no funciona en emulador Android)
+  static String get baseUrl {
+    const String port = '3000';
+    // Permitir override en build: --dart-define=API_BASE=http://tu-ip:3000
+    const String override = String.fromEnvironment('API_BASE', defaultValue: '');
+    if (override.isNotEmpty) {
+      return '$override/api';
+    }
+    // Detectar Android emulator
+    try {
+      if (Platform.isAndroid) {
+        return 'http://10.0.2.2:$port/api';
+      }
+      if (Platform.isIOS) {
+        return 'http://localhost:$port/api';
+      }
+    } catch (_) {
+      // En web u otros entornos donde Platform no aplica
+    }
+    return 'http://localhost:$port/api';
+  }
   
   // Headers comunes
   Map<String, String> get headers => {
@@ -73,6 +93,7 @@ class ApiService {
   Future<Map<String, dynamic>> iniciarSesion({
     required String correo,
     required String password,
+    bool recordar = false,
   }) async {
     try {
       final response = await http.post(
@@ -81,6 +102,7 @@ class ApiService {
         body: json.encode({
           'correo': correo,
           'contraseña': password,
+          'recordar': recordar,
         }),
       );
 
@@ -89,6 +111,12 @@ class ApiService {
       // Si el login es exitoso, guardar el token
       if (result['success'] && result['data']?['token'] != null) {
         await saveToken(result['data']['token']);
+        // Guardar rememberToken si llega
+        final rt = result['data']['rememberToken'];
+        if (rt is String && rt.isNotEmpty) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('remember_token', rt);
+        }
       }
       
       return result;
@@ -329,9 +357,33 @@ class ApiService {
           'statusCode': response.statusCode,
         };
       } else {
+        // Extraer mensaje del backend (puede venir en 'message' o 'error')
+        String mensaje = (body['message'] ?? body['error'] ?? 'Error del servidor').toString();
+
+        // Normalizar mensajes específicos de login
+        if (response.statusCode == 404 && mensaje.toLowerCase().contains('usuario no encontrado')) {
+          mensaje = 'El correo no está registrado';
+        } else if (response.statusCode == 401 && mensaje.toLowerCase().contains('contraseña incorrecta')) {
+          mensaje = 'La contraseña es incorrecta';
+        }
+
+        // Mensajes de validación (registro/login) express-validator usualmente vienen como array
+        if (body is Map && body['errors'] is List) {
+          final errors = body['errors'] as List;
+            if (errors.isNotEmpty) {
+              // Concatenar los mensajes de validación
+              mensaje = errors.map((e) => e['msg']).join('. ');
+            }
+        }
+
+        // Duplicate key Mongo (correo ya existe)
+        if (mensaje.contains('E11000') && mensaje.toLowerCase().contains('correo')) {
+          mensaje = 'El correo ya está registrado';
+        }
+
         return {
           'success': false,
-          'message': body['message'] ?? 'Error del servidor',
+          'message': mensaje,
           'statusCode': response.statusCode,
           'data': body,
         };
