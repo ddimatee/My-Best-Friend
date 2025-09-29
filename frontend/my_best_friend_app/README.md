@@ -1,16 +1,45 @@
-# my_best_friend_app
+# My Best Friend (Flutter)
 
-A new Flutter project.
+Aplicación Flutter orientada solo a Android (se retiró soporte iOS/macOS/Linux para simplificar el proyecto).
 
-## Getting Started
+## Plataformas soportadas
+- ✅ Android
+- ❌ iOS (no necesario actualmente)
+- ❌ macOS / Linux / Web (no en esta fase; web aún puede permanecer pero no se mantiene)
 
-This project is a starting point for a Flutter application.
+Si en el futuro quieres volver a generar alguna plataforma eliminada:
+```
+flutter create --platforms=android,ios,linux,macos,web .
+```
+(añade sólo las que necesites)
 
-A few resources to get you started if this is your first Flutter project:
+## Ícono de la app
+Generado con `flutter_launcher_icons` a partir de `assets/icon/app_icon.png`.
+Para regenerar:
+```
+flutter pub run flutter_launcher_icons
+```
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## Comandos básicos
+```
+flutter pub get
+flutter run
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Estructura breve
+```
+lib/
+	main.dart
+	modulo_autenticacion/
+	...
+assets/
+	images/
+	icon/app_icon.png
+```
+
+## Próximos pasos sugeridos
+- Añadir splash screen: `flutter_native_splash`
+- Configurar flavors (dev / prod) si se requiere.
+
+---
+Este README fue ajustado tras la limpieza para reflejar el alcance real del proyecto.
