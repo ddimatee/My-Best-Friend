@@ -27,6 +27,7 @@ class _CalendarioPantallaState extends State<CalendarioPantalla> {
   // Listas para almacenar recordatorios y eventos
   List<EventoCalendario> _recordatorios = [];
   List<Evento> _eventos = [];
+  List<Map<String, dynamic>> _recordatoriosVacunas = [];
   bool _isLoading = true;
 
   @override
@@ -48,13 +49,15 @@ class _CalendarioPantallaState extends State<CalendarioPantalla> {
   Future<void> _cargarDatos() async {
     setState(() => _isLoading = true);
     try {
-      // Cargar recordatorios y eventos en paralelo
+      // Cargar recordatorios, eventos y recordatorios de vacunas en paralelo
       final recordatorios = await CalendarioService.obtenerEventos();
       final eventos = await EventoService.obtenerEventos();
+      final recordatoriosVacunas = await CalendarioService.obtenerRecordatoriosVacunas();
       
       setState(() {
         _recordatorios = recordatorios;
         _eventos = eventos;
+        _recordatoriosVacunas = recordatoriosVacunas;
         _isLoading = false;
         _selectedEvents.value = _getEventsForDay(_selectedDay!);
       });
@@ -82,6 +85,15 @@ class _CalendarioPantallaState extends State<CalendarioPantalla> {
     for (final evento in _eventos) {
       if (_isEventForDay(evento.fecha, day)) {
         eventos.add(evento);
+      }
+    }
+    
+    // Agregar recordatorios de vacunas del día
+    for (final recordatorioVacuna in _recordatoriosVacunas) {
+      final fechaUTC = DateTime.parse(recordatorioVacuna['fechaHora']);
+      final fechaLocal = fechaUTC.toLocal(); // Convertir de UTC a hora local
+      if (_isEventForDay(fechaLocal, day)) {
+        eventos.add(recordatorioVacuna);
       }
     }
     
@@ -379,6 +391,15 @@ class _CalendarioPantallaState extends State<CalendarioPantalla> {
       subtitulo = '${event.categoria} • ${DateFormat('HH:mm').format(event.fecha)}';
       icono = Icons.event;
       color = _greenColor;
+    } else if (event is Map<String, dynamic>) {
+      // Recordatorio de vacuna
+      titulo = event['titulo'] ?? 'Recordatorio';
+      final fechaUTC = DateTime.parse(event['fechaHora']);
+      final fechaLocal = fechaUTC.toLocal(); // Convertir de UTC a hora local
+      final mascotaNombre = event['mascota']?['nombre'] ?? 'mascota';
+      subtitulo = 'Vacuna • ${DateFormat('HH:mm').format(fechaLocal)} • $mascotaNombre';
+      icono = Icons.vaccines;
+      color = Colors.purple;
     }
 
     return ListTile(

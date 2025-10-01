@@ -7,6 +7,7 @@ const DatabaseService = require('./services/databaseService');
 require('dotenv').config();
 
 const app = express();
+const path = require('path');
 
 // Middlewares de seguridad
 app.use(helmet()); // Añade headers de seguridad
@@ -80,6 +81,9 @@ app.use((req, res, next) => {
 // ----------------------------------------
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Servir archivos estáticos de uploads
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Configurar eventos de base de datos
 DatabaseService.configurarEventos();

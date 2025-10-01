@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io' show Platform; // Ignorado en web si no se usa directamente allí
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/material.dart';
 
 class ApiService {
   // Detectar plataforma para seleccionar host correcto (localhost no funciona en emulador Android)
@@ -46,6 +47,32 @@ class ApiService {
   Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('auth_token');
+  }
+
+  // Formatear fecha en hora local sin conversión a UTC
+  String _formatearFechaLocal(DateTime fecha) {
+    // MongoDB guarda en UTC, así que necesitamos enviar la hora ajustada
+    // Si estamos en UTC-5 y queremos 15:00, MongoDB lo guardará como 20:00 UTC
+    // Para que se muestre correctamente, enviamos la fecha TAL CUAL con zona horaria
+    
+    // Obtener el offset local en horas
+    final offset = fecha.timeZoneOffset;
+    final offsetHoras = offset.inHours;
+    final offsetMinutos = offset.inMinutes.remainder(60).abs();
+    
+    // Formatear la fecha con la zona horaria
+    final year = fecha.year.toString().padLeft(4, '0');
+    final month = fecha.month.toString().padLeft(2, '0');
+    final day = fecha.day.toString().padLeft(2, '0');
+    final hour = fecha.hour.toString().padLeft(2, '0');
+    final minute = fecha.minute.toString().padLeft(2, '0');
+    final second = fecha.second.toString().padLeft(2, '0');
+    
+    // Construir el string con zona horaria (ej: 2025-10-11T15:00:00-05:00)
+    final signo = offset.isNegative ? '-' : '+';
+    final offsetStr = '$signo${offsetHoras.abs().toString().padLeft(2, '0')}:${offsetMinutos.toString().padLeft(2, '0')}';
+    
+    return '$year-$month-${day}T$hour:$minute:$second$offsetStr';
   }
 
   // Guardar token
@@ -139,6 +166,33 @@ class ApiService {
     }
   }
 
+  // Actualizar perfil del usuario autenticado
+  Future<Map<String, dynamic>> actualizarPerfil({
+    required String id,
+    String? nombre,
+    String? apellido,
+    String? correo,
+    String? celular,
+    String? fotoPerfil,
+  }) async {
+    try {
+      final body = <String, dynamic>{};
+      if (nombre != null) body['nombre'] = nombre;
+      if (apellido != null) body['apellido'] = apellido;
+      if (correo != null) body['correo'] = correo;
+      if (celular != null) body['celular'] = celular;
+      if (fotoPerfil != null) body['fotoPerfil'] = fotoPerfil;
+      final response = await http.put(
+        Uri.parse('$baseUrl/usuarios/$id'),
+        headers: await headersWithAuth,
+        body: json.encode(body),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': 'Error de conexión: $e'};
+    }
+  }
+
   // =============== MASCOTAS ===============
   
   // Obtener mascotas del usuario
@@ -184,148 +238,537 @@ class ApiService {
     }
   }
 
-  // =============== EVENTOS ===============
-  
-  // Obtener eventos de una mascota
-  Future<Map<String, dynamic>> obtenerEventos(String mascotaId) async {
+  Future<Map<String,dynamic>> actualizarMascota({required String id, required Map<String,dynamic> data}) async {
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/eventos/$mascotaId'),
+      final body = <String,dynamic>{};
+      // Permitimos sólo campos conocidos
+      const permitidos = {
+        'nombre','especie','raza','fechaNacimiento','fecha_nac','sexo','descripcion','oculto','estiloVida','cuidaConAlguien','cuidador','fotoPerfil'
+      };
+      for (final entry in data.entries) {
+        if (permitidos.contains(entry.key) && entry.value != null) {
+          body[entry.key] = entry.value;
+        }
+      }
+      final response = await http.put(
+        Uri.parse('$baseUrl/mascotas/$id'),
         headers: await headersWithAuth,
+        body: json.encode(body),
       );
-
       return _handleResponse(response);
     } catch (e) {
       return {'success': false, 'message': 'Error de conexión: $e'};
     }
   }
 
-  // Crear nuevo evento
+  Future<Map<String,dynamic>> eliminarMascota(String id) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/mascotas/$id'),
+        headers: await headersWithAuth,
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': 'Error de conexión: $e'};
+    }
+  }
+
+  Future<Map<String,dynamic>> subirFotoMascota({required String id, required String filePath}) async {
+    try {
+      final token = await getToken();
+      final uri = Uri.parse('$baseUrl/mascotas/$id/foto');
+      final request = http.MultipartRequest('POST', uri);
+      if (token != null) request.headers['Authorization'] = 'Bearer $token';
+      request.files.add(await http.MultipartFile.fromPath('foto', filePath));
+      final streamed = await request.send();
+      final response = await http.Response.fromStream(streamed);
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': 'Error de conexión: $e'};
+    }
+  }
+
+  // =============== EVENTOS ===============
+  // Backend actual usa /api/eventos con filtros en query
+  Future<Map<String, dynamic>> obtenerEventos({
+    String? fechaISO,
+    String? mascotaId,
+    String? tipo,
+    bool? completado,
+  }) async {
+    try {
+      final params = <String, String>{};
+      if (fechaISO != null) params['fecha'] = fechaISO; // yyyy-MM-dd
+      if (mascotaId != null) params['mascota'] = mascotaId;
+      if (tipo != null) params['tipo'] = tipo;
+      if (completado != null) params['completado'] = completado.toString();
+      final uri = Uri.parse('$baseUrl/eventos').replace(queryParameters: params.isEmpty ? null : params);
+      final response = await http.get(
+        uri,
+        headers: await headersWithAuth,
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': 'Error de conexión: $e'};
+    }
+  }
+
+  Future<Map<String, dynamic>> obtenerEventosCalendario({
+    required DateTime inicio,
+    required DateTime fin,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/eventos/calendario').replace(queryParameters: {
+        'fechaInicio': inicio.toIso8601String(),
+        'fechaFin': fin.toIso8601String(),
+      });
+      final response = await http.get(uri, headers: await headersWithAuth);
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': 'Error de conexión: $e'};
+    }
+  }
+
   Future<Map<String, dynamic>> crearEvento({
     required String mascotaId,
     required String titulo,
     required String tipo,
     required DateTime fecha,
+    required String hora, // backend separa fecha y hora
     String? descripcion,
+    bool recordatorioActivo = true,
+    int minutosAntes = 30,
+    String prioridad = 'media',
   }) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/eventos'),
         headers: await headersWithAuth,
         body: json.encode({
-          'mascotaId': mascotaId,
+          'mascota': mascotaId,
           'titulo': titulo,
           'tipo': tipo,
           'fecha': fecha.toIso8601String(),
+          'hora': hora,
           'descripcion': descripcion,
+          'prioridad': prioridad,
+          'recordatorio': {
+            'activo': recordatorioActivo,
+            'tiempoAntes': minutosAntes,
+          }
         }),
       );
-
       return _handleResponse(response);
     } catch (e) {
       return {'success': false, 'message': 'Error de conexión: $e'};
     }
   }
+
+  Future<Map<String, dynamic>> actualizarEvento({
+    required String eventoId,
+    String? titulo,
+    String? tipo,
+    DateTime? fecha,
+    String? hora,
+    String? descripcion,
+    String? prioridad,
+    bool? completado,
+    bool? recordatorioActivo,
+    int? minutosAntes,
+  }) async {
+    try {
+      final body = <String, dynamic>{};
+      if (titulo != null) body['titulo'] = titulo;
+      if (tipo != null) body['tipo'] = tipo;
+      if (fecha != null) body['fecha'] = fecha.toIso8601String();
+      if (hora != null) body['hora'] = hora;
+      if (descripcion != null) body['descripcion'] = descripcion;
+      if (prioridad != null) body['prioridad'] = prioridad;
+      if (completado != null) body['completado'] = completado;
+      if (recordatorioActivo != null || minutosAntes != null) {
+        body['recordatorio'] = {
+          if (recordatorioActivo != null) 'activo': recordatorioActivo,
+          if (minutosAntes != null) 'tiempoAntes': minutosAntes,
+        };
+      }
+      final response = await http.put(
+        Uri.parse('$baseUrl/eventos/$eventoId'),
+        headers: await headersWithAuth,
+        body: json.encode(body),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return { 'success': false, 'message': 'Error de conexión: $e' };
+    }
+  }
+
+  Future<Map<String,dynamic>> eliminarEvento(String id) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/eventos/$id'),
+        headers: await headersWithAuth,
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': 'Error de conexión: $e'};
+    }
+  }
+
 
   // =============== VACUNAS ===============
   
-  // Obtener vacunas de una mascota
-  Future<Map<String, dynamic>> obtenerVacunas(String mascotaId) async {
+  // Obtener vacunas (opcionalmente por mascota / estado)
+  Future<Map<String, dynamic>> obtenerVacunas({ String? mascotaId, String? estado }) async {
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/vacunas/$mascotaId'),
-        headers: await headersWithAuth,
-      );
-
+      final params = <String, String>{};
+      if (mascotaId != null) params['mascota'] = mascotaId;
+      if (estado != null) params['estado'] = estado;
+      final uri = Uri.parse('$baseUrl/vacunas').replace(queryParameters: params.isEmpty ? null : params);
+      final response = await http.get(uri, headers: await headersWithAuth);
       return _handleResponse(response);
     } catch (e) {
       return {'success': false, 'message': 'Error de conexión: $e'};
     }
   }
 
-  // Crear nueva vacuna
   Future<Map<String, dynamic>> crearVacuna({
-    required String mascotaId,
-    required String nombre,
-    required DateTime fecha,
-    DateTime? proximaDosis,
-    String? veterinario,
-    String? notas,
+  required String mascotaId,
+  required String nombre,
+  required DateTime fechaAplicacion,
+  DateTime? fechaVencimiento,
+  String? observaciones,
+  String? ubicacion,
+  String? lote,
+  String? laboratorio,
+  String? vetNombre,
+  String? vetClinica,
+  String? vetTelefono,
+  bool? recordatorio,
+  TimeOfDay? horaRecordatorio,
   }) async {
     try {
+      // Si se activa el recordatorio, combinamos fecha con hora
+      DateTime? fechaRecordatorio;
+      if (recordatorio == true) {
+        final hora = horaRecordatorio ?? TimeOfDay(hour: 9, minute: 0);
+        fechaRecordatorio = DateTime(
+          fechaAplicacion.year,
+          fechaAplicacion.month,
+          fechaAplicacion.day,
+          hora.hour,
+          hora.minute,
+        );
+      }
+      
       final response = await http.post(
         Uri.parse('$baseUrl/vacunas'),
         headers: await headersWithAuth,
         body: json.encode({
-          'mascotaId': mascotaId,
+          'mascota': mascotaId,
           'nombre': nombre,
-          'fecha': fecha.toIso8601String(),
-          'proximaDosis': proximaDosis?.toIso8601String(),
-          'veterinario': veterinario,
-          'notas': notas,
+          'fechaAplicacion': fechaAplicacion.toIso8601String(),
+          if (fechaVencimiento != null) 'fechaVencimiento': fechaVencimiento.toIso8601String(),
+          if (observaciones != null) 'observaciones': observaciones,
+          if (ubicacion != null) 'ubicacion': ubicacion,
+          if (lote != null) 'lote': lote,
+          if (laboratorio != null) 'laboratorio': laboratorio,
+          if (recordatorio != null) 'recordatorio': {
+            'activo': recordatorio,
+            if (fechaRecordatorio != null) 'fechaRecordatorio': _formatearFechaLocal(fechaRecordatorio),
+          },
+          if (vetNombre != null || vetClinica != null || vetTelefono != null) 'veterinario': {
+            if (vetNombre != null) 'nombre': vetNombre,
+            if (vetClinica != null) 'clinica': vetClinica,
+            if (vetTelefono != null) 'telefono': vetTelefono,
+          },
         }),
       );
-
       return _handleResponse(response);
     } catch (e) {
       return {'success': false, 'message': 'Error de conexión: $e'};
+    }
+  }
+
+  Future<Map<String, dynamic>> actualizarVacuna({
+  required String vacunaId,
+  String? nombre,
+  DateTime? fechaAplicacion,
+  DateTime? fechaVencimiento,
+  String? observaciones,
+  String? ubicacion,
+  String? lote,
+  String? laboratorio,
+  String? vetNombre,
+  String? vetClinica,
+  String? vetTelefono,
+  bool? recordatorio,
+  TimeOfDay? horaRecordatorio,
+  }) async {
+    try {
+      final body = <String, dynamic>{};
+      if (nombre != null) body['nombre'] = nombre;
+      if (fechaAplicacion != null) body['fechaAplicacion'] = fechaAplicacion.toIso8601String();
+      if (fechaVencimiento != null) body['fechaVencimiento'] = fechaVencimiento.toIso8601String();
+      if (observaciones != null) body['observaciones'] = observaciones;
+      if (ubicacion != null) body['ubicacion'] = ubicacion;
+      if (lote != null) body['lote'] = lote;
+      if (laboratorio != null) body['laboratorio'] = laboratorio;
+      
+      // Si se activa el recordatorio, construir fecha con hora
+      if (recordatorio == true && horaRecordatorio != null) {
+        // Usar la fecha de aplicación si existe, si no usar la fecha actual
+        final fechaBase = fechaAplicacion ?? DateTime.now();
+        
+        // Construir fecha en hora local con la hora seleccionada
+        final fechaRecordatorio = DateTime(
+          fechaBase.year,
+          fechaBase.month,
+          fechaBase.day,
+          horaRecordatorio.hour,
+          horaRecordatorio.minute,
+        );
+        
+        body['recordatorio'] = {
+          'activo': recordatorio,
+          'fechaRecordatorio': _formatearFechaLocal(fechaRecordatorio),
+        };
+      } else if (recordatorio != null) {
+        body['recordatorio'] = {'activo': recordatorio};
+      }
+      
+      if (vetNombre != null || vetClinica != null || vetTelefono != null) {
+        body['veterinario'] = {
+          if (vetNombre != null) 'nombre': vetNombre,
+          if (vetClinica != null) 'clinica': vetClinica,
+          if (vetTelefono != null) 'telefono': vetTelefono,
+        };
+      }
+      final response = await http.put(
+        Uri.parse('$baseUrl/vacunas/$vacunaId'),
+        headers: await headersWithAuth,
+        body: json.encode(body),
+      ).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw Exception('Tiempo de espera agotado');
+        },
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return { 'success': false, 'message': 'Error de conexión: $e' };
+    }
+  }
+
+  Future<Map<String, dynamic>> eliminarVacuna(String vacunaId) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/vacunas/$vacunaId'),
+        headers: await headersWithAuth,
+      ).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw Exception('Tiempo de espera agotado');
+        },
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return { 'success': false, 'message': 'Error de conexión: $e' };
+    }
+  }
+
+  // Obtener recordatorios de vacunas
+  Future<Map<String, dynamic>> obtenerRecordatoriosVacunas() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/vacunas/recordatorios'),
+        headers: await headersWithAuth,
+      ).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw Exception('Tiempo de espera agotado');
+        },
+      );
+      
+      if (response.statusCode == 200) {
+        final recordatorios = json.decode(response.body);
+        return { 'ok': true, 'recordatorios': recordatorios };
+      } else {
+        return { 'ok': false, 'mensaje': 'Error al obtener recordatorios' };
+      }
+    } catch (e) {
+      return { 'ok': false, 'mensaje': 'Error de conexión: $e' };
     }
   }
 
   // =============== PESO ===============
   
-  // Obtener registros de peso de una mascota
-  Future<Map<String, dynamic>> obtenerRegistrosPeso(String mascotaId) async {
+  // Obtener registros de peso (con filtros opcionales)
+  Future<Map<String, dynamic>> obtenerRegistrosPeso({ String? mascotaId, DateTime? inicio, DateTime? fin, int? limite }) async {
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/peso/$mascotaId'),
-        headers: await headersWithAuth,
-      );
-
+      final params = <String, String>{};
+      if (mascotaId != null) params['mascota'] = mascotaId;
+      if (inicio != null && fin != null) {
+        params['fechaInicio'] = inicio.toIso8601String();
+        params['fechaFin'] = fin.toIso8601String();
+      }
+      if (limite != null) params['limite'] = limite.toString();
+      final uri = Uri.parse('$baseUrl/peso').replace(queryParameters: params.isEmpty ? null : params);
+      final response = await http.get(uri, headers: await headersWithAuth);
       return _handleResponse(response);
     } catch (e) {
       return {'success': false, 'message': 'Error de conexión: $e'};
     }
   }
 
-  // Crear registro de peso
   Future<Map<String, dynamic>> crearRegistroPeso({
     required String mascotaId,
     required double peso,
-    required DateTime fecha,
-    String? notas,
+    DateTime? fecha,
+    String? observaciones,
+    String tipoRegistro = 'rutina',
   }) async {
     try {
+      final body = {
+        'mascota': mascotaId,
+        'peso': peso,
+        if (fecha != null) 'fecha': fecha.toIso8601String(),
+        if (observaciones != null) 'observaciones': observaciones,
+        'tipoRegistro': tipoRegistro,
+      };
       final response = await http.post(
         Uri.parse('$baseUrl/peso'),
         headers: await headersWithAuth,
-        body: json.encode({
-          'mascotaId': mascotaId,
-          'peso': peso,
-          'fecha': fecha.toIso8601String(),
-          'notas': notas,
-        }),
+        body: json.encode(body),
       );
-
       return _handleResponse(response);
     } catch (e) {
       return {'success': false, 'message': 'Error de conexión: $e'};
+    }
+  }
+
+  Future<Map<String, dynamic>> actualizarRegistroPeso({
+    required String registroId,
+    double? peso,
+    DateTime? fecha,
+    String? observaciones,
+    String? tipoRegistro,
+  }) async {
+    try {
+      final body = <String, dynamic>{};
+      if (peso != null) body['peso'] = peso;
+      if (fecha != null) body['fecha'] = fecha.toIso8601String();
+      if (observaciones != null) body['observaciones'] = observaciones;
+      if (tipoRegistro != null) body['tipoRegistro'] = tipoRegistro;
+      final response = await http.put(
+        Uri.parse('$baseUrl/peso/$registroId'),
+        headers: await headersWithAuth,
+        body: json.encode(body),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return { 'success': false, 'message': 'Error de conexión: $e' };
+    }
+  }
+
+  Future<Map<String, dynamic>> eliminarRegistroPeso(String registroId) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/peso/$registroId'),
+        headers: await headersWithAuth,
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return { 'success': false, 'message': 'Error de conexión: $e' };
     }
   }
 
   // =============== ÁLBUM ===============
   
-  // Obtener fotos del álbum
-  Future<Map<String, dynamic>> obtenerFotos(String mascotaId) async {
+  // Álbum: obtener fotos (paginadas y con filtros)
+  Future<Map<String, dynamic>> obtenerFotos({ String? mascotaId, String? etiqueta, bool? esPortada, int limite = 20, int pagina = 1 }) async {
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/album/$mascotaId'),
-        headers: await headersWithAuth,
-      );
-
+      final params = <String, String>{
+        'limite': limite.toString(),
+        'pagina': pagina.toString(),
+      };
+      if (mascotaId != null) params['mascota'] = mascotaId;
+      if (etiqueta != null) params['etiqueta'] = etiqueta;
+      if (esPortada != null) params['esPortada'] = esPortada.toString();
+      final uri = Uri.parse('$baseUrl/album').replace(queryParameters: params);
+      final response = await http.get(uri, headers: await headersWithAuth);
       return _handleResponse(response);
     } catch (e) {
       return {'success': false, 'message': 'Error de conexión: $e'};
+    }
+  }
+
+  Future<Map<String, dynamic>> subirFoto({
+    required String mascotaId,
+    required String url,
+    String? titulo,
+    String? descripcion,
+    String? ubicacion,
+    List<String>? etiquetas,
+    bool esPortada = false,
+    DateTime? fecha,
+  }) async {
+    try {
+      final body = {
+        'mascota': mascotaId,
+        'url': url,
+        if (titulo != null) 'titulo': titulo,
+        if (descripcion != null) 'descripcion': descripcion,
+        if (ubicacion != null) 'ubicacion': ubicacion,
+        if (etiquetas != null && etiquetas.isNotEmpty) 'etiquetas': etiquetas,
+        'esPortada': esPortada,
+        if (fecha != null) 'fecha': fecha.toIso8601String(),
+      };
+      final response = await http.post(
+        Uri.parse('$baseUrl/album'),
+        headers: await headersWithAuth,
+        body: json.encode(body),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return { 'success': false, 'message': 'Error de conexión: $e' };
+    }
+  }
+
+  Future<Map<String, dynamic>> actualizarFoto({
+    required String fotoId,
+    String? titulo,
+    String? descripcion,
+    String? ubicacion,
+    List<String>? etiquetas,
+    bool? esPortada,
+  }) async {
+    try {
+      final body = <String, dynamic>{};
+      if (titulo != null) body['titulo'] = titulo;
+      if (descripcion != null) body['descripcion'] = descripcion;
+      if (ubicacion != null) body['ubicacion'] = ubicacion;
+      if (etiquetas != null) body['etiquetas'] = etiquetas;
+      if (esPortada != null) body['esPortada'] = esPortada;
+      final response = await http.put(
+        Uri.parse('$baseUrl/album/$fotoId'),
+        headers: await headersWithAuth,
+        body: json.encode(body),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return { 'success': false, 'message': 'Error de conexión: $e' };
+    }
+  }
+
+  Future<Map<String, dynamic>> eliminarFoto(String fotoId) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/album/$fotoId'),
+        headers: await headersWithAuth,
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return { 'success': false, 'message': 'Error de conexión: $e' };
     }
   }
 
@@ -384,15 +827,16 @@ class ApiService {
         return {
           'success': false,
           'message': mensaje,
-          'statusCode': response.statusCode,
+          'code': response.statusCode,
           'data': body,
+          'unauthorized': response.statusCode == 401,
         };
       }
     } catch (e) {
       return {
         'success': false,
         'message': 'Error al procesar respuesta: $e',
-        'statusCode': response.statusCode,
+        'code': response.statusCode,
       };
     }
   }
@@ -400,5 +844,14 @@ class ApiService {
   // Cerrar sesión
   Future<void> cerrarSesion() async {
     await removeToken();
+  }
+
+  // Helper para envolver peticiones desde UI/Providers y disparar callback si 401
+  Future<Map<String,dynamic>> guard(Future<Map<String,dynamic>> Function() call, {Future<void> Function()? onUnauthorized}) async {
+    final resp = await call();
+    if (resp['unauthorized'] == true && onUnauthorized != null) {
+      await onUnauthorized();
+    }
+    return resp;
   }
 }

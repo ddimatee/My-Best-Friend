@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../datos/mascota_model.dart';
+import 'package:provider/provider.dart';
+import '../../../providers/mascotas_provider.dart';
 import '../menu_principal.dart'; // Para navegar directamente a la pestaña Calendario
 
 /// Tipo de resultado general de búsqueda.
@@ -24,7 +25,7 @@ class BuscadorGlobal {
   factory BuscadorGlobal() => _i;
   BuscadorGlobal._internal();
 
-  final MascotasRepo _repoMascotas = MascotasRepo();
+  // Uso de MascotasProvider en lugar de repositorio legacy
 
   // Catálogo estático de secciones / pantallas clave
   List<ResultadoBusqueda> _catalogoBase(BuildContext context) => [
@@ -97,11 +98,17 @@ class BuscadorGlobal {
     final base = _catalogoBase(context);
 
     // Mascotas
-    final mascotas = _repoMascotas.buscar(q, incluirOcultas: incluirOcultasMascotas).map(
+    final prov = context.read<MascotasProvider>();
+    final lista = prov.mascotas.where((m) {
+      if (q.isEmpty) return true;
+      final nombre = (m['nombre'] ?? '').toString().toLowerCase();
+      return nombre.contains(q);
+    }).where((m) => incluirOcultasMascotas || !(m['oculto'] == true));
+    final mascotas = lista.map(
       (m) => ResultadoBusqueda(
-        id: 'pet:${m.id}',
-        titulo: m.nombre,
-        descripcion: m.oculto ? 'Mascota oculta' : 'Mascota visible',
+        id: 'pet:${m['_id'] ?? m['id']}',
+        titulo: (m['nombre'] ?? '').toString(),
+        descripcion: (m['oculto'] == true) ? 'Mascota oculta' : 'Mascota visible',
         icono: Icons.pets,
         onTap: () => Navigator.pushNamed(context, '/menu'),
       ),

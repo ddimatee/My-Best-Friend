@@ -1,6 +1,12 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'mascotas_provider.dart';
+import 'vacunas_provider.dart';
+import 'peso_provider.dart';
+import 'album_provider.dart';
+import 'eventos_provider.dart';
 
 class AuthProvider with ChangeNotifier {
   final ApiService _apiService = ApiService();
@@ -94,6 +100,7 @@ class AuthProvider with ChangeNotifier {
       if (result['success']) {
         _user = result['data']['usuario'];
         _isAuthenticated = true;
+        // Intentar reprogramar recordatorios (necesitamos context externo normalmente, se puede diferir)
         if (recordar) {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('remember_correo', correo);
@@ -134,13 +141,13 @@ class AuthProvider with ChangeNotifier {
   }
 
   // Cerrar sesión
-  Future<void> cerrarSesion() async {
+  Future<void> cerrarSesion({required BuildContext context}) async {
     await _apiService.cerrarSesion();
-    _cerrarSesionLocal();
+    _cerrarSesionLocal(context: context);
   }
 
   // Cerrar sesión local
-  void _cerrarSesionLocal() {
+  void _cerrarSesionLocal({BuildContext? context}) {
     _isAuthenticated = false;
     _user = null;
     // Limpiar datos remember
@@ -151,6 +158,21 @@ class AuthProvider with ChangeNotifier {
     });
     _clearError();
     notifyListeners();
+    // Limpiar otros providers para evitar fugas entre usuarios
+    if (context != null) {
+      try { (context as dynamic).read<MascotasProvider>().clear(); } catch (_) {}
+      try { (context as dynamic).read<VacunasProvider>().clear(); } catch (_) {}
+      try { (context as dynamic).read<PesoProvider>().clear(); } catch (_) {}
+      try { (context as dynamic).read<AlbumProvider>().clear(); } catch (_) {}
+      try { (context as dynamic).read<EventosProvider>().clear(); } catch (_) {}
+    }
+  }
+
+  // Manejo central de 401: llamado por capas superiores cuando ApiService detecta unauthorized
+  Future<void> handleUnauthorized({BuildContext? context}) async {
+    if (!_isAuthenticated) return; // ya deslogueado
+    await _apiService.removeToken();
+    _cerrarSesionLocal(context: context);
   }
 
   // Métodos privados para manejar el estado
@@ -166,6 +188,16 @@ class AuthProvider with ChangeNotifier {
 
   void _clearError() {
     _errorMessage = null;
+    notifyListeners();
+  }
+
+  // Actualizar campos básicos del perfil localmente (sin llamar backend)
+  void updateUserProfile({String? nombre, String? apellido, String? correo, String? celular}) {
+    if (_user == null) return;
+    if (nombre != null) _user!['nombre'] = nombre;
+    if (apellido != null) _user!['apellido'] = apellido;
+    if (correo != null) _user!['correo'] = correo;
+    if (celular != null) _user!['celular'] = celular;
     notifyListeners();
   }
 }

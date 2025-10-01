@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../modulo_general/widgets/bottom_nav_global.dart';
 import 'widgets/calendario_selector.dart';
 import 'detalle_peso.dart';
 import 'peso.dart';
@@ -18,7 +19,6 @@ class HistorialPesoPantalla extends StatefulWidget {
 class _HistorialPesoPantallaState extends State<HistorialPesoPantalla> {
   String _filtroSeleccionado = 'Hoy';
   late List<Map<String, dynamic>> _registrosFiltrados;
-  int _tabIndex = 0;
 
   @override
   void initState() {
@@ -326,51 +326,7 @@ class _HistorialPesoPantallaState extends State<HistorialPesoPantalla> {
           ),
         ],
       ),
-      bottomNavigationBar: Container(
-        height: 88,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(30),
-            topRight: Radius.circular(30),
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _BottomItem(
-              icon: Icons.pets,
-              text: 'Mascotas',
-              selected: _tabIndex == 0,
-              onTap: () {
-                setState(() {
-                  _tabIndex = 0;
-                });
-              },
-            ),
-            _BottomItem(
-              icon: Icons.calendar_month,
-              text: 'Calendario',
-              selected: _tabIndex == 1,
-              onTap: () {
-                setState(() {
-                  _tabIndex = 1;
-                });
-              },
-            ),
-            _BottomItem(
-              icon: Icons.settings,
-              text: 'Configurar',
-              selected: _tabIndex == 2,
-              onTap: () {
-                setState(() {
-                  _tabIndex = 2;
-                });
-              },
-            ),
-          ],
-        ),
-      ),
+      bottomNavigationBar: const BottomNavGlobal(selectedIndex: 0),
     );
   }
 
@@ -685,50 +641,4 @@ class _FiltroPersonalizadoDialogState extends State<_FiltroPersonalizadoDialog> 
   }
 }
 
-class _BottomItem extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _BottomItem({
-    required this.icon,
-    required this.text,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        decoration: BoxDecoration(
-          color: selected ? const Color(0xFF4CAF50) : Colors.transparent,
-          borderRadius: BorderRadius.circular(25),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              color: selected ? Colors.white : Colors.grey,
-              size: 24,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              text,
-              style: TextStyle(
-                color: selected ? Colors.white : Colors.grey,
-                fontSize: 12,
-                fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+// _BottomItem eliminado (se usa BottomNavGlobal)

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../modulo_general/widgets/bottom_nav_global.dart';
 import 'package:flutter/services.dart';
 import 'formulario_descripcion_calendario.dart';
 import 'detalle_recordatorio_calendario.dart';
@@ -178,38 +179,8 @@ class _CalendarioModuloPantallaState extends State<CalendarioModuloPantalla> {
         ),
       ),
       
-      // Bottom Navigation Bar
-      bottomNavigationBar: Container(
-        height: 64,
-        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade300,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: const [
-            BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 3)),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _BottomItem(
-              icon: Icons.pets,
-              selected: true,
-              onTap: () => Navigator.pop(context),
-            ),
-            _BottomItem(
-              icon: Icons.calendar_month,
-              selected: false,
-              onTap: () {},
-            ),
-            _BottomItem(
-              icon: Icons.settings,
-              selected: false,
-              onTap: () {},
-            ),
-          ],
-        ),
-      ),
+      // Barra inferior global (pantalla del módulo Calendario)
+  bottomNavigationBar: const BottomNavGlobal(selectedIndex: 0),
     );
   }
 
@@ -411,28 +382,4 @@ class _RecordatorioCard extends StatelessWidget {
   }
 }
 
-class _BottomItem extends StatelessWidget {
-  final IconData icon;
-  final bool selected;
-  final VoidCallback onTap;
-  const _BottomItem({required this.icon, required this.selected, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: selected ? Colors.white : Colors.transparent,
-          shape: BoxShape.circle,
-          boxShadow: selected
-              ? const [BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2))]
-              : null,
-        ),
-        child: Icon(icon, size: 28, color: Colors.black),
-      ),
-    );
-  }
-}
+// Clase _BottomItem eliminada (se usa BottomNavGlobal)

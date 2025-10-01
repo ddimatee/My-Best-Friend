@@ -349,7 +349,7 @@ class _CuentaSesionPantallaState extends State<CuentaSesionPantalla> {
             ElevatedButton(
             onPressed: () async {
               Navigator.pop(context); // cierra diálogo
-              await auth.cerrarSesion();
+              await auth.cerrarSesion(context: context);
               if (!mounted) return;
               Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(builder: (_) => LoginScreen()),

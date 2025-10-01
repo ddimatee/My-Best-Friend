@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import '../modulo_general/widgets/bottom_nav_global.dart';
 import 'package:intl/intl.dart';
-import 'modelos/evento.dart';
-import 'servicios/evento_service.dart';
+import 'package:provider/provider.dart';
+import '../../providers/eventos_provider.dart';
+import '../../providers/mascotas_provider.dart';
 import 'seleccion_categoria_evento.dart';
 import 'detalle_evento.dart';
 import 'formulario_evento.dart';
@@ -14,46 +16,54 @@ class EventosPantalla extends StatefulWidget {
 }
 
 class _EventosPantallaState extends State<EventosPantalla> {
-  List<Evento> _eventos = [];
+  List<Map<String, dynamic>> _eventos = [];
   bool _isLoading = true;
   final Color _greenColor = const Color(0xFF4CAF50);
+  String? _mascotaSeleccionada;
+  DateTime _fechaActual = DateTime.now();
 
   @override
   void initState() {
     super.initState();
-    _cargarEventos();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final masc = context.read<MascotasProvider>();
+      if (masc.mascotas.isEmpty) await masc.cargarMascotas();
+      if (masc.mascotas.isNotEmpty) {
+        _mascotaSeleccionada = (masc.mascotas.first['_id'] ?? masc.mascotas.first['id']).toString();
+        await _cargarEventos();
+      } else {
+        setState(() { _isLoading = false; });
+      }
+    });
   }
 
   Future<void> _cargarEventos() async {
-    setState(() => _isLoading = true);
-    try {
-      final eventos = await EventoService.obtenerEventos();
-      setState(() {
-        _eventos = eventos;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al cargar eventos: $e')),
-      );
-    }
+    if (_mascotaSeleccionada == null) return;
+    setState(() { _isLoading = true; });
+    final prov = context.read<EventosProvider>();
+    await prov.cargarDia(_fechaActual, mascotaId: _mascotaSeleccionada, forzar: true);
+    setState(() {
+      _eventos = prov.eventosDeDia(_key(_fechaActual));
+      _isLoading = false;
+    });
   }
 
-  void _navegarASeleccionCategoria() async {
-    final String? categoria = await Navigator.push<String>(
+  String _key(DateTime d) => '${d.year.toString().padLeft(4,'0')}-${d.month.toString().padLeft(2,'0')}-${d.day.toString().padLeft(2,'0')}';
+
+  void _navegarASeleccionTipo() async {
+    final String? tipo = await Navigator.push<String>(
       context,
       MaterialPageRoute(
         builder: (context) => const SeleccionCategoriaEvento(),
       ),
     );
 
-    if (categoria != null) {
+    if (tipo != null) {
       // Navegar al formulario de evento con la categoría seleccionada
       final resultado = await Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => FormularioEvento(categoria: categoria),
+          builder: (context) => FormularioEvento(tipoInicial: tipo, mascotaId: _mascotaSeleccionada),
         ),
       );
       
@@ -63,7 +73,7 @@ class _EventosPantallaState extends State<EventosPantalla> {
     }
   }
 
-  void _navegarADetalle(Evento evento) async {
+  void _navegarADetalle(Map<String,dynamic> evento) async {
     final resultado = await Navigator.push(
       context,
       MaterialPageRoute(
@@ -76,7 +86,9 @@ class _EventosPantallaState extends State<EventosPantalla> {
     }
   }
 
-  Widget _buildEventoCard(Evento evento) {
+  Widget _buildEventoCard(Map<String,dynamic> evento) {
+    final fecha = DateTime.tryParse(evento['fecha']?.toString() ?? '') ?? DateTime.now();
+  final tipo = (evento['tipo'] ?? evento['categoria'] ?? 'evento').toString();
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(16),
@@ -104,7 +116,7 @@ class _EventosPantallaState extends State<EventosPantalla> {
                 borderRadius: BorderRadius.circular(30),
               ),
               child: Icon(
-                _getIconoCategoria(evento.categoria),
+                _getIconoCategoria(tipo),
                 color: _greenColor,
                 size: 30,
               ),
@@ -115,7 +127,7 @@ class _EventosPantallaState extends State<EventosPantalla> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    evento.titulo,
+                    (evento['titulo'] ?? '').toString(),
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -124,14 +136,14 @@ class _EventosPantallaState extends State<EventosPantalla> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'De: ${DateFormat('d MMM, yyyy').format(evento.fecha)}',
+                    'De: ${DateFormat('d MMM, yyyy').format(fecha)}',
                     style: const TextStyle(
                       fontSize: 14,
                       color: Colors.black87,
                     ),
                   ),
                   Text(
-                    '11:00 AM',
+                    _horaDesde(fecha, evento),
                     style: const TextStyle(
                       fontSize: 14,
                       color: Colors.black54,
@@ -149,6 +161,11 @@ class _EventosPantallaState extends State<EventosPantalla> {
         ),
       ),
     );
+  }
+
+  String _horaDesde(DateTime fecha, Map<String,dynamic> evento) {
+    if (evento['hora'] != null) return evento['hora'];
+    return DateFormat('h:mm a').format(fecha);
   }
 
   IconData _getIconoCategoria(String categoria) {
@@ -198,7 +215,7 @@ class _EventosPantallaState extends State<EventosPantalla> {
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton(
-                  onPressed: _navegarASeleccionCategoria,
+                  onPressed: _navegarASeleccionTipo,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
                     foregroundColor: Colors.black,
@@ -272,7 +289,7 @@ class _EventosPantallaState extends State<EventosPantalla> {
             Padding(
               padding: const EdgeInsets.only(right: 16.0),
               child: GestureDetector(
-                onTap: _navegarASeleccionCategoria,
+                onTap: _navegarASeleccionTipo,
                 child: Container(
                   width: 40,
                   height: 40,
@@ -312,64 +329,15 @@ class _EventosPantallaState extends State<EventosPantalla> {
                     return _buildEventoCard(_eventos[index]);
                   },
                 ),
-      // Bottom Navigation Bar
-      bottomNavigationBar: Container(
-        height: 64,
-        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade300,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: const [
-            BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 3)),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _BottomItem(
-              icon: Icons.pets,
-              selected: true,
-              onTap: () => Navigator.pop(context),
+      bottomNavigationBar: const BottomNavGlobal(selectedIndex: 0),
+      floatingActionButton: (_mascotaSeleccionada == null)
+          ? null
+          : FloatingActionButton(
+              backgroundColor: Colors.white,
+              onPressed: _navegarASeleccionTipo,
+              child: const Icon(Icons.add, color: Colors.black),
             ),
-            _BottomItem(
-              icon: Icons.calendar_month,
-              selected: false,
-              onTap: () {},
-            ),
-            _BottomItem(
-              icon: Icons.settings,
-              selected: false,
-              onTap: () {},
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
-
-class _BottomItem extends StatelessWidget {
-  final IconData icon;
-  final bool selected;
-  final VoidCallback onTap;
-  const _BottomItem({required this.icon, required this.selected, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: selected ? Colors.white : Colors.transparent,
-          shape: BoxShape.circle,
-          boxShadow: selected
-              ? const [BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2))]
-              : null,
-        ),
-        child: Icon(icon, size: 28, color: Colors.black),
-      ),
-    );
-  }
-}
+// _BottomItem eliminado (se usa BottomNavGlobal)

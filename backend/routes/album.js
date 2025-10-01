@@ -6,10 +6,17 @@ const protegerRuta = require('../middlewares/protegerRuta');
 // Subir nueva foto
 router.post('/', protegerRuta, async (req, res) => {
   try {
-    const nuevaFoto = new Foto({
+    const datosNuevaFoto = {
       ...req.body,
       usuario: req.usuario._id
-    });
+    };
+    
+    // Si se envía una fecha desde el frontend, usarla; si no, usar la fecha actual
+    if (!datosNuevaFoto.fecha) {
+      datosNuevaFoto.fecha = new Date();
+    }
+    
+    const nuevaFoto = new Foto(datosNuevaFoto);
     await nuevaFoto.save();
     await nuevaFoto.populate('mascota', 'nombre raza');
     

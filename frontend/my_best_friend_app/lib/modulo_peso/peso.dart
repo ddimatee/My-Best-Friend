@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'lista_pesos_pantalla.dart';
+// import 'lista_pesos_pantalla.dart'; // legacy navegación lista local
 import 'widgets/calendario_selector.dart';
+import 'lista_pesos_pantalla.dart';
+import 'package:provider/provider.dart';
+import '../../providers/peso_provider.dart';
+import '../../providers/mascotas_provider.dart';
+import 'widgets/registro_peso_detalle.dart';
+import '../modulo_general/widgets/bottom_nav_global.dart';
 
 class PesoPantalla extends StatefulWidget {
-  final List<Map<String, dynamic>>? registrosExistentes;
-  
-  const PesoPantalla({Key? key, this.registrosExistentes}) : super(key: key);
+  final List<Map<String, dynamic>>? registrosExistentes; // legacy param (ya no se usa con provider)
+  final String? mascotaId;
+  const PesoPantalla({Key? key, this.registrosExistentes, this.mascotaId}) : super(key: key);
 
   @override
   State<PesoPantalla> createState() => _PesoPantallaState();
@@ -16,19 +22,34 @@ class _PesoPantallaState extends State<PesoPantalla> {
   final TextEditingController _pesoController = TextEditingController();
   final TextEditingController _notasController = TextEditingController();
   bool _showForm = false; // Controla si mostrar el formulario o el estado vacío
-  int _tabIndex = 0; // Índice para la barra de navegación inferior
   DateTime _fechaMedicionNueva = DateTime.now();
   
   // Lista de registros de peso (inicialmente vacía)
   List<Map<String, dynamic>> _registrosPeso = [];
+  bool _guardando = false;
+  String? _mascotaSeleccionada; // id de la mascota elegida
 
   @override
   void initState() {
     super.initState();
     // Cargar registros existentes si se proporcionan
     if (widget.registrosExistentes != null) {
-      _registrosPeso = List.from(widget.registrosExistentes!);
+      _registrosPeso = List.from(widget.registrosExistentes!); // soporte transitorio
     }
+    // Mascota inicial si viene por parámetro
+    _mascotaSeleccionada = widget.mascotaId;
+    // Intentar cargar mascotas si no hay
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final mascProv = context.read<MascotasProvider>();
+      if (mascProv.mascotas.isEmpty) {
+        await mascProv.cargarMascotas();
+      }
+      if (_mascotaSeleccionada == null && mascProv.mascotas.isNotEmpty) {
+        setState(() {
+          _mascotaSeleccionada = (mascProv.mascotas.first['_id'] ?? mascProv.mascotas.first['id']).toString();
+        });
+      }
+    });
   }
 
   // Función para convertir el peso ingresado
@@ -66,7 +87,7 @@ class _PesoPantallaState extends State<PesoPantalla> {
     }
   }
 
-  void _guardarPeso() {
+  void _guardarPeso() async {
     if (_pesoController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -88,33 +109,46 @@ class _PesoPantallaState extends State<PesoPantalla> {
       return;
     }
 
-    setState(() {
-      _registrosPeso.insert(0, {
-        'peso': _formatearPeso(pesoParseado),
-        'pesoNumerico': pesoParseado, // Guardamos el valor numérico para cálculos
-        'fecha': _fechaMedicionNueva,
-        'notas': _notasController.text.isEmpty ? '' : _notasController.text,
-      });
-    });
+    final mascotaId = _mascotaSeleccionada ?? widget.mascotaId;
+    if (mascotaId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se ha seleccionado mascota'), backgroundColor: Colors.red),
+      );
+      return;
+    }
 
-    _pesoController.clear();
-    _notasController.clear();
-
-    // Navegar a la pantalla de lista de pesos
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ListaPesosPantalla(
-          registrosPeso: _registrosPeso,
-        ),
-      ),
-    ).then((result) {
-      if (result != null && result is List<Map<String, dynamic>>) {
-        setState(() {
-          _registrosPeso = result;
-        });
+    setState(() { _guardando = true; });
+    try {
+      final pesoProv = Provider.of<PesoProvider>(context, listen: false);
+      final ok = await pesoProv.crear(
+        mascotaId: mascotaId,
+        peso: pesoParseado,
+        fecha: _fechaMedicionNueva,
+        observaciones: _notasController.text.isEmpty ? null : _notasController.text,
+      );
+      if (!ok) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(pesoProv.error ?? 'Error al guardar'), backgroundColor: Colors.red),
+        );
+        return;
       }
-    });
+      if (!mounted) return;
+      // Obtener el último registro insertado para navegar a detalle
+      final ultimo = pesoProv.registros(mascotaId).isNotEmpty ? pesoProv.registros(mascotaId).first : null;
+      if (!mounted) return;
+      if (ultimo != null) {
+        await Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => RegistroPesoDetallePantalla(registro: ultimo, mascotaId: mascotaId),
+          ),
+        );
+      } else {
+        Navigator.pop(context, true);
+      }
+    } finally {
+      if (mounted) setState(() { _guardando = false; });
+    }
   }
 
   String _getMonthName(int month) {
@@ -147,37 +181,7 @@ class _PesoPantallaState extends State<PesoPantalla> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      bottomNavigationBar: Container(
-        height: 64,
-        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade300,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: const [
-            BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 3)),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _BottomItem(
-              icon: Icons.pets,
-              selected: _tabIndex == 0,
-              onTap: () => setState(() => _tabIndex = 0),
-            ),
-            _BottomItem(
-              icon: Icons.calendar_month,
-              selected: _tabIndex == 1,
-              onTap: () => setState(() => _tabIndex = 1),
-            ),
-            _BottomItem(
-              icon: Icons.settings,
-              selected: _tabIndex == 2,
-              onTap: () => setState(() => _tabIndex = 2),
-            ),
-          ],
-        ),
-      ),
+      bottomNavigationBar: const BottomNavGlobal(selectedIndex: 0),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -258,75 +262,47 @@ class _PesoPantallaState extends State<PesoPantalla> {
           ),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.list_alt, color: Colors.white),
+            tooltip: 'Ver historial completo',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ListaPesosPantalla(mascotaId: _mascotaSeleccionada),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // Botones de Kilogramo y Gramo
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 8,
-                    offset: Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () {
-                        // Lógica para kilogramo
-                      },
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        side: BorderSide(color: Colors.grey.shade400),
-                      ),
-                      child: const Text(
-                        'Kilogramo',
-                        style: TextStyle(
-                          color: Colors.black87,
-                          fontSize: 16,
-                        ),
-                      ),
+            _buildSelectorMascota(),
+            const SizedBox(height: 16),
+            // (Se removió el selector de unidad Kilogramo/Gramo a petición del usuario)
+            const SizedBox(height: 8),
+            _buildHistorial(),
+
+            // Botón para ir a la lista avanzada
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                icon: const Icon(Icons.open_in_new, size: 18),
+                label: const Text('Ver historial completo'),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ListaPesosPantalla(mascotaId: _mascotaSeleccionada),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () {
-                        // Lógica para gramo
-                      },
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        side: BorderSide(color: Colors.grey.shade400),
-                      ),
-                      child: const Text(
-                        'Gramo',
-                        style: TextStyle(
-                          color: Colors.black87,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                  );
+                },
               ),
             ),
-
-            const SizedBox(height: 16),
 
             // Peso de Mascota
             Container(
@@ -515,7 +491,7 @@ class _PesoPantallaState extends State<PesoPantalla> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: _guardarPeso,
+                      onPressed: _guardando ? null : _guardarPeso,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF4CAF50),
                         foregroundColor: Colors.white,
@@ -524,13 +500,15 @@ class _PesoPantallaState extends State<PesoPantalla> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: const Text(
-                        'Guardar',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      child: _guardando
+                          ? const SizedBox(height:20, width:20, child: CircularProgressIndicator(strokeWidth:2, color: Colors.white))
+                          : const Text(
+                              'Guardar',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                     ),
                   ),
                 ],
@@ -539,36 +517,187 @@ class _PesoPantallaState extends State<PesoPantalla> {
           ],
         ),
       ),
-      bottomNavigationBar: Container(
-        height: 64,
-        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade300,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: const [
-            BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 3)),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _BottomItem(
-              icon: Icons.pets,
-              selected: _tabIndex == 0,
-              onTap: () => setState(() => _tabIndex = 0),
+      bottomNavigationBar: const BottomNavGlobal(selectedIndex: 0),
+    );
+  }
+
+  Widget _buildHistorial() {
+    if (_mascotaSeleccionada == null) return const SizedBox.shrink();
+    final pesoProv = context.watch<PesoProvider>();
+    final registros = pesoProv.registros(_mascotaSeleccionada!);
+    if (registros.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0,4)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Historial reciente', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+          ...registros.take(5).map((r) {
+            final fechaStr = _formatFecha(r['fecha'] ?? r['createdAt']);
+            final peso = r['peso']?.toString() ?? '-';
+            return ListTile(
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+              title: Text('$peso kg', style: const TextStyle(fontWeight: FontWeight.w600)),
+              subtitle: Text(fechaStr),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => RegistroPesoDetallePantalla(registro: r, mascotaId: _mascotaSeleccionada!),
+                  ),
+                );
+              },
+            );
+          }).toList(),
+          if (registros.length > 5)
+            TextButton(
+              onPressed: () {
+                _mostrarHistorialCompleto(registros);
+              },
+              child: const Text('Ver todos'),
+            )
+        ],
+      ),
+    );
+  }
+
+  void _mostrarHistorialCompleto(List<Map<String,dynamic>> registros) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.8,
+          maxChildSize: 0.95,
+          minChildSize: 0.4,
+          builder: (_, scroll) {
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Text('Historial completo', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      const Spacer(),
+                      IconButton(onPressed: () => Navigator.pop(ctx), icon: const Icon(Icons.close)),
+                    ],
+                  ),
+                  Expanded(
+                    child: ListView.builder(
+                      controller: scroll,
+                      itemCount: registros.length,
+                      itemBuilder: (c, i) {
+                        final r = registros[i];
+                        final fechaStr = _formatFecha(r['fecha'] ?? r['createdAt']);
+                        final peso = r['peso']?.toString() ?? '-';
+                        return ListTile(
+                          title: Text('$peso kg'),
+                          subtitle: Text(fechaStr),
+                          onTap: () {
+                            Navigator.pop(ctx);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => RegistroPesoDetallePantalla(registro: r, mascotaId: _mascotaSeleccionada!),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  )
+                ],
+              ),
+            );
+          },
+        );
+      }
+    );
+  }
+
+  String _formatFecha(dynamic raw) {
+    DateTime? f;
+    if (raw is DateTime) {
+      f = raw;
+    } else if (raw is String) {
+      f = DateTime.tryParse(raw);
+    }
+    f ??= DateTime.now();
+    return '${f.day.toString().padLeft(2,'0')}/${f.month.toString().padLeft(2,'0')}/${f.year} ${f.hour.toString().padLeft(2,'0')}:${f.minute.toString().padLeft(2,'0')}';
+  }
+
+  Widget _buildSelectorMascota() {
+    final mascProv = context.watch<MascotasProvider>();
+    final mascotas = mascProv.mascotas;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0,4)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.pets, color: Colors.black54),
+              const SizedBox(width: 8),
+              const Text('Mascota', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              const Spacer(),
+              if (mascProv.cargando)
+                const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth:2)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (mascotas.isEmpty && !mascProv.cargando)
+            const Text('No tienes mascotas aún. Crea una primero.', style: TextStyle(color: Colors.redAccent))
+          else
+            DropdownButtonFormField<String>(
+              value: _mascotaSeleccionada,
+              decoration: InputDecoration(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              hint: const Text('Selecciona una mascota'),
+              items: mascotas.map((m) {
+                final id = (m['_id'] ?? m['id']).toString();
+                final nombre = m['nombre']?.toString() ?? 'Sin nombre';
+                return DropdownMenuItem<String>(
+                  value: id,
+                  child: Text(nombre),
+                );
+              }).toList(),
+              onChanged: (val) {
+                setState(() { _mascotaSeleccionada = val; });
+              },
             ),
-            _BottomItem(
-              icon: Icons.calendar_month,
-              selected: _tabIndex == 1,
-              onTap: () => setState(() => _tabIndex = 1),
-            ),
-            _BottomItem(
-              icon: Icons.settings,
-              selected: _tabIndex == 2,
-              onTap: () => setState(() => _tabIndex = 2),
-            ),
-          ],
-        ),
+          const SizedBox(height: 4),
+          if (_mascotaSeleccionada == null)
+            const Text('Debes seleccionar una mascota para guardar el peso', style: TextStyle(fontSize: 12, color: Colors.orange)),
+        ],
       ),
     );
   }
@@ -581,28 +710,4 @@ class _PesoPantallaState extends State<PesoPantalla> {
   }
 }
 
-class _BottomItem extends StatelessWidget {
-  final IconData icon;
-  final bool selected;
-  final VoidCallback onTap;
-  const _BottomItem({required this.icon, required this.selected, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: selected ? Colors.white : Colors.transparent,
-          shape: BoxShape.circle,
-          boxShadow: selected
-              ? const [BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2))]
-              : null,
-        ),
-        child: Icon(icon, size: 28, color: Colors.black),
-      ),
-    );
-  }
-}
+// _BottomItem eliminado en favor de BottomNavGlobal

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'servicios/dueno_service.dart';
+import 'servicios/dueno_service.dart'; // Queda para potencial persistencia futura
 import 'modelos/dueno_model.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
 import 'editar_dueno_pantalla.dart';
+import '../modulo_general/widgets/bottom_nav_global.dart';
 
 class DuenoModuloPantalla extends StatefulWidget {
   const DuenoModuloPantalla({Key? key}) : super(key: key);
@@ -15,6 +18,7 @@ class DuenoModuloPantalla extends StatefulWidget {
 class _DuenoModuloPantallaState extends State<DuenoModuloPantalla> {
   final Color _greenColor = const Color(0xFF4CAF50);
   final DuenoService _duenoService = DuenoService();
+  // Mantengo dueno por compatibilidad (foto, etc), pero datos básicos vienen de AuthProvider
   DuenoModel? dueno;
   bool _cargando = true;
 
@@ -51,74 +55,24 @@ class _DuenoModuloPantallaState extends State<DuenoModuloPantalla> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: _cargando
-          ? const Center(
-              child: CircularProgressIndicator(color: Colors.white),
-            )
-          : dueno == null
-              ? _buildErrorState()
-              : _buildDuenoInfo(),
-      // Bottom Navigation Bar
-      bottomNavigationBar: Container(
-        height: 64,
-        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade300,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: const [
-            BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 3)),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _BottomItem(
-              icon: Icons.pets,
-              selected: true,
-              onTap: () => Navigator.pop(context),
-            ),
-            _BottomItem(
-              icon: Icons.calendar_month,
-              selected: false,
-              onTap: () {},
-            ),
-            _BottomItem(
-              icon: Icons.settings,
-              selected: false,
-              onTap: () {},
-            ),
-          ],
-        ),
-      ),
+    body: _cargando
+      ? const Center(child: CircularProgressIndicator(color: Colors.white))
+      : _buildDuenoInfo(),
+      bottomNavigationBar: const BottomNavGlobal(selectedIndex: 0),
     );
   }
 
-  Widget _buildErrorState() {
-    return const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.error_outline,
-            size: 80,
-            color: Colors.white70,
-          ),
-          SizedBox(height: 20),
-          Text(
-            'No se pudo cargar la información del dueño',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w500,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
+  // Eliminado método de error (no se usa tras unificación)
 
   Widget _buildDuenoInfo() {
+    final auth = Provider.of<AuthProvider>(context, listen: true);
+    final u = auth.user;
+    final nombre = u != null ? (u['nombre'] ?? '') : '';
+    final apellido = u != null ? (u['apellido'] ?? '') : '';
+    final nombreCompleto = ('$nombre $apellido').trim().isEmpty ? 'Usuario' : ('$nombre $apellido').trim();
+  final telefono = (u?['celular'] ?? '').toString();
+  final email = (u?['correo'] ?? '').toString();
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -151,7 +105,7 @@ class _DuenoModuloPantallaState extends State<DuenoModuloPantalla> {
                 
                 // Nombre completo
                 Text(
-                  dueno!.nombreCompleto,
+                  nombreCompleto,
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -162,21 +116,26 @@ class _DuenoModuloPantallaState extends State<DuenoModuloPantalla> {
                 
                 const SizedBox(height: 8),
                 
-                // Subtítulo "Propietario"
-                Text(
-                  'Propietario',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey.shade600,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
+                Builder(builder: (context){
+                  final auth = Provider.of<AuthProvider>(context, listen: true);
+                  final u = auth.user;
+                  final bool esCuidador = (u?['cuidaConAlguien'] == true || (u?['rol']?.toString().toLowerCase() == 'cuidador'));
+                  final rolTexto = esCuidador ? 'Cuidador' : 'Dueño';
+                  return Text(
+                    rolTexto,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey.shade600,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    textAlign: TextAlign.center,
+                  );
+                }),
                 
                 const SizedBox(height: 30),
                 
                 // Información de contacto
-                _buildInfoSection(),
+                _buildInfoSection(telefono: telefono, email: email),
               ],
             ),
           ),
@@ -248,26 +207,23 @@ class _DuenoModuloPantallaState extends State<DuenoModuloPantalla> {
     }
   }
 
-  Widget _buildInfoSection() {
+  Widget _buildInfoSection({required String telefono, required String email}) {
     return Column(
       children: [
-        _buildInfoItem(
-          icon: Icons.phone,
-          title: 'Teléfono',
-          value: dueno!.telefono,
-        ),
+        if (telefono.isNotEmpty)
+          _buildInfoItem(
+            icon: Icons.phone,
+            title: 'Teléfono',
+            value: telefono,
+          ),
         const SizedBox(height: 20),
         _buildInfoItem(
           icon: Icons.email,
           title: 'Correo electrónico',
-          value: dueno!.email,
+          value: email.isEmpty ? 'No definido' : email,
         ),
         const SizedBox(height: 20),
-        _buildInfoItem(
-          icon: Icons.location_on,
-          title: 'Dirección',
-          value: dueno!.direccion,
-        ),
+        // Dirección eliminada según requerimiento (no se muestra)
       ],
     );
   }
@@ -357,28 +313,4 @@ class _DuenoModuloPantallaState extends State<DuenoModuloPantalla> {
 
 }
 
-class _BottomItem extends StatelessWidget {
-  final IconData icon;
-  final bool selected;
-  final VoidCallback onTap;
-  const _BottomItem({required this.icon, required this.selected, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: selected ? Colors.white : Colors.transparent,
-          shape: BoxShape.circle,
-          boxShadow: selected
-              ? const [BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2))]
-              : null,
-        ),
-        child: Icon(icon, size: 28, color: Colors.black),
-      ),
-    );
-  }
-}
+// _BottomItem eliminado (se usa BottomNavGlobal)

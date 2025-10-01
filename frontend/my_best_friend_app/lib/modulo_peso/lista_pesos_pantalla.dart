@@ -1,31 +1,77 @@
 import 'package:flutter/material.dart';
+import '../modulo_general/widgets/bottom_nav_global.dart';
 import 'detalle_peso.dart';
 import 'peso.dart';
+import 'package:provider/provider.dart';
+import '../../providers/peso_provider.dart';
+import '../../providers/mascotas_provider.dart';
 
 class ListaPesosPantalla extends StatefulWidget {
-  final List<Map<String, dynamic>> registrosPeso;
-
-  const ListaPesosPantalla({
-    Key? key,
-    required this.registrosPeso,
-  }) : super(key: key);
+  final String? mascotaId; // si se desea filtrar por mascota específica
+  const ListaPesosPantalla({Key? key, this.mascotaId}) : super(key: key);
 
   @override
   State<ListaPesosPantalla> createState() => _ListaPesosPantallaState();
 }
 
 class _ListaPesosPantallaState extends State<ListaPesosPantalla> {
-  int _tabIndex = 0; // Índice para la barra de navegación inferior
-  late List<Map<String, dynamic>> _registrosPeso;
-  late List<Map<String, dynamic>> _registrosFiltrados;
+  List<Map<String, dynamic>> _registrosPeso = [];
+  List<Map<String, dynamic>> _registrosFiltrados = [];
   String _filtroSeleccionado = 'Hoy';
+  String? _mascotaSeleccionada;
+  bool _cargandoInicial = true;
+  late final ScrollController _scrollController;
+  VoidCallback? _pesoListener;
 
   @override
   void initState() {
     super.initState();
-    _registrosPeso = List.from(widget.registrosPeso);
-    _aplicarFiltro();
+    _scrollController = ScrollController();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final mascProv = context.read<MascotasProvider>();
+      final pesoProv = context.read<PesoProvider>();
+      if (mascProv.mascotas.isEmpty) {
+        await mascProv.cargarMascotas();
+      }
+      if (widget.mascotaId != null) {
+        _mascotaSeleccionada = widget.mascotaId;
+      } else if (mascProv.mascotas.isNotEmpty) {
+        _mascotaSeleccionada = (mascProv.mascotas.first['_id'] ?? mascProv.mascotas.first['id']).toString();
+      }
+      if (_mascotaSeleccionada != null) {
+        await pesoProv.cargar(mascotaId: _mascotaSeleccionada);
+        _refrescarDesdeProvider();
+        // Escuchar cambios futuros (creación/actualización/eliminación)
+        _pesoListener = () {
+          if (!mounted) return;
+            _refrescarDesdeProvider(autoScrollTop: true);
+        };
+        pesoProv.addListener(_pesoListener!);
+      }
+      setState(() { _cargandoInicial = false; });
+    });
   }
+
+  @override
+  void dispose() {
+    if (_pesoListener != null) {
+      context.read<PesoProvider>().removeListener(_pesoListener!);
+    }
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _refrescarDesdeProvider({bool autoScrollTop = false}) {
+    final pesoProv = context.read<PesoProvider>();
+    if (_mascotaSeleccionada != null) {
+      _registrosPeso = List.from(pesoProv.registros(_mascotaSeleccionada!));
+      _aplicarFiltro();
+      if (autoScrollTop && _scrollController.hasClients) {
+        _scrollController.animateTo(0, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+      }
+    }
+  }
+
 
   String _formatearFecha(DateTime fecha) {
     const meses = [
@@ -39,35 +85,48 @@ class _ListaPesosPantallaState extends State<ListaPesosPantalla> {
   void _aplicarFiltro() {
     final ahora = DateTime.now();
     final hoy = DateTime(ahora.year, ahora.month, ahora.day);
-    
+    DateTime? _parseFecha(dynamic raw) {
+      if (raw is DateTime) return raw;
+      if (raw is String) return DateTime.tryParse(raw);
+      return null;
+    }
     setState(() {
       switch (_filtroSeleccionado) {
         case 'Hoy':
           _registrosFiltrados = _registrosPeso.where((registro) {
-            final fechaRegistro = registro['fecha'] as DateTime;
-            final diaRegistro = DateTime(fechaRegistro.year, fechaRegistro.month, fechaRegistro.day);
+            final fechaRegistro = _parseFecha(registro['fecha']);
+            if (fechaRegistro == null) return false;
+            // Convertir a local si viene en UTC
+            final local = fechaRegistro.toLocal();
+            final diaRegistro = DateTime(local.year, local.month, local.day);
             return diaRegistro.isAtSameMomentAs(hoy);
           }).toList();
           break;
         case '1 sem.':
           final unaSemanaAtras = hoy.subtract(const Duration(days: 7));
           _registrosFiltrados = _registrosPeso.where((registro) {
-            final fechaRegistro = registro['fecha'] as DateTime;
-            return fechaRegistro.isAfter(unaSemanaAtras) && fechaRegistro.isBefore(ahora.add(const Duration(days: 1)));
+            final fechaRegistro = _parseFecha(registro['fecha']);
+            if (fechaRegistro == null) return false;
+            final local = fechaRegistro.toLocal();
+            return local.isAfter(unaSemanaAtras) && local.isBefore(ahora.add(const Duration(days: 1)));
           }).toList();
           break;
         case '1 mes':
           final unMesAtras = DateTime(ahora.year, ahora.month - 1, ahora.day);
           _registrosFiltrados = _registrosPeso.where((registro) {
-            final fechaRegistro = registro['fecha'] as DateTime;
-            return fechaRegistro.isAfter(unMesAtras) && fechaRegistro.isBefore(ahora.add(const Duration(days: 1)));
+            final fechaRegistro = _parseFecha(registro['fecha']);
+            if (fechaRegistro == null) return false;
+            final local = fechaRegistro.toLocal();
+            return local.isAfter(unMesAtras) && local.isBefore(ahora.add(const Duration(days: 1)));
           }).toList();
           break;
         case '1 año':
           final unAnoAtras = DateTime(ahora.year - 1, ahora.month, ahora.day);
           _registrosFiltrados = _registrosPeso.where((registro) {
-            final fechaRegistro = registro['fecha'] as DateTime;
-            return fechaRegistro.isAfter(unAnoAtras) && fechaRegistro.isBefore(ahora.add(const Duration(days: 1)));
+            final fechaRegistro = _parseFecha(registro['fecha']);
+            if (fechaRegistro == null) return false;
+            final local = fechaRegistro.toLocal();
+            return local.isAfter(unAnoAtras) && local.isBefore(ahora.add(const Duration(days: 1)));
           }).toList();
           break;
         case 'Personalizado':
@@ -106,7 +165,14 @@ class _ListaPesosPantallaState extends State<ListaPesosPantalla> {
       setState(() {
         _filtroSeleccionado = 'Personalizado';
         _registrosFiltrados = _registrosPeso.where((registro) {
-          final fechaRegistro = registro['fecha'] as DateTime;
+          DateTime? fechaRegistro;
+          final raw = registro['fecha'];
+          if (raw is DateTime) {
+            fechaRegistro = raw;
+          } else if (raw is String) {
+            fechaRegistro = DateTime.tryParse(raw);
+          }
+          if (fechaRegistro == null) return false;
           return fechaRegistro.isAfter(rango.start.subtract(const Duration(days: 1))) &&
                  fechaRegistro.isBefore(rango.end.add(const Duration(days: 1)));
         }).toList();
@@ -134,10 +200,12 @@ class _ListaPesosPantallaState extends State<ListaPesosPantalla> {
             TextButton(
               onPressed: () {
                 final registroAEliminar = _registrosFiltrados[index];
-                setState(() {
-                  _registrosPeso.remove(registroAEliminar);
+                final id = registroAEliminar['_id'] ?? registroAEliminar['id'];
+                context.read<PesoProvider>().eliminar(id).then((ok) {
+                  if (ok) {
+                    _refrescarDesdeProvider();
+                  }
                 });
-                _aplicarFiltro();
                 Navigator.of(context).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -158,15 +226,53 @@ class _ListaPesosPantallaState extends State<ListaPesosPantalla> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => PesoPantalla(registrosExistentes: _registrosPeso),
+        builder: (context) => PesoPantalla(mascotaId: _mascotaSeleccionada),
       ),
-    ).then((result) {
-      if (result != null && result is List<Map<String, dynamic>>) {
-        setState(() {
-          _registrosPeso = result;
-        });
-      }
-    });
+    ).then((_) => _refrescarDesdeProvider());
+  }
+
+  Widget _buildSelectorMascota() {
+    final mascProv = context.watch<MascotasProvider>();
+    final mascotas = mascProv.mascotas;
+    if (mascotas.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      alignment: Alignment.centerLeft,
+      child: DropdownButtonHideUnderline(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white24),
+          ),
+          child: DropdownButton<String>(
+            value: _mascotaSeleccionada,
+            dropdownColor: const Color(0xFF4CAF50),
+            iconEnabledColor: Colors.white,
+            style: const TextStyle(color: Colors.white, fontSize: 14),
+            items: mascotas.map<DropdownMenuItem<String>>((m) {
+              final id = (m['_id'] ?? m['id']).toString();
+              final nombre = m['nombre']?.toString() ?? 'Mascota';
+              return DropdownMenuItem<String>(
+                value: id,
+                child: Text(nombre, style: const TextStyle(color: Colors.white)),
+              );
+            }).toList(),
+            onChanged: (nuevo) async {
+              if (nuevo == null) return;
+              setState(() { _mascotaSeleccionada = nuevo; _cargandoInicial = true; });
+              final pesoProv = context.read<PesoProvider>();
+              await pesoProv.cargar(mascotaId: nuevo);
+              _refrescarDesdeProvider(autoScrollTop: true);
+              setState(() { _cargandoInicial = false; });
+            },
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -199,6 +305,8 @@ class _ListaPesosPantallaState extends State<ListaPesosPantalla> {
       ),
       body: Column(
         children: [
+          // Selector de mascota
+          _buildSelectorMascota(),
           // Filtros
           Container(
             color: const Color(0xFF4CAF50),
@@ -240,6 +348,9 @@ class _ListaPesosPantallaState extends State<ListaPesosPantalla> {
             ),
           ),
           
+          if (_cargandoInicial)
+            const Expanded(child: Center(child: CircularProgressIndicator(color: Colors.white)))
+          else
           // Lista de registros
           Expanded(
             child: Container(
@@ -268,11 +379,15 @@ class _ListaPesosPantallaState extends State<ListaPesosPantalla> {
                       ),
                     )
                   : ListView.builder(
+                      controller: _scrollController,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       itemCount: _registrosFiltrados.length,
                       itemBuilder: (context, index) {
                         final registro = _registrosFiltrados[index];
-                        final fecha = registro['fecha'] as DateTime;
+            final fechaRaw = registro['fecha'];
+            final fecha = (fechaRaw is DateTime)
+              ? fechaRaw
+              : (fechaRaw is String ? DateTime.tryParse(fechaRaw) ?? DateTime.now() : DateTime.now());
                         
                         return Container(
                           margin: const EdgeInsets.only(bottom: 12),
@@ -306,7 +421,7 @@ class _ListaPesosPantallaState extends State<ListaPesosPantalla> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      '${_formatearPesoParaLista(registro['pesoNumerico'] as double)} kg',
+                                      '${_formatearPesoParaLista(_parsePeso(registro))} kg',
                                       style: const TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
@@ -320,10 +435,12 @@ class _ListaPesosPantallaState extends State<ListaPesosPantalla> {
                                         color: Colors.grey.shade600,
                                       ),
                                     ),
-                                    if (registro['notas'] != null && registro['notas'].toString().isNotEmpty) ...[
+                                    // Mostrar notas u observaciones si existen
+                                    if ((registro['notas'] != null && registro['notas'].toString().isNotEmpty) ||
+                                        (registro['observaciones'] != null && registro['observaciones'].toString().isNotEmpty)) ...[
                                       const SizedBox(height: 2),
                                       Text(
-                                        registro['notas'].toString(),
+                                        registro['notas']?.toString() ?? registro['observaciones']?.toString() ?? '',
                                         style: TextStyle(
                                           fontSize: 11,
                                           color: Colors.grey.shade700,
@@ -346,14 +463,15 @@ class _ListaPesosPantallaState extends State<ListaPesosPantalla> {
                                     MaterialPageRoute(
                                       builder: (context) => DetallePesoPantalla(
                                         registro: registro,
-                                        onActualizar: (registroActualizado) {
-                                          final indiceOriginal = _registrosPeso.indexOf(registro);
-                                          if (indiceOriginal != -1) {
-                                            setState(() {
-                                              _registrosPeso[indiceOriginal] = registroActualizado;
-                                            });
-                                            _aplicarFiltro();
-                                          }
+                                        onActualizar: (regAct) async {
+                                          final id = registro['_id'] ?? registro['id'];
+                                          final cambios = {
+                                            'peso': _parsePeso(regAct),
+                                            'fecha': regAct['fecha'],
+                                            'observaciones': regAct['notas'],
+                                          };
+                                          await context.read<PesoProvider>().actualizar(id, cambios);
+                                          _refrescarDesdeProvider();
                                         },
                                       ),
                                     ),
@@ -376,38 +494,7 @@ class _ListaPesosPantallaState extends State<ListaPesosPantalla> {
         ],
       ),
       
-      // Barra de navegación inferior
-      bottomNavigationBar: Container(
-        height: 64,
-        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade300,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: const [
-            BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 3)),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _BottomItem(
-              icon: Icons.pets,
-              selected: _tabIndex == 0,
-              onTap: () => setState(() => _tabIndex = 0),
-            ),
-            _BottomItem(
-              icon: Icons.calendar_month,
-              selected: _tabIndex == 1,
-              onTap: () => setState(() => _tabIndex = 1),
-            ),
-            _BottomItem(
-              icon: Icons.settings,
-              selected: _tabIndex == 2,
-              onTap: () => setState(() => _tabIndex = 2),
-            ),
-          ],
-        ),
-      ),
+      bottomNavigationBar: const BottomNavGlobal(selectedIndex: 0),
     );
   }
 }
@@ -450,33 +537,12 @@ class _FilterChip extends StatelessWidget {
   }
 }
 
-class _BottomItem extends StatelessWidget {
-  final IconData icon;
-  final bool selected;
-  final VoidCallback onTap;
+// _BottomItem eliminado (se usa BottomNavGlobal)
 
-  const _BottomItem({
-    required this.icon,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: selected ? Colors.white : Colors.transparent,
-          shape: BoxShape.circle,
-          boxShadow: selected
-              ? const [BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2))]
-              : null,
-        ),
-        child: Icon(icon, size: 28, color: Colors.black),
-      ),
-    );
+  double _parsePeso(Map<String, dynamic> registro) {
+    final p = registro['peso'];
+    if (p is num) return p.toDouble();
+    if (p is String) return double.tryParse(p) ?? 0.0;
+    if (registro['pesoNumerico'] is num) return (registro['pesoNumerico'] as num).toDouble();
+    return 0.0;
   }
-}

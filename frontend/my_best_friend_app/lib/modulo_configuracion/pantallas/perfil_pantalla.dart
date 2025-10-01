@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../providers/auth_provider.dart';
 
 class PerfilPantalla extends StatefulWidget {
   const PerfilPantalla({Key? key}) : super(key: key);
@@ -15,10 +17,19 @@ class _PerfilPantallaState extends State<PerfilPantalla> {
   @override
   void initState() {
     super.initState();
-    // Cargar datos existentes del usuario
-    _nombreController.text = 'Brayan Dimate';
-    _emailController.text = 'bryandimate2023@gmail.com';
-    _telefonoController.text = '+57 300 123 4567';
+    // Cargar datos desde AuthProvider si existen
+    // Se difiere a post frame para asegurar que el provider esté montado
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final auth = context.read<AuthProvider>();
+      final u = auth.user;
+      if (u != null) {
+        final nombre = '${u['nombre'] ?? ''} ${u['apellido'] ?? ''}'.trim();
+        _nombreController.text = nombre.isEmpty ? 'Sin nombre' : nombre;
+        _emailController.text = u['correo'] ?? '';
+        // No tienes teléfono en el modelo? Podrías agregarlo; por ahora dejar vacío o placeholder.
+        _telefonoController.text = u['celular'] ?? '';
+      }
+    });
   }
 
   @override
@@ -221,10 +232,11 @@ class _PerfilPantallaState extends State<PerfilPantalla> {
   }
 
   void _guardarCambios() {
-    // Aquí implementarías la lógica para guardar los cambios
+    // TODO: Implementar endpoint de actualización de perfil en ApiService.
+    // De momento sólo mostramos snackbar y regresamos.
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Cambios guardados exitosamente'),
+        content: Text('Cambios guardados (solo local, falta API).'),
         backgroundColor: Color(0xFF4CAF50),
       ),
     );

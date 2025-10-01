@@ -27,18 +27,41 @@ class _DetallePesoPantallaState extends State<DetallePesoPantalla> {
   @override
   void initState() {
     super.initState();
-    
-    // Usar el valor numérico si existe, sino parsearlo del texto
-    final pesoKg = widget.registro.containsKey('pesoNumerico') 
-        ? widget.registro['pesoNumerico'] as double
-        : double.tryParse(widget.registro['peso']) ?? 0;
-    
+
+    // Robustly parse peso from registro (can be int, double, or String)
+    double pesoKg = 0;
+    if (widget.registro.containsKey('pesoNumerico')) {
+      final dynamic pesoNum = widget.registro['pesoNumerico'];
+      if (pesoNum is num) {
+        pesoKg = pesoNum.toDouble();
+      } else if (pesoNum is String) {
+        pesoKg = double.tryParse(pesoNum) ?? 0;
+      }
+    } else if (widget.registro.containsKey('peso')) {
+      final dynamic pesoVal = widget.registro['peso'];
+      if (pesoVal is num) {
+        pesoKg = pesoVal.toDouble();
+      } else if (pesoVal is String) {
+        pesoKg = double.tryParse(pesoVal) ?? 0;
+      }
+    }
+
     _pesoKgController = TextEditingController(text: _formatearPeso(pesoKg));
     _pesoGrController = TextEditingController(text: (pesoKg * 1000).toStringAsFixed(0));
-    _notasController = TextEditingController(text: widget.registro['notas'] ?? '');
-    _fechaMedicion = widget.registro['fecha'] as DateTime;
-    _fechaCreacion = widget.registro['fecha'] as DateTime;
-    
+    _notasController = TextEditingController(text: (widget.registro['notas'] ?? '').toString());
+    // Parse fecha as DateTime if it's a String, otherwise use as DateTime
+    final dynamic fechaRaw = widget.registro['fecha'];
+    if (fechaRaw is String) {
+      _fechaMedicion = DateTime.parse(fechaRaw);
+      _fechaCreacion = DateTime.parse(fechaRaw);
+    } else if (fechaRaw is DateTime) {
+      _fechaMedicion = fechaRaw;
+      _fechaCreacion = fechaRaw;
+    } else {
+      _fechaMedicion = DateTime.now();
+      _fechaCreacion = DateTime.now();
+    }
+
     // Inicializar preview
     _pesoPreview = 'Peso de Mascota = ${_formatearPeso(pesoKg)} kg';
   }

@@ -143,6 +143,18 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Perfil del usuario autenticado
+// Devuelve la información del usuario actual (según el token)
+// GET /api/usuarios/perfil
+router.get('/perfil', protegerRuta, async (req, res) => {
+  try {
+    // req.usuario ya viene sin la contraseña por el middleware protegerRuta
+    res.json(req.usuario);
+  } catch (error) {
+    res.status(500).json({ error: 'Error al obtener el perfil' });
+  }
+});
+
 // Actualizar usuario (sólo el propio usuario puede actualizar su perfil)
 router.put('/:id', protegerRuta, async (req, res) => {
   try {

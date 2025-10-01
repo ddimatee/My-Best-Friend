@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../modulo_general/widgets/bottom_nav_global.dart';
 import '../modulo_peso/widgets/calendario_selector.dart';
 import 'configuracion_avanzada_calendario.dart';
 
@@ -271,38 +272,7 @@ class _ConfiguracionRecordatorioCalendarioState extends State<ConfiguracionRecor
         ],
       ),
       
-      // Bottom Navigation Bar
-      bottomNavigationBar: Container(
-        height: 64,
-        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade300,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: const [
-            BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 3)),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _BottomItem(
-              icon: Icons.pets,
-              selected: true,
-              onTap: () => Navigator.popUntil(context, (route) => route.isFirst),
-            ),
-            _BottomItem(
-              icon: Icons.calendar_month,
-              selected: false,
-              onTap: () {},
-            ),
-            _BottomItem(
-              icon: Icons.settings,
-              selected: false,
-              onTap: () {},
-            ),
-          ],
-        ),
-      ),
+  bottomNavigationBar: const BottomNavGlobal(selectedIndex: -1),
     );
   }
 }
@@ -371,29 +341,4 @@ class _ConfiguracionItem extends StatelessWidget {
   }
 }
 
-class _BottomItem extends StatelessWidget {
-  final IconData icon;
-  final bool selected;
-  final VoidCallback onTap;
-  
-  const _BottomItem({required this.icon, required this.selected, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: selected ? Colors.white : Colors.transparent,
-          shape: BoxShape.circle,
-          boxShadow: selected
-              ? const [BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2))]
-              : null,
-        ),
-        child: Icon(icon, size: 28, color: Colors.black),
-      ),
-    );
-  }
-}
+// _BottomItem eliminado (se usa BottomNavGlobal)

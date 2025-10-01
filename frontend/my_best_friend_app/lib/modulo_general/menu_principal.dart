@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 
 // Menú principal con barra superior, tarjeta de mascota y navegación inferior.
@@ -9,13 +8,16 @@ import '../modulo_calendario/calendario.dart';
 import 'placeholder_funcion.dart';
 import 'buscar.dart';
 import '../modulo_peso/peso.dart';
+import '../modulo_peso/lista_pesos_pantalla.dart'; // NUEVO import
 import '../modulo_vacunas/vacunas_pantalla.dart'; // NUEVO import
 import '../modulo_eventos/eventos_pantalla.dart'; // NUEVO import
 import '../modulo_calendario/calendario_modulo_pantalla.dart'; // NUEVO import calendario
 import '../modulo_album/album_modulo_pantalla.dart'; // NUEVO import álbum
 import '../modulo_dueno/dueno_modulo_pantalla.dart'; // NUEVO import dueño
 import '../modulo_configuracion/configuracion_modulo_pantalla.dart'; // NUEVO import configuración
-import 'datos/mascota_model.dart';
+// Eliminado uso de modelo legacy; trabajamos directo con Map de provider
+import 'package:provider/provider.dart';
+import '../../providers/mascotas_provider.dart';
 import 'editar_mascota_pantalla.dart';
 
 class MenuPrincipal extends StatefulWidget {
@@ -28,22 +30,28 @@ class MenuPrincipal extends StatefulWidget {
 
 class _MenuPrincipalState extends State<MenuPrincipal> {
   final Color green = const Color(0xFF4CAF50);
-  late int _tabIndex; // 0: Mascota, 1: Calendario, 2: Ajustes
+  late int _tabIndex; // 0: Mascotas, 1: Calendario, 2: Configuración
   bool _visible = true; // segment Visible/Oculto
-  final MascotasRepo _repo = MascotasRepo();
+  // Eliminamos dependencia directa de MascotasRepo para usar provider
 
-  void _onRepoChange() => setState(() {});
 
   @override
   void initState() {
     super.initState();
     _tabIndex = widget.initialTab;
-    _repo.addListener(_onRepoChange);
+    // Cargar mascotas desde backend si hay sesión
+    // Usamos addPostFrameCallback para esperar que el contexto esté listo
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      try {
+        final mascotasProv = context.read<MascotasProvider>();
+        mascotasProv.cargarMascotas();
+      } catch (_) {}
+    });
   }
 
   @override
   void dispose() {
-    _repo.removeListener(_onRepoChange);
     super.dispose();
   }
 
@@ -93,7 +101,12 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
                           imageQuality: 85,
                         );
                         if (image != null) {
-                          _repo.actualizarImagen(mascotaId, image.path);
+                          final prov = context.read<MascotasProvider>();
+                          final ok = await prov.subirFoto(mascotaId, image.path);
+                          if (!mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(ok ? 'Foto actualizada' : (prov.error ?? 'Error actualizando foto'))),
+                          );
                         }
                       },
                     ),
@@ -109,16 +122,27 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
                           imageQuality: 85,
                         );
                         if (image != null) {
-                          _repo.actualizarImagen(mascotaId, image.path);
+                          final prov = context.read<MascotasProvider>();
+                          final ok = await prov.subirFoto(mascotaId, image.path);
+                          if (!mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(ok ? 'Foto actualizada' : (prov.error ?? 'Error actualizando foto'))),
+                          );
                         }
                       },
                     ),
                     _OpcionImagen(
                       icon: Icons.delete,
                       label: 'Eliminar',
-                      onTap: () {
+                      onTap: () async {
                         Navigator.pop(context);
-                        _repo.actualizarImagen(mascotaId, null);
+                        final prov = context.read<MascotasProvider>();
+                        // Limpiar foto -> actualizarMascota con fotoPerfil vacío
+                        final ok = await prov.actualizarMascota(mascotaId, {'fotoPerfil': ''});
+                        if (!mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(ok ? 'Foto eliminada' : (prov.error ?? 'Error eliminando foto'))),
+                        );
                       },
                     ),
                   ],
@@ -132,7 +156,7 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
     );
   }
 
-  Future<void> _mostrarMenuMascota(Mascota mascota) async {
+  Future<void> _mostrarMenuMascota(Map<String,dynamic> mascota) async {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -147,7 +171,7 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Opciones para ${mascota.nombre}',
+                  'Opciones para ${mascota['nombre'] ?? ''}',
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -162,20 +186,22 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => EditarMascotaPantalla(mascotaId: mascota.id),
+                        builder: (_) => EditarMascotaPantalla(mascotaId: (mascota['_id'] ?? mascota['id']).toString()),
                       ),
                     );
                   },
                 ),
                 ListTile(
                   leading: Icon(
-                    mascota.oculto ? Icons.visibility : Icons.visibility_off,
+                    (mascota['oculto'] == true) ? Icons.visibility : Icons.visibility_off,
                     color: const Color(0xFF4CAF50),
                   ),
-                  title: Text(mascota.oculto ? 'Mostrar mascota' : 'Ocultar mascota'),
+                  title: Text(mascota['oculto'] == true ? 'Mostrar mascota' : 'Ocultar mascota'),
                   onTap: () {
                     Navigator.pop(context);
-                    _repo.toggleOculto(mascota.id);
+                    final prov = context.read<MascotasProvider>();
+                    final id = (mascota['_id'] ?? mascota['id']).toString();
+                    prov.toggleOculto(id);
                   },
                 ),
                 ListTile(
@@ -195,13 +221,13 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
     );
   }
 
-  Future<void> _confirmarEliminarMascota(Mascota mascota) async {
+  Future<void> _confirmarEliminarMascota(Map<String,dynamic> mascota) async {
     final resultado = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Eliminar mascota'),
-          content: Text('¿Estás seguro de que quieres eliminar a ${mascota.nombre}? Esta acción no se puede deshacer.'),
+          content: Text('¿Estás seguro de que quieres eliminar a ${mascota['nombre']}? Esta acción no se puede deshacer.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -218,9 +244,12 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
     );
 
     if (resultado == true) {
-      _repo.eliminar(mascota.id);
+      final prov = context.read<MascotasProvider>();
+  final id = (mascota['_id'] ?? mascota['id']).toString();
+  final ok = await prov.eliminarMascota(id);
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${mascota.nombre} ha sido eliminado')),
+  SnackBar(content: Text(ok ? '${mascota['nombre']} ha sido eliminado' : (prov.error ?? 'Error eliminando mascota'))),
       );
     }
   }
@@ -306,12 +335,13 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
     );
   }
 
-  // Lista dinámica de tarjetas de mascotas (visibles u ocultas).
+  // Lista dinámica de tarjetas de mascotas (visibles u ocultas) usando Map directamente.
   Widget _buildPetCardsList() {
-    final visibles = _repo.visibles;
-    final ocultas = _repo.ocultas;
+    final mascotasProvider = context.watch<MascotasProvider>();
+    final todas = mascotasProvider.mascotas;
+    final visibles = todas.where((m) => !(m['oculto'] == true)).toList();
+    final ocultas = todas.where((m) => m['oculto'] == true).toList();
     final lista = _visible ? visibles : ocultas;
-
     if (visibles.isEmpty && ocultas.isEmpty) {
       return _emptyState('Aún no has agregado una mascota');
     }
@@ -349,7 +379,7 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
     );
   }
 
-  Widget _petCard(Mascota m) {
+  Widget _petCard(Map<String,dynamic> m) {
     return Container(
       margin: const EdgeInsets.only(bottom: 18),
       decoration: BoxDecoration(
@@ -362,7 +392,7 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
           _buildPatternStrip(),
           const SizedBox(height: 12),
           GestureDetector(
-            onTap: () => _cambiarFotoMascota(m.id),
+            onTap: () => _cambiarFotoMascota((m['_id'] ?? m['id']).toString()),
             child: Stack(
               children: [
                 Container(
@@ -408,9 +438,9 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
             ),
           ),
           const SizedBox(height: 8),
-          Text(m.nombre, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+          Text(m['nombre'] ?? 'Sin nombre', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
           const SizedBox(height: 4),
-          Text(m.obtenerEdadFormateada(), style: TextStyle(color: Colors.grey.shade800, fontSize: 14)),
+          Text(_edadFormateada(m), style: TextStyle(color: Colors.grey.shade800, fontSize: 14)),
           const SizedBox(height: 12),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8),
@@ -428,7 +458,7 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _FeatureButton(label: 'Calendario', onTap: () => _openFeature('Calendario')),
+                    _FeatureButton(label: 'Recordatorios', onTap: () => _openFeature('Recordatorios')),
                     _FeatureButton(label: 'Eventos', onTap: () => _openFeature('Eventos')),
                     _FeatureButton(label: 'Dueño', onTap: () => _openFeature('Dueño')),
                   ],
@@ -455,7 +485,7 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
     if (title == 'Peso') {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => const PesoPantalla()),
+        MaterialPageRoute(builder: (_) => const ListaPesosPantalla()),
       );
     } else if (title == 'Vacunas') { // NUEVO caso
       Navigator.push(
@@ -467,7 +497,7 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
         context,
         MaterialPageRoute(builder: (_) => const EventosPantalla()),
       );
-    } else if (title == 'Calendario') { // NUEVO caso calendario
+  } else if (title == 'Recordatorios') { // Caso para módulo de recordatorios/calendario
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const CalendarioModuloPantalla()),
@@ -488,6 +518,22 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
         MaterialPageRoute(builder: (_) => PlaceholderFuncionPantalla(title: title)),
       );
     }
+  }
+
+  String _edadFormateada(Map<String,dynamic> m) {
+    final fechaStr = m['fechaNacimiento'] ?? m['fecha_nac'] ?? m['createdAt'];
+    DateTime? base;
+    if (fechaStr is String) base = DateTime.tryParse(fechaStr);
+    if (base == null) return '';
+    final diff = DateTime.now().difference(base);
+    final dias = diff.inDays;
+    final meses = (dias / 30.44).floor();
+    if (meses == 0) return '$dias días';
+    if (meses < 12) return '$dias días ($meses meses)';
+  final anios = (meses / 12).floor();
+  final rem = meses % 12;
+  if (rem == 0) return '$anios ${anios==1?'año':'años'}';
+  return '$anios ${anios==1?'año':'años'} y $rem ${rem==1?'mes':'meses'}';
   }
 
   Widget _buildContentForTab() {
@@ -577,27 +623,18 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
   }
 
   // Método para obtener la decoración de imagen que funciona tanto en web como móvil
-  DecorationImage? _getImageDecoration(Mascota m) {
-    if (m.imagenPath != null) {
-      // Para móvil usa FileImage, para web usa NetworkImage con el path
-      if (kIsWeb) {
-        return DecorationImage(
-          image: NetworkImage(m.imagenPath!),
-          fit: BoxFit.cover,
-        );
-      } else {
-        return DecorationImage(
-          image: FileImage(File(m.imagenPath!)),
-          fit: BoxFit.cover,
-        );
-      }
-    } else {
-      // Imagen por defecto
-      return const DecorationImage(
-        image: AssetImage('assets/images/perro_logo.png'),
+  DecorationImage? _getImageDecoration(Map<String,dynamic> m) {
+    final path = m['fotoPerfil'];
+    if (path is String && path.isNotEmpty) {
+      return DecorationImage(
+        image: NetworkImage(path),
         fit: BoxFit.cover,
       );
     }
+    return const DecorationImage(
+      image: AssetImage('assets/images/perro_logo.png'),
+      fit: BoxFit.cover,
+    );
   }
 }
 

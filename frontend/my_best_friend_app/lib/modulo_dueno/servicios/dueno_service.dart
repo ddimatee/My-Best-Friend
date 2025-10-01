@@ -49,13 +49,15 @@ class DuenoService {
   }
 
   DuenoModel _crearDuenoPorDefecto() {
+    // TODO: Reemplazar estos valores por datos del AuthProvider cuando el usuario esté autenticado
     return DuenoModel(
       id: 'dueno_001',
-      nombre: 'Brayan',
-      apellido: 'Dimate',
-      telefono: '+57 300 123 4567',
-      email: 'brayan.dimate@email.com',
-      direccion: 'Calle 123 #45-67, Bogotá, Colombia',
+      nombre: 'Usuario',
+      apellido: '',
+      telefono: '',
+      email: '',
+      direccion: null,
+      rol: 'dueno',
       fechaCreacion: DateTime.now(),
     );
   }

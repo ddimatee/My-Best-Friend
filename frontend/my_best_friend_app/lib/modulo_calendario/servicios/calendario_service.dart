@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../modelos/evento_calendario.dart';
+import '../../services/api_service.dart';
 
 class CalendarioService {
   static const String _keyEventosCalendario = 'eventos_calendario_guardados';
@@ -79,6 +80,21 @@ class CalendarioService {
       return false;
     } catch (e) {
       return false;
+    }
+  }
+
+  // Obtener recordatorios de vacunas desde el backend
+  static Future<List<Map<String, dynamic>>> obtenerRecordatoriosVacunas() async {
+    try {
+      final apiService = ApiService();
+      final response = await apiService.obtenerRecordatoriosVacunas();
+      if (response['ok'] == true && response['recordatorios'] != null) {
+        return List<Map<String, dynamic>>.from(response['recordatorios']);
+      }
+      return [];
+    } catch (e) {
+      print('Error al obtener recordatorios de vacunas: $e');
+      return [];
     }
   }
 }

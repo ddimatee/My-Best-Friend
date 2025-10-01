@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../menu_principal.dart';
-import '../../datos/mascota_model.dart';
+// Eliminamos dependencia directa de MascotasRepo para usar provider/backend
+import 'package:provider/provider.dart';
+import '../../../../providers/mascotas_provider.dart';
 import 'estado.dart';
 
 class MascotaPasoCargandoPantalla extends StatefulWidget {
@@ -15,33 +17,40 @@ class _MascotaPasoCargandoPantallaState extends State<MascotaPasoCargandoPantall
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(milliseconds: 1200), () {
-      if (!mounted) return;
-      // Crear la mascota en el repositorio si hay estado.
-      final repo = MascotasRepo();
-      final st = widget.estado;
-      if (st != null) {
-        final nombre = st.name?.isNotEmpty == true ? st.name! : 'Mascota';
-        repo.agregar(Mascota(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
-          nombre: nombre,
-          creado: DateTime.now(),
-          cumpleanos: st.birthday,
-          situacion: st.situation,
-          sexo: st.sex,
-          raza: st.breed,
-          seguimiento: st.tracking,
-          estiloVida: st.lifestyle,
-          coCuidado: st.coCare,
-          rol: st.role,
-        ));
-      }
-      // Ir al menú principal y limpiar el historial para que no vuelva al formulario.
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const MenuPrincipal()),
-        (route) => false,
-      );
+    _crear();
+  }
+
+  Future<void> _crear() async {
+    final st = widget.estado;
+    final provider = context.read<MascotasProvider>();
+    if (st == null) {
+      _irMenu();
+      return;
+    }
+    final nombre = st.name?.isNotEmpty == true ? st.name! : 'Mascota';
+    // El formulario no tiene campo especie explícito: asumimos 'perro' por defecto.
+    final ok = await provider.crearMascota({
+      'nombre': nombre,
+      'especie': 'perro',
+      'raza': st.breed ?? 'Desconocida',
+      'fechaNacimiento': st.birthday ?? DateTime.now(),
+      'sexo': (st.sex ?? 'Macho').toLowerCase().startsWith('h') ? 'hembra' : 'macho',
+      'descripcion': st.situation,
     });
+    if (!mounted) return;
+    if (!ok) {
+      // Mostrar error breve y regresar (o permitir reintento)
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error creando mascota. Intenta de nuevo.')));
+    }
+    _irMenu();
+  }
+
+  void _irMenu() {
+    if (!mounted) return;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const MenuPrincipal()),
+      (route) => false,
+    );
   }
 
   @override
@@ -60,6 +69,8 @@ class _MascotaPasoCargandoPantallaState extends State<MascotaPasoCargandoPantall
             Text('Cargando tus datos\ningresados...',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900)),
+            SizedBox(height: 24),
+            CircularProgressIndicator(color: Colors.white),
           ],
         ),
       ),

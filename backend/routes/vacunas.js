@@ -11,6 +11,7 @@ router.post('/', protegerRuta, async (req, res) => {
       usuario: req.usuario._id
     });
     await nuevaVacuna.save();
+    
     await nuevaVacuna.populate('mascota', 'nombre raza');
     
     res.status(201).json({ 
@@ -18,6 +19,7 @@ router.post('/', protegerRuta, async (req, res) => {
       vacuna: nuevaVacuna 
     });
   } catch (error) {
+    console.error('❌ Error:', error.message);
     res.status(400).json({ error: error.message });
   }
 });
@@ -112,6 +114,35 @@ router.get('/estadisticas', protegerRuta, async (req, res) => {
   }
 });
 
+// Obtener recordatorios activos de vacunas para el calendario
+router.get('/recordatorios', protegerRuta, async (req, res) => {
+  try {
+    const vacunasConRecordatorio = await Vacuna.find({
+      usuario: req.usuario._id,
+      'recordatorio.activo': true,
+      'recordatorio.fechaRecordatorio': { $exists: true }
+    })
+      .populate('mascota', 'nombre raza fotoPerfil')
+      .sort({ 'recordatorio.fechaRecordatorio': 1 });
+    
+    // Transformar las vacunas a un formato compatible con el calendario
+    const recordatorios = vacunasConRecordatorio.map(vacuna => ({
+      id: vacuna._id,
+      titulo: `Recordatorio: ${vacuna.nombre}`,
+      descripcion: vacuna.observaciones || `Vacuna para ${vacuna.mascota?.nombre || 'mascota'}`,
+      categoria: 'Vacuna',
+      fechaHora: vacuna.recordatorio.fechaRecordatorio,
+      tipo: 'vacuna',
+      mascota: vacuna.mascota,
+      ubicacion: vacuna.ubicacion || ''
+    }));
+    
+    res.json(recordatorios);
+  } catch (error) {
+    res.status(500).json({ error: 'Error al obtener recordatorios de vacunas' });
+  }
+});
+
 // Actualizar vacuna
 router.put('/:id', protegerRuta, async (req, res) => {
   try {
@@ -127,6 +158,7 @@ router.put('/:id', protegerRuta, async (req, res) => {
     
     res.json({ mensaje: 'Vacuna actualizada correctamente', vacuna });
   } catch (error) {
+    console.error('❌ Error:', error.message);
     res.status(400).json({ error: error.message });
   }
 });

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'formularios/formulario_mascota.dart';
-import 'menu_principal.dart';
+import '../modulo_general/widgets/bottom_nav_global.dart';
 
 /// Pantalla intermedia antes del formulario de creación de mascota
 class CrearMascotaNuevaPantalla extends StatefulWidget {
@@ -11,7 +11,6 @@ class CrearMascotaNuevaPantalla extends StatefulWidget {
 }
 
 class _CrearMascotaNuevaPantallaState extends State<CrearMascotaNuevaPantalla> {
-  int _tabIndex = 0; // Para mantener la coherencia con el menú
 
   @override
   Widget build(BuildContext context) {
@@ -141,99 +140,11 @@ class _CrearMascotaNuevaPantallaState extends State<CrearMascotaNuevaPantalla> {
                 ),
               ),
             ),
-            // Barra de navegación inferior usando el código del menú principal
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
-                child: Container(
-                  height: 64,
-                  margin: const EdgeInsets.symmetric(horizontal: 20),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(18),
-                    boxShadow: const [
-                      BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 3)),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _BottomItem(
-                        icon: Icons.pets,
-                        selected: _tabIndex == 0,
-                        onTap: () => Navigator.of(context).pop(),
-                      ),
-                      _BottomItem(
-                        icon: Icons.calendar_month,
-                        selected: _tabIndex == 1,
-                        onTap: () {
-                          Navigator.of(context).pop();
-                          Navigator.pushNamed(context, '/calendario');
-                        },
-                      ),
-                      _BottomItem(
-                        icon: Icons.settings,
-                        selected: _tabIndex == 2,
-                        onTap: () {
-                          Navigator.of(context).pop();
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const MenuPrincipal(initialTab: 2)
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
           ],
         ),
       ),
+      bottomNavigationBar: const BottomNavGlobal(selectedIndex: 0),
     );
   }
 }
-
-class _BottomItem extends StatelessWidget {
-  final IconData icon;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _BottomItem({
-    required this.icon,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: selected ? Colors.white : Colors.transparent,
-          shape: BoxShape.circle,
-          boxShadow: selected
-              ? const [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 6,
-                    offset: Offset(0, 2),
-                  ),
-                ]
-              : null,
-        ),
-        child: Icon(
-          icon,
-          size: 28,
-          color: Colors.black,
-        ),
-      ),
-    );
-  }
-}
+// Barra inferior reutiliza BottomNavGlobal (se eliminó la implementación local)

@@ -4,7 +4,8 @@ class DuenoModel {
   final String apellido;
   final String telefono;
   final String email;
-  final String direccion;
+  final String? direccion; // ahora opcional
+  final String rol; // 'dueno' o 'cuidador'
   final String? fotoPerfil;
   final DateTime fechaCreacion;
 
@@ -14,7 +15,8 @@ class DuenoModel {
     required this.apellido,
     required this.telefono,
     required this.email,
-    required this.direccion,
+    this.direccion,
+    this.rol = 'dueno',
     this.fotoPerfil,
     required this.fechaCreacion,
   });
@@ -28,7 +30,8 @@ class DuenoModel {
       'apellido': apellido,
       'telefono': telefono,
       'email': email,
-      'direccion': direccion,
+      if (direccion != null) 'direccion': direccion,
+      'rol': rol,
       'fotoPerfil': fotoPerfil,
       'fechaCreacion': fechaCreacion.toIso8601String(),
     };
@@ -41,7 +44,8 @@ class DuenoModel {
       apellido: json['apellido']?.toString() ?? '',
       telefono: json['telefono']?.toString() ?? '',
       email: json['email']?.toString() ?? '',
-      direccion: json['direccion']?.toString() ?? '',
+      direccion: json['direccion']?.toString(),
+      rol: (json['rol']?.toString() ?? 'dueno'),
       fotoPerfil: json['fotoPerfil']?.toString(),
       fechaCreacion: DateTime.tryParse(json['fechaCreacion']?.toString() ?? '') ?? DateTime.now(),
     );
@@ -54,6 +58,7 @@ class DuenoModel {
     String? telefono,
     String? email,
     String? direccion,
+    String? rol,
     String? fotoPerfil,
     DateTime? fechaCreacion,
   }) {
@@ -64,6 +69,7 @@ class DuenoModel {
       telefono: telefono ?? this.telefono,
       email: email ?? this.email,
       direccion: direccion ?? this.direccion,
+      rol: rol ?? this.rol,
       fotoPerfil: fotoPerfil ?? this.fotoPerfil,
       fechaCreacion: fechaCreacion ?? this.fechaCreacion,
     );

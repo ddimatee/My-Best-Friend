@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'datos/mascota_model.dart';
 import 'busqueda/buscador_global.dart';
+import 'package:provider/provider.dart';
+import '../../providers/mascotas_provider.dart';
 
 // Wrapper en español para pantalla de búsqueda.
 class BuscarPantalla extends StatefulWidget {
@@ -11,7 +12,6 @@ class BuscarPantalla extends StatefulWidget {
 
 class _BuscarPantallaState extends State<BuscarPantalla> {
   final TextEditingController _ctrl = TextEditingController();
-  final MascotasRepo _repo = MascotasRepo();
   final BuscadorGlobal _buscador = BuscadorGlobal();
   String _query = '';
   bool _incluirOcultas = true; // incluir mascotas ocultas en resultados
@@ -19,14 +19,13 @@ class _BuscarPantallaState extends State<BuscarPantalla> {
   @override
   void initState() {
     super.initState();
-    _repo.addListener(_onRepoChange);
+  // Escuchar provider indirectamente via setState en cambios de texto / switch
   }
 
-  void _onRepoChange() => setState(() {});
 
   @override
   void dispose() {
-    _repo.removeListener(_onRepoChange);
+  // No listener directo al provider aquí
     _ctrl.dispose();
     super.dispose();
   }
@@ -96,17 +95,19 @@ class _BuscarPantallaState extends State<BuscarPantalla> {
                             subtitle: Text(r.descripcion, maxLines: 2, overflow: TextOverflow.ellipsis),
                             onTap: r.onTap,
                             trailing: r.id.startsWith('pet:')
-                                ? IconButton(
-                                    tooltip: 'Ocultar / Mostrar',
-                                    icon: Icon(
-                                      _repo.ocultas.any((m) => 'pet:${m.id}' == r.id)
-                                          ? Icons.visibility
-                                          : Icons.visibility_off,
-                                      color: Colors.black87,
-                                    ),
-                                    onPressed: () {
+                                ? Consumer<MascotasProvider>(
+                                    builder: (_, prov, __) {
                                       final petId = r.id.substring(4);
-                                      _repo.toggleOculto(petId);
+                                      final m = prov.buscarPorId(petId);
+                                      final oculto = m != null && (m['oculto'] == true);
+                                      return IconButton(
+                                        tooltip: oculto ? 'Mostrar' : 'Ocultar',
+                                        icon: Icon(
+                                          oculto ? Icons.visibility : Icons.visibility_off,
+                                          color: Colors.black87,
+                                        ),
+                                        onPressed: () => prov.toggleOculto(petId),
+                                      );
                                     },
                                   )
                                 : null,

@@ -1,16 +1,42 @@
 const express = require('express');
 const router = express.Router();
+const path = require('path');
+const fs = require('fs');
+const multer = require('multer');
 const Mascota = require('../models/mascota');
 const Usuario = require('../models/usuario');
 const mongoose = require('mongoose');
 const protegerRuta = require('../middlewares/protegerRuta');
 const { validarMascota, validarId } = require('../middlewares/validaciones');
 
+// ---- Configuración subida de imágenes ----
+const uploadDir = path.join(__dirname, '..', 'uploads', 'mascotas');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    cb(null, `${Date.now()}-${Math.round(Math.random()*1e9)}${ext}`);
+  }
+});
+const fileFilter = (req, file, cb) => {
+  if (/^image\/(jpeg|png|webp|gif)$/.test(file.mimetype)) return cb(null, true);
+  cb(new Error('Formato de imagen no permitido')); }
+const upload = multer({
+  storage,
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
+  fileFilter
+});
+
 // Registrar nueva mascota
 router.post('/', protegerRuta, validarMascota, async (req, res) => {
   try {
+    const { fechaNacimiento, fecha_nac, ...resto } = req.body;
     const nuevaMascota = new Mascota({
-      ...req.body,
+      ...resto,
+      fecha_nac: fechaNacimiento || fecha_nac,
       dueño: req.usuario._id
     });
     await nuevaMascota.save();
@@ -70,12 +96,18 @@ router.get('/:id', protegerRuta, async (req, res) => {
 
 router.put('/:id', protegerRuta, async (req, res) => {
   try {
+    const { fechaNacimiento, fecha_nac, ...resto } = req.body;
+    const update = { ...resto };
+    if (fechaNacimiento || fecha_nac) {
+      update.fecha_nac = fechaNacimiento || fecha_nac;
+    }
     const mascota = await Mascota.findOneAndUpdate(
       { _id: req.params.id, dueño: req.usuario._id },
-      req.body,
+      update,
       { new: true, runValidators: true }
-    ).populate('dueño', 'nombre apellido correo celular fotoPerfil')
-     .populate('cuidador', 'nombre apellido correo celular fotoPerfil');
+    )
+      .populate('dueño', 'nombre apellido correo celular fotoPerfil')
+      .populate('cuidador', 'nombre apellido correo celular fotoPerfil');
 
     if (!mascota) {
       return res.status(404).json({ error: 'Mascota no encontrada o no pertenece al usuario' });
@@ -113,6 +145,28 @@ router.delete('/:id', protegerRuta, async (req, res) => {
   } catch (error) {
     console.error('Error en DELETE /api/mascotas/:id ->', error);
     res.status(500).json({ error: 'Error al eliminar la mascota' });
+  }
+});
+
+// Subir / actualizar foto de perfil de mascota
+router.post('/:id/foto', protegerRuta, upload.single('foto'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: 'Id inválido' });
+    }
+    if (!req.file) return res.status(400).json({ error: 'No se recibió archivo' });
+
+    const mascota = await Mascota.findOneAndUpdate(
+      { _id: id, dueño: req.usuario._id },
+      { fotoPerfil: `/uploads/mascotas/${req.file.filename}` },
+      { new: true }
+    );
+    if (!mascota) return res.status(404).json({ error: 'Mascota no encontrada o no pertenece al usuario' });
+    res.json({ mensaje: 'Foto actualizada', mascota });
+  } catch (e) {
+    console.error('Error subiendo foto mascota:', e);
+    res.status(500).json({ error: 'Error al subir foto' });
   }
 });
 

@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+// LEGACY: Este archivo será eliminado una vez que todas las pantallas usen MascotasProvider directamente.
 
 /// Modelo simple de Mascota almacenado sólo en memoria.
 class Mascota {

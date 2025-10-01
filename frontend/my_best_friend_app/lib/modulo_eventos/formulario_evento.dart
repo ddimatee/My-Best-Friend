@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'modelos/evento.dart';
-import 'servicios/evento_service.dart';
+import 'package:provider/provider.dart';
+import '../../providers/eventos_provider.dart';
+import '../../providers/mascotas_provider.dart';
 import '../modulo_peso/widgets/calendario_selector.dart';
 import 'seleccion_categoria_evento.dart';
 
 class FormularioEvento extends StatefulWidget {
-  final String categoria;
-  final Evento? evento; // Para editar un evento existente
+  final String tipoInicial;
+  final Map<String,dynamic>? evento; // datos existentes
+  final String? mascotaId;
 
-  const FormularioEvento({Key? key, required this.categoria, this.evento}) : super(key: key);
+  const FormularioEvento({Key? key, required this.tipoInicial, this.evento, this.mascotaId}) : super(key: key);
 
   @override
   State<FormularioEvento> createState() => _FormularioEventoState();
@@ -23,18 +25,25 @@ class _FormularioEventoState extends State<FormularioEvento> {
   DateTime _fechaSeleccionada = DateTime.now();
   bool _crearRecordatorio = false;
   bool _isLoading = false;
-  String _categoriaSeleccionada = '';
+  String _tipoSeleccionado = '';
+  int _minutosAntes = 30;
+  String? _mascotaSeleccionada;
   final Color _greenColor = const Color(0xFF4CAF50);
 
   @override
   void initState() {
     super.initState();
-    _categoriaSeleccionada = widget.categoria;
+  _tipoSeleccionado = widget.tipoInicial;
+  _mascotaSeleccionada = widget.mascotaId;
     if (widget.evento != null) {
-      _tituloController.text = widget.evento!.titulo;
-      _descripcionController.text = widget.evento!.descripcion;
-      _fechaSeleccionada = widget.evento!.fecha;
-      _crearRecordatorio = widget.evento!.tieneRecordatorio;
+      final e = widget.evento!;
+      _tituloController.text = (e['titulo'] ?? '').toString();
+      _descripcionController.text = (e['descripcion'] ?? '').toString();
+      _fechaSeleccionada = DateTime.tryParse(e['fecha']?.toString() ?? '') ?? DateTime.now();
+  _crearRecordatorio = (e['recordatorio']?['activo'] == true) || (e['tieneRecordatorio'] == true);
+  final rec = e['recordatorio'];
+  if (rec is Map && rec['tiempoAntes'] is int) _minutosAntes = rec['tiempoAntes'];
+  if (e['tipo'] != null) _tipoSeleccionado = e['tipo'];
     }
   }
 
@@ -58,67 +67,96 @@ class _FormularioEventoState extends State<FormularioEvento> {
     }
   }
 
-  Future<void> _cambiarCategoria() async {
-    final String? nuevaCategoria = await Navigator.push<String>(
+  Future<void> _cambiarTipo() async {
+    final String? nuevo = await Navigator.push<String>(
       context,
       MaterialPageRoute(
         builder: (context) => const SeleccionCategoriaEvento(),
       ),
     );
+    if (nuevo != null) setState(() => _tipoSeleccionado = nuevo);
+  }
 
-    if (nuevaCategoria != null) {
-      setState(() {
-        _categoriaSeleccionada = nuevaCategoria;
-      });
+  Future<void> _seleccionarMascotaSiNecesario() async {
+    if (_mascotaSeleccionada != null) return;
+    final mascotasProv = context.read<MascotasProvider>();
+    if (mascotasProv.mascotas.isEmpty) await mascotasProv.cargarMascotas(forzar: true);
+    final lista = mascotasProv.mascotas;
+    if (lista.isEmpty) return;
+    if (lista.length == 1) {
+      _mascotaSeleccionada = (lista.first['_id'] ?? lista.first['id']).toString();
+      return;
     }
+    final seleccion = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Seleccionar mascota'),
+        content: SizedBox(
+          width: double.maxFinite,
+            child: ListView(
+              shrinkWrap: true,
+              children: lista.map((m) {
+                final nombre = (m['nombre'] ?? '').toString();
+                final id = (m['_id'] ?? m['id']).toString();
+                return ListTile(
+                  title: Text(nombre),
+                  onTap: () => Navigator.pop(ctx, id),
+                );
+              }).toList(),
+            ),
+        ),
+      ),
+    );
+    if (seleccion != null) setState(() => _mascotaSeleccionada = seleccion);
   }
 
   Future<void> _guardarEvento() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _isLoading = true);
-
     try {
-      final evento = Evento(
-        id: widget.evento?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
-        titulo: _tituloController.text.trim(),
-        categoria: _categoriaSeleccionada,
-        fecha: _fechaSeleccionada,
-        descripcion: _descripcionController.text.trim(),
-        tieneRecordatorio: _crearRecordatorio,
-      );
-
-      bool success;
-      if (widget.evento != null) {
-        success = await EventoService.actualizarEvento(evento);
-      } else {
-        success = await EventoService.guardarEvento(evento);
-      }
-
-      if (success) {
-        Navigator.pop(context, true);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              widget.evento != null 
-                  ? 'Evento actualizado exitosamente'
-                  : 'Evento guardado exitosamente',
-            ),
-            backgroundColor: _greenColor,
-          ),
+      final prov = context.read<EventosProvider>();
+      final fecha = _fechaSeleccionada;
+      final hora = DateFormat('HH:mm').format(fecha);
+      if (widget.evento == null) {
+        await _seleccionarMascotaSiNecesario();
+        final mascotaId = _mascotaSeleccionada;
+        if (mascotaId == null) throw 'Selecciona una mascota';
+        final ok = await prov.crear(
+          mascotaId: mascotaId,
+          titulo: _tituloController.text.trim(),
+          tipo: _tipoSeleccionado,
+          fecha: fecha,
+          hora: hora,
+          descripcion: _descripcionController.text.trim().isEmpty ? null : _descripcionController.text.trim(),
+          recordatorioActivo: _crearRecordatorio,
+          minutosAntes: _minutosAntes,
         );
+        if (!ok) throw prov.error ?? 'Error al crear';
       } else {
-        throw Exception('Error al guardar');
+        final id = widget.evento!['_id'] ?? widget.evento!['id'];
+        final ok = await prov.actualizar(id, {
+          'titulo': _tituloController.text.trim(),
+          'tipo': _tipoSeleccionado,
+          'fecha': fecha,
+          'hora': hora,
+          'descripcion': _descripcionController.text.trim().isEmpty ? null : _descripcionController.text.trim(),
+          'recordatorioActivo': _crearRecordatorio,
+          'minutosAntes': _minutosAntes,
+        });
+        if (!ok) throw prov.error ?? 'Error al actualizar';
       }
+      if (!mounted) return;
+      Navigator.pop(context, true);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(widget.evento == null ? 'Evento guardado exitosamente' : 'Evento actualizado'),
+        backgroundColor: _greenColor,
+      ));
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error al guardar el evento: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+      }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -300,7 +338,7 @@ class _FormularioEventoState extends State<FormularioEvento> {
               
               // Botón para cambiar categoría
               GestureDetector(
-                onTap: _cambiarCategoria,
+                onTap: _cambiarTipo,
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -311,14 +349,14 @@ class _FormularioEventoState extends State<FormularioEvento> {
                   child: Row(
                     children: [
                       Icon(
-                        _getIconoCategoria(_categoriaSeleccionada),
+                        _getIconoCategoria(_tipoSeleccionado),
                         color: _greenColor,
                         size: 24,
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'Categoría: $_categoriaSeleccionada',
+                          'Tipo: $_tipoSeleccionado',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -334,6 +372,41 @@ class _FormularioEventoState extends State<FormularioEvento> {
                     ],
                   ),
                 ),
+              ),
+
+              const SizedBox(height: 16),
+              // Selector minutos antes (si recordatorio activo)
+              if (_crearRecordatorio) Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.timer, color: Colors.black54),
+                    const SizedBox(width: 12),
+                    const Text('Avisar antes:', style: TextStyle(fontWeight: FontWeight.w600)),
+                    const SizedBox(width: 12),
+                    DropdownButton<int>(
+                      value: _minutosAntes,
+                      underline: const SizedBox(),
+                      items: const [5,10,15,30,45,60].map((m) => DropdownMenuItem(
+                        value: m,
+                        child: Text('$m min'),
+                      )).toList(),
+                      onChanged: (v) { if (v!=null) setState(()=>_minutosAntes=v); },
+                    ),
+                  ],
+                ),
+              ),
+
+              SwitchListTile(
+                value: _crearRecordatorio,
+                title: const Text('Recordatorio activo'),
+                activeColor: _greenColor,
+                onChanged: (v) => setState(() => _crearRecordatorio = v),
+                contentPadding: EdgeInsets.zero,
               ),
               
               const SizedBox(height: 32),
@@ -407,24 +480,32 @@ class _FormularioEventoState extends State<FormularioEvento> {
     );
   }
 
-  IconData _getIconoCategoria(String categoria) {
-    switch (categoria.toLowerCase()) {
+  IconData _getIconoCategoria(String tipo) {
+    switch (tipo.toLowerCase()) {
       case 'paseo':
         return Icons.directions_walk;
       case 'juego':
         return Icons.sports_basketball;
       case 'comida':
         return Icons.restaurant;
+      case 'alimentacion':
+        return Icons.restaurant_menu;
       case 'baño':
         return Icons.bathtub;
       case 'veterinario':
         return Icons.local_hospital;
       case 'entrenamiento':
         return Icons.school;
+      case 'ejercicio':
+        return Icons.fitness_center;
       case 'socialización':
         return Icons.group;
       case 'descanso':
         return Icons.bed;
+      case 'medicamento':
+        return Icons.medical_services;
+      case 'otro':
+        return Icons.event_note;
       default:
         return Icons.event;
     }

@@ -39,6 +39,19 @@ const vacunaSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  ubicacion: {
+    type: String,
+    trim: true
+  },
+  recordatorio: {
+    activo: {
+      type: Boolean,
+      default: false
+    },
+    fechaRecordatorio: {
+      type: Date
+    }
+  },
   estado: {
     type: String,
     enum: ['vigente', 'vencida', 'proxima_vencer'],

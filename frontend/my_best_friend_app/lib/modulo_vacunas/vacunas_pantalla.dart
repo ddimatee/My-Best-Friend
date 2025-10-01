@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'modelos/vacuna.dart';
-import 'servicios/vacuna_service.dart';
+import 'package:provider/provider.dart';
+import '../../providers/vacunas_provider.dart';
+import '../../providers/mascotas_provider.dart';
 import 'detalle_vacuna.dart';
 import 'formulario_vacuna.dart';
+import '../modulo_general/widgets/bottom_nav_global.dart';
 
 class VacunasPantalla extends StatefulWidget {
   const VacunasPantalla({Key? key}) : super(key: key);
@@ -13,30 +15,17 @@ class VacunasPantalla extends StatefulWidget {
 }
 
 class _VacunasPantallaState extends State<VacunasPantalla> {
-  List<Vacuna> _vacunas = [];
-  bool _isLoading = true;
   final Color _greenColor = const Color(0xFF4CAF50);
+  String? _mascotaSeleccionada; // filtro opcional
 
   @override
   void initState() {
     super.initState();
-    _cargarVacunas();
-  }
-
-  Future<void> _cargarVacunas() async {
-    setState(() => _isLoading = true);
-    try {
-      final vacunas = await VacunaService.obtenerVacunas();
-      setState(() {
-        _vacunas = vacunas;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al cargar vacunas: $e')),
-      );
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final vacProv = context.read<VacunasProvider>();
+      // Cargar todas (o podrías decidir esperar a que el usuario seleccione una mascota)
+      vacProv.cargarVacunas();
+    });
   }
 
   void _navegarAFormulario() async {
@@ -46,26 +35,26 @@ class _VacunasPantallaState extends State<VacunasPantalla> {
         builder: (context) => const FormularioVacuna(),
       ),
     );
-
     if (resultado == true) {
-      _cargarVacunas();
+      context.read<VacunasProvider>().cargarVacunas(mascotaId: _mascotaSeleccionada, forzar: true);
     }
   }
 
-  void _navegarADetalle(Vacuna vacuna) async {
+  void _navegarADetalle(Map<String, dynamic> vacuna) async {
     final resultado = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => DetalleVacuna(vacuna: vacuna),
       ),
     );
-
     if (resultado == true) {
-      _cargarVacunas();
+      context.read<VacunasProvider>().cargarVacunas(mascotaId: _mascotaSeleccionada, forzar: true);
     }
   }
 
-  Widget _buildVacunaCard(Vacuna vacuna) {
+  Widget _buildVacunaCard(Map<String, dynamic> vacuna) {
+    final nombre = vacuna['nombre'] ?? 'Vacuna';
+    final fechaAplicacion = DateTime.tryParse(vacuna['fechaAplicacion']?.toString() ?? '') ?? DateTime.now();
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(16),
@@ -104,7 +93,7 @@ class _VacunasPantallaState extends State<VacunasPantalla> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    vacuna.nombre,
+                    nombre,
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -113,19 +102,31 @@ class _VacunasPantallaState extends State<VacunasPantalla> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'De: ${DateFormat('d MMM, yyyy').format(vacuna.fechaAplicacion)}',
+                    'De: ${DateFormat('d MMM, yyyy').format(fechaAplicacion)}',
                     style: const TextStyle(
                       fontSize: 14,
                       color: Colors.black87,
                     ),
                   ),
-                  Text(
-                    '11:00 AM',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.black54,
+                  if (vacuna['recordatorio']?['activo'] == true && vacuna['recordatorio']?['fechaRecordatorio'] != null)
+                    Builder(
+                      builder: (context) {
+                        try {
+                          final fechaRecordatorioUTC = DateTime.parse(vacuna['recordatorio']['fechaRecordatorio'].toString());
+                          final fechaRecordatorioLocal = fechaRecordatorioUTC.toLocal();
+                          final hora = DateFormat('h:mm a').format(fechaRecordatorioLocal);
+                          return Text(
+                            hora,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.black54,
+                            ),
+                          );
+                        } catch (e) {
+                          return const SizedBox.shrink();
+                        }
+                      },
                     ),
-                  ),
                 ],
               ),
             ),
@@ -203,6 +204,15 @@ class _VacunasPantallaState extends State<VacunasPantalla> {
 
   @override
   Widget build(BuildContext context) {
+    final vacProv = context.watch<VacunasProvider>();
+    final mascotasProv = context.watch<MascotasProvider>();
+    final listaMascotas = mascotasProv.mascotas;
+    
+    // Si no hay mascota seleccionada ("Todas"), obtener todas las vacunas
+    final vacunas = (_mascotaSeleccionada == null)
+        ? vacProv.todasLasVacunas() // Obtener todas las vacunas
+        : vacProv.vacunasDe(_mascotaSeleccionada!);
+
     return Scaffold(
       backgroundColor: _greenColor,
       appBar: AppBar(
@@ -212,109 +222,79 @@ class _VacunasPantallaState extends State<VacunasPantalla> {
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
+        title: const Text('Vacunas', style: TextStyle(color: Colors.black)),
         actions: [
-          if (_vacunas.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(right: 16.0),
-              child: GestureDetector(
-                onTap: _navegarAFormulario,
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.add,
-                    color: Colors.black,
-                    size: 24,
-                  ),
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: GestureDetector(
+              onTap: _navegarAFormulario,
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.add,
+                  color: Colors.black,
+                  size: 24,
                 ),
               ),
             ),
+          ),
         ],
       ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-              ),
-            )
-          : _vacunas.isEmpty
-              ? _buildEmptyState()
-              : ListView.builder(
-                  padding: const EdgeInsets.only(top: 16),
-                  itemCount: _vacunas.length,
-                  itemBuilder: (context, index) {
-                    return _buildVacunaCard(_vacunas[index]);
+      body: Column(
+        children: [
+          // Selector de mascota (simple dropdown)
+            if (listaMascotas.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: DropdownButtonFormField<String>(
+                  value: _mascotaSeleccionada,
+                  decoration: const InputDecoration(
+                    labelText: 'Filtrar por mascota',
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)), borderSide: BorderSide.none),
+                  ),
+                  items: [
+                    const DropdownMenuItem<String>(value: null, child: Text('Todas', overflow: TextOverflow.ellipsis)),
+                    ...listaMascotas.map((m) => DropdownMenuItem<String>(
+                          value: m['_id'] ?? m['id'],
+                          child: Text(m['nombre'] ?? 'Mascota', overflow: TextOverflow.ellipsis),
+                        ))
+                  ].cast<DropdownMenuItem<String>>(),
+                  onChanged: (val) {
+                    setState(() => _mascotaSeleccionada = val);
+                    context.read<VacunasProvider>().cargarVacunas(mascotaId: val, forzar: true);
                   },
                 ),
-      // Bottom Navigation Bar
-      bottomNavigationBar: Container(
-        height: 64,
-        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade300,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: const [
-            BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 3)),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _BottomItem(
-              icon: Icons.pets,
-              selected: true,
-              onTap: () => Navigator.pop(context),
-            ),
-            _BottomItem(
-              icon: Icons.calendar_month,
-              selected: false,
-              onTap: () {},
-            ),
-            _BottomItem(
-              icon: Icons.settings,
-              selected: false,
-              onTap: () {},
-            ),
-          ],
-        ),
+              ),
+          Expanded(
+            child: vacProv.cargando
+                ? const Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.white)))
+                : (vacunas.isEmpty)
+                    ? _buildEmptyState()
+                    : ListView.builder(
+                        padding: const EdgeInsets.only(top: 16),
+                        itemCount: vacunas.length,
+                        itemBuilder: (context, index) => _buildVacunaCard(vacunas[index]),
+                      ),
+          ),
+        ],
       ),
+      bottomNavigationBar: const BottomNavGlobal(selectedIndex: 0),
     );
   }
 }
 
-class _BottomItem extends StatelessWidget {
-  final IconData icon;
-  final bool selected;
-  final VoidCallback onTap;
-  const _BottomItem({required this.icon, required this.selected, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: selected ? Colors.white : Colors.transparent,
-          shape: BoxShape.circle,
-          boxShadow: selected
-              ? const [BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2))]
-              : null,
-        ),
-        child: Icon(icon, size: 28, color: Colors.black),
-      ),
-    );
-  }
-}
+// _BottomItem eliminado en favor de BottomNavGlobal

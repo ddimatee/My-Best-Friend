@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'modelos/evento.dart';
-import 'servicios/evento_service.dart';
+import 'package:provider/provider.dart';
+import '../../providers/eventos_provider.dart';
 import 'formulario_evento.dart';
 
 class DetalleEvento extends StatefulWidget {
-  final Evento evento;
+  final Map<String,dynamic> evento;
 
   const DetalleEvento({Key? key, required this.evento}) : super(key: key);
 
@@ -21,8 +21,11 @@ class _DetalleEventoState extends State<DetalleEvento> {
       context,
       MaterialPageRoute(
         builder: (context) => FormularioEvento(
-          categoria: widget.evento.categoria,
+          tipoInicial: (widget.evento['tipo'] ?? widget.evento['categoria'] ?? 'evento').toString(),
           evento: widget.evento,
+          mascotaId: (widget.evento['mascota'] is Map)
+              ? (widget.evento['mascota']['_id'] ?? widget.evento['mascota']['id']).toString()
+              : (widget.evento['mascota']?.toString()),
         ),
       ),
     );
@@ -55,7 +58,9 @@ class _DetalleEventoState extends State<DetalleEvento> {
 
     if (confirmar == true) {
       try {
-        final success = await EventoService.eliminarEvento(widget.evento.id);
+  final id = widget.evento['_id'] ?? widget.evento['id'];
+  final prov = context.read<EventosProvider>();
+  final success = await prov.eliminar(id);
         if (success) {
           Navigator.pop(context, true);
           ScaffoldMessenger.of(context).showSnackBar(
@@ -227,7 +232,7 @@ class _DetalleEventoState extends State<DetalleEvento> {
                   ],
                 ),
                 child: Text(
-                  widget.evento.titulo,
+                  (widget.evento['titulo'] ?? '').toString(),
                   style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
@@ -243,35 +248,35 @@ class _DetalleEventoState extends State<DetalleEvento> {
             // Detalles del evento
             _buildDetailRow(
               'Categoría',
-              widget.evento.categoria,
-              icon: _getIconoCategoria(widget.evento.categoria),
+              (widget.evento['tipo'] ?? widget.evento['categoria'] ?? '').toString(),
+              icon: _getIconoCategoria((widget.evento['tipo'] ?? widget.evento['categoria'] ?? '').toString()),
             ),
             
             _buildDetailRow(
               'Fecha del evento',
-              DateFormat('d \'de\' MMMM \'de\' yyyy').format(widget.evento.fecha),
+              DateFormat('d \'de\' MMMM \'de\' yyyy').format(DateTime.tryParse(widget.evento['fecha']?.toString() ?? '') ?? DateTime.now()),
               icon: Icons.calendar_today,
             ),
             
             _buildDetailRow(
               'Hora',
-              DateFormat('h:mm a').format(widget.evento.fecha),
+              DateFormat('h:mm a').format(DateTime.tryParse(widget.evento['fecha']?.toString() ?? '') ?? DateTime.now()),
               icon: Icons.access_time,
             ),
             
-            if (widget.evento.descripcion.isNotEmpty)
+            if ((widget.evento['descripcion'] ?? '').toString().isNotEmpty)
               _buildDetailRow(
                 'Descripción',
-                widget.evento.descripcion,
+                widget.evento['descripcion'].toString(),
                 icon: Icons.description,
               ),
             
             _buildDetailRow(
               'Recordatorio',
-              widget.evento.tieneRecordatorio ? 'Activado' : 'Desactivado',
-              icon: widget.evento.tieneRecordatorio 
-                  ? Icons.notifications_active 
-                  : Icons.notifications_off,
+        (widget.evento['recordatorio']?['activo'] == true) ? 'Activado' : 'Desactivado',
+        icon: (widget.evento['recordatorio']?['activo'] == true)
+          ? Icons.notifications_active
+          : Icons.notifications_off,
             ),
             
             const SizedBox(height: 32),

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import '../modulo_general/widgets/bottom_nav_global.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'servicios/album_service.dart';
-import 'modelos/foto_album.dart';
 import 'subir_foto_pantalla.dart';
+import 'package:provider/provider.dart';
+import '../../providers/album_provider.dart';
+import '../../providers/mascotas_provider.dart';
 
 class AlbumModuloPantalla extends StatefulWidget {
   const AlbumModuloPantalla({Key? key}) : super(key: key);
@@ -14,53 +16,74 @@ class AlbumModuloPantalla extends StatefulWidget {
 
 class _AlbumModuloPantallaState extends State<AlbumModuloPantalla> {
   final Color _greenColor = const Color(0xFF4CAF50);
-  final AlbumService _albumService = AlbumService();
-  List<FotoAlbum> fotos = [];
   bool _cargando = true;
+  String? _mascotaSeleccionada;
+  List<Map<String, dynamic>> _fotos = [];
+  int _anioActual = DateTime.now().year;
 
   @override
   void initState() {
     super.initState();
-    _cargarFotos();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final mascProv = context.read<MascotasProvider>();
+      if (mascProv.mascotas.isEmpty) {
+        await mascProv.cargarMascotas();
+      }
+      if (mascProv.mascotas.isNotEmpty) {
+        _mascotaSeleccionada = (mascProv.mascotas.first['_id'] ?? mascProv.mascotas.first['id']).toString();
+        await context.read<AlbumProvider>().cargar(mascotaId: _mascotaSeleccionada);
+        _refrescar();
+      }
+      if (mounted) setState(() { _cargando = false; });
+    });
   }
 
-  Future<void> _cargarFotos() async {
-    try {
-      final fotosObtenidas = await _albumService.obtenerFotos();
-      setState(() {
-        fotos = fotosObtenidas;
-        _cargando = false;
-      });
-    } catch (e) {
-      print('Error al cargar fotos: $e');
-      
-      // En caso de error, limpiar datos y reinicializar
-      try {
-        await _albumService.limpiarDatos();
-        final fotosLimpias = await _albumService.obtenerFotos();
-        setState(() {
-          fotos = fotosLimpias;
-          _cargando = false;
-        });
-      } catch (e2) {
-        setState(() {
-          fotos = [];
-          _cargando = false;
-        });
-      }
+  void _refrescar() {
+    if (_mascotaSeleccionada != null) {
+      _fotos = List.from(context.read<AlbumProvider>().fotos(_mascotaSeleccionada!));
     }
   }
 
-  Future<void> _abrirSubirFoto(String mes) async {
+  List<Map<String, dynamic>> _fotosDelMes(int mes) {
+    // Filtrar fotos del año/mes indicado (se asume campo fechaSubida o fecha)
+    return _fotos.where((f) {
+      final fechaRaw = f['fechaSubida'] ?? f['fecha'] ?? f['createdAt'];
+      DateTime? fecha;
+      if (fechaRaw is DateTime) {
+        fecha = fechaRaw;
+      } else if (fechaRaw is String) {
+        fecha = DateTime.tryParse(fechaRaw);
+      }
+      if (fecha == null) {
+        debugPrint('⚠️ Foto sin fecha válida: $f');
+        return false;
+      }
+      
+      final coincide = fecha.year == _anioActual && fecha.month == mes;
+      if (coincide) {
+        debugPrint('✅ Foto encontrada para mes $mes: fecha=${fecha.toString()}, año=${fecha.year}, mes=${fecha.month}');
+      }
+      
+      return coincide;
+    }).take(4).toList();
+  }
+
+  static const List<String> _meses = [
+    'Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'
+  ];
+
+  Future<void> _abrirSubirFoto() async {
+    if (_mascotaSeleccionada == null) return;
     final resultado = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
-        builder: (context) => SubirFotoPantalla(mes: mes, ano: '2025'),
+        builder: (context) => SubirFotoPantalla(mascotaId: _mascotaSeleccionada!),
       ),
     );
 
     if (resultado == true) {
-      _cargarFotos(); // Recargar fotos si se subió una nueva
+      await context.read<AlbumProvider>().cargar(mascotaId: _mascotaSeleccionada);
+      if (mounted) setState(() { _refrescar(); });
     }
   }
 
@@ -74,8 +97,8 @@ class _AlbumModuloPantallaState extends State<AlbumModuloPantalla> {
           icon: const Icon(Icons.arrow_back, color: Colors.white, size: 28),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          '2025',
+        title: Text(
+          _anioActual.toString(),
           style: TextStyle(
             color: Colors.black,
             fontSize: 20,
@@ -86,9 +109,7 @@ class _AlbumModuloPantallaState extends State<AlbumModuloPantalla> {
         backgroundColor: const Color(0xFFFFB74D), // Color naranja del año
       ),
       body: _cargando
-          ? const Center(
-              child: CircularProgressIndicator(color: Colors.white),
-            )
+          ? const Center(child: CircularProgressIndicator(color: Colors.white))
           : Padding(
               padding: const EdgeInsets.all(16.0),
               child: GridView.builder(
@@ -98,51 +119,23 @@ class _AlbumModuloPantallaState extends State<AlbumModuloPantalla> {
                   crossAxisSpacing: 16,
                   mainAxisSpacing: 16,
                 ),
-                itemCount: fotos.length,
+                itemCount: 12,
                 itemBuilder: (context, index) {
-                  final foto = fotos[index];
-                  return _buildFotoCard(foto);
+                  final mes = index + 1;
+                  final fotosMes = _fotosDelMes(mes);
+                  return _buildMesCard(mes, fotosMes);
                 },
               ),
             ),
-      // Bottom Navigation Bar
-      bottomNavigationBar: Container(
-        height: 64,
-        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade300,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: const [
-            BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 3)),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _BottomItem(
-              icon: Icons.pets,
-              selected: true,
-              onTap: () => Navigator.pop(context),
-            ),
-            _BottomItem(
-              icon: Icons.calendar_month,
-              selected: false,
-              onTap: () {},
-            ),
-            _BottomItem(
-              icon: Icons.settings,
-              selected: false,
-              onTap: () {},
-            ),
-          ],
-        ),
-      ),
+      bottomNavigationBar: const BottomNavGlobal(selectedIndex: 0),
     );
   }
 
-  Widget _buildFotoCard(FotoAlbum foto) {
+  Widget _buildMesCard(int mes, List<Map<String, dynamic>> fotosMes) {
+    // Para cada foto usamos campo 'url'
+    final rutas = fotosMes.map((f) => f['url']?.toString() ?? '').where((s) => s.isNotEmpty).take(4).toList();
     return GestureDetector(
-      onTap: () => _abrirSubirFoto(foto.mes),
+      onTap: _abrirSubirFoto,
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -157,7 +150,6 @@ class _AlbumModuloPantallaState extends State<AlbumModuloPantalla> {
         ),
         child: Column(
           children: [
-            // Área de las 4 imágenes en grid 2x2
             Expanded(
               child: Container(
                 margin: const EdgeInsets.all(8),
@@ -171,28 +163,36 @@ class _AlbumModuloPantallaState extends State<AlbumModuloPantalla> {
                   ),
                   itemCount: 4,
                   itemBuilder: (context, index) {
-                    return Container(
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF5F5F5),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(
-                          color: Colors.grey.shade300,
-                          style: BorderStyle.solid,
+                    final tiene = index < fotosMes.length && index < 4;
+                    final foto = tiene ? fotosMes[index] : null;
+                    return GestureDetector(
+                      onTap: () {
+                        if (tiene && foto != null) {
+                          _editarFoto(foto);
+                        } else {
+                          _abrirSubirFoto();
+                        }
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF5F5F5),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: Colors.grey.shade300,
+                          ),
                         ),
+                        child: tiene
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(6),
+                                child: _buildImageWidget(((foto?['url']) ?? '').toString()),
+                              )
+                            : _buildMiniPlaceholder(),
                       ),
-                      child: foto.obtenerImagen(index) != null
-                          ? ClipRRect(
-                              borderRadius: BorderRadius.circular(6),
-                              child: _buildImageWidget(foto.obtenerImagen(index)!),
-                            )
-                          : _buildMiniPlaceholder(),
                     );
                   },
                 ),
               ),
             ),
-            
-            // Mes y contador de fotos
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 8),
@@ -206,7 +206,7 @@ class _AlbumModuloPantallaState extends State<AlbumModuloPantalla> {
               child: Column(
                 children: [
                   Text(
-                    '${foto.mes} ${foto.ano}',
+                    '${_meses[mes-1]} $_anioActual',
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontSize: 14,
@@ -214,21 +214,143 @@ class _AlbumModuloPantallaState extends State<AlbumModuloPantalla> {
                       color: Colors.black87,
                     ),
                   ),
-                  if (foto.tieneImagenes)
-                    Text(
-                      '${foto.cantidadImagenes}/4 fotos',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
+                  Text('${rutas.length}/4 fotos', style: TextStyle(fontSize: 10, color: Colors.grey.shade600)),
                 ],
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  void _editarFoto(Map<String, dynamic> foto) {
+    final descripcionInicial = (foto['descripcion'] ?? '').toString();
+    final TextEditingController descCtrl = TextEditingController(text: descripcionInicial);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 20,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Editar Foto', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              AspectRatio(
+                aspectRatio: 1.6,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: _buildImageWidget((foto['url'] ?? '').toString()),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: descCtrl,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  labelText: 'Descripción',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        final id = (foto['_id'] ?? foto['id'])?.toString();
+                        if (id == null) return;
+                        final ok = await context.read<AlbumProvider>().actualizar(id, {
+                          'descripcion': descCtrl.text.trim(),
+                        });
+                        if (ok) {
+                          if (mounted) {
+                            _refrescar();
+                            setState(() {});
+                          }
+                          if (Navigator.canPop(ctx)) Navigator.pop(ctx);
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Descripción actualizada')));
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error al actualizar'), backgroundColor: Colors.red));
+                        }
+                      },
+                      icon: const Icon(Icons.save),
+                      label: const Text('Guardar'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _greenColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        final id = (foto['_id'] ?? foto['id'])?.toString();
+                        if (id == null) return;
+                        final confirmar = await showDialog<bool>(
+                          context: context,
+                          builder: (dCtx) => AlertDialog(
+                            title: const Text('Eliminar foto'),
+                            content: const Text('¿Seguro que deseas eliminar esta foto?'),
+                            actions: [
+                              TextButton(onPressed: () => Navigator.pop(dCtx, false), child: const Text('Cancelar')),
+                              ElevatedButton(onPressed: () => Navigator.pop(dCtx, true), child: const Text('Eliminar')),
+                            ],
+                          ),
+                        );
+                        if (confirmar == true) {
+                          final ok = await context.read<AlbumProvider>().eliminar(id);
+                          if (ok) {
+                            if (mounted) {
+                              _refrescar();
+                              setState(() {});
+                            }
+                            if (Navigator.canPop(ctx)) Navigator.pop(ctx);
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Foto eliminada')));
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error al eliminar'), backgroundColor: Colors.red));
+                          }
+                        }
+                      },
+                      icon: const Icon(Icons.delete_outline),
+                      label: const Text('Eliminar'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red.shade600,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
+        );
+      }
     );
   }
 
@@ -297,28 +419,4 @@ class _AlbumModuloPantallaState extends State<AlbumModuloPantalla> {
 
 }
 
-class _BottomItem extends StatelessWidget {
-  final IconData icon;
-  final bool selected;
-  final VoidCallback onTap;
-  const _BottomItem({required this.icon, required this.selected, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: selected ? Colors.white : Colors.transparent,
-          shape: BoxShape.circle,
-          boxShadow: selected
-              ? const [BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2))]
-              : null,
-        ),
-        child: Icon(icon, size: 28, color: Colors.black),
-      ),
-    );
-  }
-}
+// _BottomItem eliminado (se usa BottomNavGlobal)

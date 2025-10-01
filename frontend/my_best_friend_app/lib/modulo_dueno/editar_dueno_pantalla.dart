@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'servicios/dueno_service.dart';
 import 'modelos/dueno_model.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
+import '../services/api_service.dart';
 
 class EditarDuenoPantalla extends StatefulWidget {
   final DuenoModel dueno;
@@ -17,12 +20,13 @@ class EditarDuenoPantalla extends StatefulWidget {
 class _EditarDuenoPantallaState extends State<EditarDuenoPantalla> {
   final Color _greenColor = const Color(0xFF4CAF50);
   final DuenoService _duenoService = DuenoService();
+  final ApiService _apiService = ApiService();
   
   late TextEditingController _nombreController;
   late TextEditingController _apellidoController;
   late TextEditingController _telefonoController;
   late TextEditingController _emailController;
-  late TextEditingController _direccionController;
+  // Dirección eliminada del flujo de edición unificada
   
   bool _guardando = false;
 
@@ -33,7 +37,7 @@ class _EditarDuenoPantallaState extends State<EditarDuenoPantalla> {
     _apellidoController = TextEditingController(text: widget.dueno.apellido);
     _telefonoController = TextEditingController(text: widget.dueno.telefono);
     _emailController = TextEditingController(text: widget.dueno.email);
-    _direccionController = TextEditingController(text: widget.dueno.direccion);
+  // dirección ya no se edita
   }
 
   @override
@@ -42,7 +46,6 @@ class _EditarDuenoPantallaState extends State<EditarDuenoPantalla> {
     _apellidoController.dispose();
     _telefonoController.dispose();
     _emailController.dispose();
-    _direccionController.dispose();
     super.dispose();
   }
 
@@ -54,15 +57,45 @@ class _EditarDuenoPantallaState extends State<EditarDuenoPantalla> {
     });
 
     try {
+      // Actualizar Dueno local (foto, etc) para consistencia
       final duenoActualizado = widget.dueno.copyWith(
         nombre: _nombreController.text.trim(),
         apellido: _apellidoController.text.trim(),
         telefono: _telefonoController.text.trim(),
         email: _emailController.text.trim(),
-        direccion: _direccionController.text.trim(),
       );
+      await _duenoService.actualizarDueno(duenoActualizado); // persistencia local (foto futura)
 
-      await _duenoService.actualizarDueno(duenoActualizado);
+      // Actualizar backend + estado global
+      final auth = context.read<AuthProvider>();
+      final u = auth.user;
+      if (u != null && u['_id'] != null) {
+        final resp = await _apiService.actualizarPerfil(
+          id: u['_id'].toString(),
+          nombre: _nombreController.text.trim(),
+          apellido: _apellidoController.text.trim(),
+          celular: _telefonoController.text.trim(),
+          correo: _emailController.text.trim(),
+        );
+        if (resp['success']) {
+          auth.updateUserProfile(
+            nombre: _nombreController.text.trim(),
+            apellido: _apellidoController.text.trim(),
+            celular: _telefonoController.text.trim(),
+            correo: _emailController.text.trim(),
+          );
+        } else {
+          throw Exception(resp['message'] ?? 'No se pudo actualizar perfil');
+        }
+      } else {
+        // Fallback local si no hay id (no debería pasar luego de login correcto)
+        auth.updateUserProfile(
+          nombre: _nombreController.text.trim(),
+          apellido: _apellidoController.text.trim(),
+          celular: _telefonoController.text.trim(),
+          correo: _emailController.text.trim(),
+        );
+      }
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -180,13 +213,7 @@ class _EditarDuenoPantallaState extends State<EditarDuenoPantalla> {
                     icon: Icons.email,
                     keyboardType: TextInputType.emailAddress,
                   ),
-                  const SizedBox(height: 20),
-                  _buildTextField(
-                    controller: _direccionController,
-                    label: 'Dirección',
-                    icon: Icons.location_on,
-                    maxLines: 2,
-                  ),
+                  // Campo dirección removido
                 ],
               ),
             ),

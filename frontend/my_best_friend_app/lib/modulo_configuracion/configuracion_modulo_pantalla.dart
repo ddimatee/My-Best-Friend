@@ -5,6 +5,8 @@ import 'pantallas/contrasena_pantalla.dart';
 import 'pantallas/notificaciones_pantalla.dart';
 import 'pantallas/comentarios_soporte_pantalla.dart';
 import 'pantallas/cuenta_sesion_pantalla.dart';
+import 'package:provider/provider.dart';
+import '../../providers/auth_provider.dart';
 
 /// Widget del módulo de configuración pensado para incrustarse dentro del
 /// `MenuPrincipal` (NO usa un Scaffold propio para evitar pantalla verde vacía).
@@ -98,6 +100,13 @@ class ConfiguracionModuloPantalla extends StatelessWidget {
 class _UserHeaderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final auth = Provider.of<AuthProvider>(context, listen: true);
+    final u = auth.user;
+    final nombre = u != null
+        ? ('${u['nombre'] ?? ''} ${u['apellido'] ?? ''}').trim()
+        : 'Usuario';
+    final correo = u != null ? (u['correo'] ?? 'correo no disponible') : 'correo no disponible';
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -124,21 +133,21 @@ class _UserHeaderCard extends StatelessWidget {
             child: Icon(Icons.person, size: 34, color: Colors.grey.shade600),
           ),
           const SizedBox(width: 16),
-            Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Text(
-                  'Brayan Dimate',
-                  style: TextStyle(
+                  nombre.isEmpty ? 'Usuario' : nombre,
+                  style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
-                  'brayandimate2023@gmail.com',
-                  style: TextStyle(fontSize: 13.5, color: Colors.black87),
+                  correo,
+                  style: const TextStyle(fontSize: 13.5, color: Colors.black87),
                 ),
               ],
             ),
