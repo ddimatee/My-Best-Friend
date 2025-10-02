@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/mascotas_provider.dart';
+import '../widgets/custom_date_picker.dart';
 
 class EditarMascotaPantalla extends StatefulWidget {
   final String mascotaId;
@@ -140,12 +141,11 @@ class _EditarMascotaPantallaState extends State<EditarMascotaPantalla> {
             GestureDetector(
               onTap: () async {
                 final ahora = DateTime.now();
-                final picked = await showDatePicker(
-                  context: context,
+                final picked = await CustomDatePicker.show(
+                  context,
                   initialDate: _fechaNac ?? ahora,
                   firstDate: DateTime(1990),
                   lastDate: ahora,
-                  locale: const Locale('es','ES'),
                 );
                 if (picked != null) setState(() => _fechaNac = picked);
               },

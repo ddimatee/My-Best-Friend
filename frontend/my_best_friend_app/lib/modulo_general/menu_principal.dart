@@ -7,7 +7,6 @@ import 'crear_mascota_nueva_pantalla.dart';
 import '../modulo_calendario/calendario.dart';
 import 'placeholder_funcion.dart';
 import 'buscar.dart';
-import '../modulo_peso/peso.dart';
 import '../modulo_peso/lista_pesos_pantalla.dart'; // NUEVO import
 import '../modulo_vacunas/vacunas_pantalla.dart'; // NUEVO import
 import '../modulo_eventos/eventos_pantalla.dart'; // NUEVO import

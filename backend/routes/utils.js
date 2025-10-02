@@ -278,6 +278,7 @@ router.get('/info', (req, res) => {
       vacunas: '/api/vacunas',
       peso: '/api/peso',
       album: '/api/album',
+      soporte: '/api/soporte',
       utilidades: '/api/utils'
     },
     documentacion: 'En desarrollo',

@@ -9,31 +9,129 @@ class EventosProvider with ChangeNotifier {
   String? _error;
 
   // Agrupación básica: fecha (yyyy-MM-dd) -> lista de eventos
-  final Map<String, List<Map<String, dynamic>>> _eventosPorDia = {};
+  Map<String, List<Map<String, dynamic>>> _eventosPorDia = {};
+  // Cache de todos los eventos (para pantalla "todos")
+  List<Map<String, dynamic>> _todosEventos = [];
+  DateTime? _ultimaCargaTodos;
 
   bool get cargando => _cargando;
   bool get sincronizando => _sincronizando;
   String? get error => _error;
 
-  List<Map<String, dynamic>> eventosDeDia(String dayKey) => List.unmodifiable(_eventosPorDia[dayKey] ?? const []);
+  List<Map<String, dynamic>> eventosDeDia(String dayKey) {
+    final eventos = _eventosPorDia[dayKey];
+    if (eventos == null) return [];
+    return List.unmodifiable(eventos);
+  }
+
+  List<Map<String,dynamic>> get todosEventos => List.unmodifiable(_todosEventos);
 
   Future<void> cargarDia(DateTime fecha, {String? mascotaId, bool forzar = false}) async {
     final key = _key(fecha);
-    if (_cargando) return;
-    if (!forzar && _eventosPorDia.containsKey(key)) return;
-    _setCargando(true); _setError(null);
-    final resp = await _api.obtenerEventos(
-      fechaISO: key,
-      mascotaId: mascotaId,
-    );
-    if (resp['success']) {
-      final lista = (resp['data'] as List).cast<Map<String, dynamic>>();
-      _eventosPorDia[key] = lista;
-      notifyListeners();
-    } else {
-      _setError(resp['message']);
+    print('🔄 EventosProvider.cargarDia - fecha: $key, mascota: $mascotaId, forzar: $forzar');
+    
+    // Si no es forzar y ya tenemos los datos, no recargar
+    if (!forzar) {
+      final existing = _eventosPorDia[key];
+      if (existing != null) {
+        print('ℹ️ Ya hay ${existing.length} eventos en caché para esta fecha');
+        return;
+      }
     }
-    _setCargando(false);
+    
+    _setCargando(true); 
+    _setError(null);
+    print('📡 Llamando API.obtenerEventos...');
+    
+    try {
+      final resp = await _api.obtenerEventos(
+        fechaISO: key,
+        mascotaId: mascotaId,
+      );
+      print('📬 Respuesta recibida - success: ${resp['success']}');
+      
+      if (resp['success']) {
+        final data = resp['data'];
+        if (data is List) {
+          final lista = data.cast<Map<String, dynamic>>();
+          print('✅ Eventos obtenidos: ${lista.length}');
+          _eventosPorDia[key] = lista;
+          notifyListeners();
+        } else {
+          print('⚠️ Data no es una lista: ${data.runtimeType}');
+          _eventosPorDia[key] = [];
+          notifyListeners();
+        }
+      } else {
+        print('❌ Error en respuesta: ${resp['message']}');
+        _setError(resp['message'] ?? 'Error desconocido');
+        _eventosPorDia[key] = [];
+        notifyListeners();
+      }
+    } catch (e, stackTrace) {
+      print('💥 Excepción al cargar eventos: $e');
+      print('Stack trace: $stackTrace');
+      _setError(e.toString());
+      _eventosPorDia[key] = [];
+      notifyListeners();
+    } finally {
+      _setCargando(false);
+      print('🏁 cargarDia finalizado para $key');
+    }
+  }
+
+  // Cargar TODOS los eventos del usuario (opcionalmente filtrando por mascota)
+  Future<void> cargarTodos({String? mascotaId, bool forzar = false}) async {
+    // Evitar recarga si cache reciente (< 1 minuto) y no se fuerza
+    if (!forzar && _todosEventos.isNotEmpty && _ultimaCargaTodos != null && DateTime.now().difference(_ultimaCargaTodos!).inSeconds < 60) {
+      return;
+    }
+    _setCargando(true);
+    _setError(null);
+    try {
+      final resp = await _api.obtenerEventos(mascotaId: mascotaId);
+      if (resp['success']) {
+        final data = resp['data'];
+        if (data is List) {
+          final lista = data.cast<Map<String,dynamic>>();
+          // Ordenar por fecha + hora
+            lista.sort((a,b){
+              DateTime fa = DateTime.tryParse(a['fecha']?.toString() ?? '') ?? DateTime.now();
+              DateTime fb = DateTime.tryParse(b['fecha']?.toString() ?? '') ?? DateTime.now();
+              int cmp = fa.compareTo(fb);
+              if (cmp != 0) return cmp;
+              final ha = a['hora']?.toString() ?? '';
+              final hb = b['hora']?.toString() ?? '';
+              return ha.compareTo(hb);
+            });
+          _todosEventos = lista;
+          _ultimaCargaTodos = DateTime.now();
+          // Rellenar mapa por día para reutilización
+          _eventosPorDia.clear();
+          for (final ev in lista) {
+            final fechaStr = ev['fecha'].toString().split('T')[0];
+            _eventosPorDia.putIfAbsent(fechaStr, () => []).add(ev);
+          }
+          notifyListeners();
+        } else {
+          _todosEventos = [];
+          _ultimaCargaTodos = DateTime.now();
+          notifyListeners();
+        }
+      } else {
+        _setError(resp['message'] ?? 'Error al cargar eventos');
+        _todosEventos = [];
+        _ultimaCargaTodos = DateTime.now();
+        notifyListeners();
+      }
+    } catch (e) {
+      _setError(e.toString());
+      _todosEventos = [];
+      _ultimaCargaTodos = DateTime.now();
+      notifyListeners();
+    } finally {
+      _setCargando(false);
+    }
   }
 
   Future<bool> crear({
@@ -63,17 +161,30 @@ class EventosProvider with ChangeNotifier {
     if (resp['success']) {
       final ev = resp['data']['evento'] ?? resp['data'];
       if (ev is Map<String, dynamic>) {
-        final key = _key(DateTime.parse(ev['fecha']));
+        // Parsear fecha - el backend guarda solo la fecha (YYYY-MM-DD)
+        // pero al devolverla MongoDB la convierte a ISO con T00:00:00.000Z
+        // Extraemos solo la parte de la fecha para la clave
+        final fechaStr = ev['fecha'].toString().split('T')[0]; // "2025-09-30"
+        final key = fechaStr;
         _eventosPorDia.putIfAbsent(key, () => []).add(ev);
+        // Actualizar cache de todos (insertar manteniendo orden)
+        _todosEventos.add(ev);
+        _todosEventos.sort((a,b){
+          DateTime fa = DateTime.tryParse(a['fecha']?.toString() ?? '') ?? DateTime.now();
+          DateTime fb = DateTime.tryParse(b['fecha']?.toString() ?? '') ?? DateTime.now();
+          int cmp = fa.compareTo(fb);
+          if (cmp != 0) return cmp;
+          return (a['hora']??'').toString().compareTo((b['hora']??'').toString());
+        });
         notifyListeners();
         // Programar notificación si aplica
         try {
           if (recordatorioActivo) {
-            final fecha = DateTime.parse(ev['fecha']);
+            final fechaCompleta = DateTime.parse(ev['fecha']);
             final id = (ev['_id'] ?? ev['id']).toString();
             await NotificationService().scheduleEventReminder(
               eventoId: id,
-              fechaEvento: fecha,
+              fechaEvento: fechaCompleta,
               titulo: ev['titulo']?.toString() ?? 'Evento',
               body: '(${ev['tipo'] ?? 'evento'}) próximamente',
               minutosAntes: minutosAntes,
@@ -143,19 +254,39 @@ class EventosProvider with ChangeNotifier {
   }
 
   Future<bool> eliminar(String eventoId) async {
+    if (eventoId.isEmpty) {
+      _setError('ID del evento no válido');
+      return false;
+    }
     _setSincronizando(true);
-    final resp = await _api.eliminarEvento(eventoId);
-    if (resp['success']) {
-      for (final lista in _eventosPorDia.values) {
-        lista.removeWhere((e) => e['_id'] == eventoId);
+    _setError(null);
+    try {
+      final resp = await _api.eliminarEvento(eventoId);
+      if (resp['success'] == true) {
+        // Eliminar de todas las listas en memoria
+        for (final lista in _eventosPorDia.values) {
+          lista.removeWhere((e) {
+            final id = (e['_id'] ?? e['id']).toString();
+            return id == eventoId;
+          });
+        }
+        notifyListeners();
+        // Cancelar notificación
+        try { 
+          await NotificationService().cancelEventReminder(eventoId); 
+        } catch (e) {
+          print('Error al cancelar notificación: $e');
+        }
+        _setSincronizando(false);
+        return true;
+      } else {
+        final errorMsg = resp['message'] ?? resp['error'] ?? 'Error desconocido al eliminar evento';
+        _setError(errorMsg);
+        _setSincronizando(false);
+        return false;
       }
-      notifyListeners();
-      // Cancelar notificación
-      try { await NotificationService().cancelEventReminder(eventoId); } catch (_) {}
-      _setSincronizando(false);
-      return true;
-    } else {
-      _setError(resp['message']);
+    } catch (e) {
+      _setError('Error de conexión: $e');
       _setSincronizando(false);
       return false;
     }
@@ -167,7 +298,9 @@ class EventosProvider with ChangeNotifier {
       final idx = entry.value.indexWhere((e) => e['_id'] == id);
       if (idx != -1) {
   entry.value.removeAt(idx);
-        final keyNuevo = _key(DateTime.parse(nuevo['fecha']));
+        // Extraer solo la parte de fecha YYYY-MM-DD para la clave
+        final fechaStr = nuevo['fecha'].toString().split('T')[0];
+        final keyNuevo = fechaStr;
         _eventosPorDia.putIfAbsent(keyNuevo, () => []).add(nuevo);
         // Si keyNuevo == entry.key y solo se actualizó -> ya está añadida
         notifyListeners();

@@ -38,6 +38,7 @@ class _EditarDuenoPantallaState extends State<EditarDuenoPantalla> {
     _telefonoController = TextEditingController(text: widget.dueno.telefono);
     _emailController = TextEditingController(text: widget.dueno.email);
   // dirección ya no se edita
+    _sincronizarConAuth();
   }
 
   @override
@@ -133,6 +134,37 @@ class _EditarDuenoPantallaState extends State<EditarDuenoPantalla> {
       return false;
     }
     return true;
+  }
+
+  // Asegura que si el DuenoModel llegó con valores vacíos pero AuthProvider ya tiene
+  // la información del usuario autenticado, se muestren esos datos existentes.
+  void _sincronizarConAuth() {
+    try {
+      final auth = context.read<AuthProvider>();
+      final u = auth.user;
+      if (u == null) return;
+
+      String? nombre = (u['nombre'] ?? u['Nombre'])?.toString();
+      String? apellido = (u['apellido'] ?? u['Apellido'])?.toString();
+      String? correo = (u['correo'] ?? u['email'] ?? u['Email'])?.toString();
+      String? celular = (u['celular'] ?? u['telefono'] ?? u['tel'] ?? u['Telefono'])?.toString();
+
+      if ((_nombreController.text.isEmpty || _nombreController.text == 'Usuario') && nombre != null && nombre.isNotEmpty) {
+        _nombreController.text = nombre;
+      }
+      if (_apellidoController.text.isEmpty && apellido != null && apellido.isNotEmpty) {
+        _apellidoController.text = apellido;
+      }
+      if (_telefonoController.text.isEmpty && celular != null && celular.isNotEmpty) {
+        _telefonoController.text = celular;
+      }
+      if (_emailController.text.isEmpty && correo != null && correo.isNotEmpty) {
+        _emailController.text = correo;
+      }
+      setState(() {}); // refrescar si hubo cambios
+    } catch (_) {
+      // Silencio: si algo falla no bloquea la pantalla
+    }
   }
 
   void _mostrarError(String mensaje) {

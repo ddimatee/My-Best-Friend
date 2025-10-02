@@ -120,6 +120,7 @@ const vacunasRoutes = require('./routes/vacunas');
 const pesoRoutes = require('./routes/peso');
 const albumRoutes = require('./routes/album');
 const utilsRoutes = require('./routes/utils');
+const soporteRoutes = require('./routes/soporte');
 
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/mascotas', mascotasRoutes);
@@ -128,6 +129,7 @@ app.use('/api/vacunas', vacunasRoutes);
 app.use('/api/peso', pesoRoutes);
 app.use('/api/album', albumRoutes);
 app.use('/api/utils', utilsRoutes);
+app.use('/api/soporte', soporteRoutes);
 
 // Ruta de prueba
 app.get('/', (req, res) => {

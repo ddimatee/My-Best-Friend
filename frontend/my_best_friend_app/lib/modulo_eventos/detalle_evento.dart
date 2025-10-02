@@ -58,10 +58,14 @@ class _DetalleEventoState extends State<DetalleEvento> {
 
     if (confirmar == true) {
       try {
-  final id = widget.evento['_id'] ?? widget.evento['id'];
+  final id = (widget.evento['_id'] ?? widget.evento['id'])?.toString();
+  if (id == null || id.isEmpty) {
+    throw Exception('ID del evento no válido');
+  }
   final prov = context.read<EventosProvider>();
   final success = await prov.eliminar(id);
         if (success) {
+          if (!mounted) return;
           Navigator.pop(context, true);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -70,9 +74,11 @@ class _DetalleEventoState extends State<DetalleEvento> {
             ),
           );
         } else {
-          throw Exception('Error al eliminar');
+          final errorMsg = prov.error ?? 'Error desconocido';
+          throw Exception(errorMsg);
         }
       } catch (e) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error al eliminar el evento: $e'),

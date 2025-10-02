@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../modulo_general/widgets/bottom_nav_global.dart';
 import 'package:intl/intl.dart';
+import '../../widgets/custom_date_picker.dart';
 import 'package:provider/provider.dart';
 import '../../providers/eventos_provider.dart';
 import '../../providers/mascotas_provider.dart';
@@ -21,31 +23,94 @@ class _EventosPantallaState extends State<EventosPantalla> {
   final Color _greenColor = const Color(0xFF4CAF50);
   String? _mascotaSeleccionada;
   DateTime _fechaActual = DateTime.now();
+  bool _mostrarTodos = true; // nuevo: mostrar todos los eventos
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final masc = context.read<MascotasProvider>();
-      if (masc.mascotas.isEmpty) await masc.cargarMascotas();
-      if (masc.mascotas.isNotEmpty) {
-        _mascotaSeleccionada = (masc.mascotas.first['_id'] ?? masc.mascotas.first['id']).toString();
-        await _cargarEventos();
-      } else {
-        setState(() { _isLoading = false; });
+      print('=== INICIO carga eventos pantalla ===');
+      try {
+        final masc = context.read<MascotasProvider>();
+        print('Mascotas actuales: ${masc.mascotas.length}');
+        
+        if (masc.mascotas.isEmpty) {
+          print('Cargando mascotas desde API...');
+          await masc.cargarMascotas().timeout(
+            const Duration(seconds: 10),
+            onTimeout: () {
+              print('TIMEOUT al cargar mascotas');
+              throw TimeoutException('Tiempo de espera agotado al cargar mascotas');
+            },
+          );
+          print('Mascotas cargadas: ${masc.mascotas.length}');
+        }
+        
+        if (masc.mascotas.isNotEmpty) {
+          _mascotaSeleccionada = (masc.mascotas.first['_id'] ?? masc.mascotas.first['id']).toString();
+          print('Mascota seleccionada: $_mascotaSeleccionada');
+          print('Cargando eventos (todos) ...');
+          await _cargarEventos();
+          print('Eventos cargados: ${_eventos.length}');
+        } else {
+          print('No hay mascotas para mostrar');
+          setState(() { _isLoading = false; });
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('No hay mascotas registradas')),
+            );
+          }
+        }
+        print('=== FIN carga eventos pantalla ===');
+      } catch (e) {
+        print('❌ ERROR en initState de eventos: $e');
+        if (mounted) {
+          setState(() { _isLoading = false; });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error al cargar: $e')),
+          );
+        }
       }
     });
   }
 
   Future<void> _cargarEventos() async {
-    if (_mascotaSeleccionada == null) return;
+    if (_mascotaSeleccionada == null) {
+      print('⚠️ No hay mascota seleccionada');
+      setState(() { _isLoading = false; });
+      return;
+    }
+    print('>>> Cargando ${_mostrarTodos ? 'TODOS los eventos' : 'eventos del día'} para mascota: $_mascotaSeleccionada');
     setState(() { _isLoading = true; });
-    final prov = context.read<EventosProvider>();
-    await prov.cargarDia(_fechaActual, mascotaId: _mascotaSeleccionada, forzar: true);
-    setState(() {
-      _eventos = prov.eventosDeDia(_key(_fechaActual));
-      _isLoading = false;
-    });
+    try {
+      final prov = context.read<EventosProvider>();
+      if (_mostrarTodos) {
+        await prov.cargarTodos(mascotaId: _mascotaSeleccionada, forzar: true);
+        final lista = prov.todosEventos;
+        print('Total eventos cargados (todos): ${lista.length}');
+        setState(() {
+          _eventos = lista;
+          _isLoading = false;
+        });
+      } else {
+        await prov.cargarDia(_fechaActual, mascotaId: _mascotaSeleccionada, forzar: true);
+        final key = _key(_fechaActual);
+        final lista = prov.eventosDeDia(key);
+        print('Eventos del día $key: ${lista.length}');
+        setState(() {
+          _eventos = lista;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('❌ ERROR al cargar eventos: $e');
+      if (mounted) {
+        setState(() { _isLoading = false; _eventos = []; });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al cargar eventos: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 
   String _key(DateTime d) => '${d.year.toString().padLeft(4,'0')}-${d.month.toString().padLeft(2,'0')}-${d.day.toString().padLeft(2,'0')}';
@@ -275,6 +340,8 @@ class _EventosPantallaState extends State<EventosPantalla> {
 
   @override
   Widget build(BuildContext context) {
+  final fechaFormateada = DateFormat('d \'de\' MMM, yyyy', 'es').format(_fechaActual);
+    
     return Scaffold(
       backgroundColor: _greenColor,
       appBar: AppBar(
@@ -284,7 +351,47 @@ class _EventosPantallaState extends State<EventosPantalla> {
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (!_mostrarTodos)
+              GestureDetector(
+                onTap: () async {
+                  final nuevaFecha = await CustomDatePicker.show(
+                    context,
+                    initialDate: _fechaActual,
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2030),
+                    primaryColor: _greenColor,
+                  );
+                  if (nuevaFecha != null && nuevaFecha != _fechaActual) {
+                    setState(() { _fechaActual = nuevaFecha; });
+                    _cargarEventos();
+                  }
+                },
+                child: Row(children: [
+                  Text(
+                    fechaFormateada,
+                    style: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(width: 6),
+                  const Icon(Icons.calendar_today, color: Colors.black, size: 18),
+                ]),
+              )
+            else
+              const Text('Todos los eventos', style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
+          ],
+        ),
+        centerTitle: true,
         actions: [
+          IconButton(
+            tooltip: _mostrarTodos ? 'Ver por día' : 'Ver todos',
+            onPressed: () {
+              setState(() { _mostrarTodos = !_mostrarTodos; });
+              _cargarEventos();
+            },
+            icon: Icon(_mostrarTodos ? Icons.calendar_today : Icons.view_list, color: Colors.black),
+          ),
           if (_eventos.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(right: 16.0),

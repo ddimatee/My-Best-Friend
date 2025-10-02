@@ -33,11 +33,16 @@ router.post('/login', validarLoginUsuario, async (req, res) => {
       return res.status(401).json({ error: 'Contraseña incorrecta' });
     }
 
+    // Actualizar último acceso
+    usuario.ultimoAcceso = new Date();
+
     const token = generarToken(usuario._id);
     let rememberToken;
     if (recordar) {
       rememberToken = crypto.randomBytes(24).toString('hex');
       usuario.rememberToken = rememberToken;
+      await usuario.save();
+    } else {
       await usuario.save();
     }
     res.json({ mensaje: 'Login exitoso', usuario, token, rememberToken });

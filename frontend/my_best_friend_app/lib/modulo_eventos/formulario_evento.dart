@@ -23,6 +23,7 @@ class _FormularioEventoState extends State<FormularioEvento> {
   final _descripcionController = TextEditingController();
   
   DateTime _fechaSeleccionada = DateTime.now();
+  TimeOfDay _horaSeleccionada = TimeOfDay.now();
   bool _crearRecordatorio = false;
   bool _isLoading = false;
   String _tipoSeleccionado = '';
@@ -40,6 +41,15 @@ class _FormularioEventoState extends State<FormularioEvento> {
       _tituloController.text = (e['titulo'] ?? '').toString();
       _descripcionController.text = (e['descripcion'] ?? '').toString();
       _fechaSeleccionada = DateTime.tryParse(e['fecha']?.toString() ?? '') ?? DateTime.now();
+      // Extraer hora si existe
+      if (e['hora'] != null) {
+        try {
+          final partes = e['hora'].toString().split(':');
+          if (partes.length >= 2) {
+            _horaSeleccionada = TimeOfDay(hour: int.parse(partes[0]), minute: int.parse(partes[1]));
+          }
+        } catch (_) {}
+      }
   _crearRecordatorio = (e['recordatorio']?['activo'] == true) || (e['tieneRecordatorio'] == true);
   final rec = e['recordatorio'];
   if (rec is Map && rec['tiempoAntes'] is int) _minutosAntes = rec['tiempoAntes'];
@@ -63,6 +73,32 @@ class _FormularioEventoState extends State<FormularioEvento> {
     if (fecha != null) {
       setState(() {
         _fechaSeleccionada = fecha;
+      });
+    }
+  }
+
+  Future<void> _seleccionarHora() async {
+    final TimeOfDay? hora = await showTimePicker(
+      context: context,
+      initialTime: _horaSeleccionada,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: _greenColor,
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (hora != null) {
+      setState(() {
+        _horaSeleccionada = hora;
       });
     }
   }
@@ -115,7 +151,14 @@ class _FormularioEventoState extends State<FormularioEvento> {
     setState(() => _isLoading = true);
     try {
       final prov = context.read<EventosProvider>();
-      final fecha = _fechaSeleccionada;
+      // Combinar fecha y hora seleccionadas
+      final fecha = DateTime(
+        _fechaSeleccionada.year,
+        _fechaSeleccionada.month,
+        _fechaSeleccionada.day,
+        _horaSeleccionada.hour,
+        _horaSeleccionada.minute,
+      );
       final hora = DateFormat('HH:mm').format(fecha);
       if (widget.evento == null) {
         await _seleccionarMascotaSiNecesario();
@@ -231,30 +274,65 @@ class _FormularioEventoState extends State<FormularioEvento> {
               ),
             ),
           ),
-          InkWell(
-            onTap: _seleccionarFecha,
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      DateFormat('d \'de\' MMM, yyyy - h:mm a').format(_fechaSeleccionada),
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontSize: 16,
-                      ),
+          Row(
+            children: [
+              Expanded(
+                flex: 2,
+                child: InkWell(
+                  onTap: _seleccionarFecha,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            DateFormat('d \'de\' MMM, yyyy').format(_fechaSeleccionada),
+                            style: const TextStyle(
+                              color: Colors.black,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                        const Icon(Icons.calendar_today, color: Colors.black54),
+                      ],
                     ),
                   ),
-                  const Icon(Icons.calendar_today, color: Colors.black54),
-                ],
+                ),
               ),
-            ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: InkWell(
+                  onTap: _seleccionarHora,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _horaSeleccionada.format(context),
+                            style: const TextStyle(
+                              color: Colors.black,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                        const Icon(Icons.access_time, color: Colors.black54),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

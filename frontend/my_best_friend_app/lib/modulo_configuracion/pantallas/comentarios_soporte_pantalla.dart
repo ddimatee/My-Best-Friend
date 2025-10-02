@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ComentariosSoportePantalla extends StatefulWidget {
   const ComentariosSoportePantalla({Key? key}) : super(key: key);
@@ -330,15 +333,71 @@ class _ComentariosSoportePantallaState extends State<ComentariosSoportePantalla>
       );
       return;
     }
+    _guardarSoporte();
+  }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Comentario enviado exitosamente. Te contactaremos pronto.'),
-        backgroundColor: Color(0xFF4CAF50),
-      ),
-    );
-    
-    _comentarioController.clear();
-    Navigator.pop(context);
+  Future<void> _guardarSoporte() async {
+    final mensaje = _comentarioController.text.trim();
+    final tipo = _tipoSolicitud;
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    final scaffold = ScaffoldMessenger.of(context);
+    try {
+      scaffold.showSnackBar(const SnackBar(content: Text('Enviando...'), duration: Duration(seconds: 1)));
+
+      // Recuperar token guardado por ApiService (usa clave auth_token)
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+
+      // Usar misma lógica que ApiService: base termina en /api
+      const String override = String.fromEnvironment('API_BASE', defaultValue: '');
+      String baseApi;
+      if (override.isNotEmpty) {
+        baseApi = '$override/api';
+      } else {
+        baseApi = 'http://localhost:3000/api';
+      }
+      final uri = Uri.parse('$baseApi/soporte');
+      final resp = await http.post(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token'
+        },
+        body: jsonEncode({
+          'tipo': tipo,
+          'mensaje': mensaje,
+          'metadata': {
+            'plataforma': Theme.of(context).platform.name,
+            'lenguaje': 'es'
+          }
+        }),
+      );
+
+      if (resp.statusCode == 201) {
+        scaffold.showSnackBar(const SnackBar(
+          content: Text('Comentario enviado. ¡Gracias!'),
+          backgroundColor: Color(0xFF4CAF50),
+        ));
+        _comentarioController.clear();
+        Future.delayed(const Duration(milliseconds: 600), () {
+          if (mounted) Navigator.pop(context);
+        });
+      } else {
+        String msg = 'Error al enviar';
+        try {
+          final data = jsonDecode(resp.body);
+          msg = data['error'] ?? data['mensaje'] ?? msg;
+        } catch (_) {}
+        scaffold.showSnackBar(SnackBar(
+          content: Text(msg),
+          backgroundColor: Colors.red,
+        ));
+      }
+    } catch (e) {
+      scaffold.showSnackBar(SnackBar(
+        content: Text('Error de red: ${e.toString()}'),
+        backgroundColor: Colors.red,
+      ));
+    }
   }
 }

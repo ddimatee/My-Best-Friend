@@ -36,11 +36,18 @@ class ApiService {
   // Headers con token de autenticación
   Future<Map<String, String>> get headersWithAuth async {
     final token = await getToken();
-    return {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      if (token != null) 'Authorization': 'Bearer $token',
-    };
+    final headers = <String, String>{};
+    
+    // Solo agregar Authorization si hay token
+    if (token != null) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+    
+    // Content-Type y Accept se agregan solo si no estamos en web o si es necesario
+    headers['Content-Type'] = 'application/json; charset=utf-8';
+    headers['Accept'] = 'application/json';
+    
+    return headers;
   }
 
   // Obtener token de SharedPreferences
@@ -341,25 +348,49 @@ class ApiService {
     String prioridad = 'media',
   }) async {
     try {
+      print('🆕 crearEvento iniciado');
+      print('   mascotaId: $mascotaId');
+      print('   titulo: $titulo');
+      print('   tipo: $tipo');
+      print('   fecha: $fecha');
+      print('   hora: $hora');
+      
+      // Enviar fecha en formato YYYY-MM-DD (solo fecha, sin hora ni timezone)
+      final fechaStr = '${fecha.year.toString().padLeft(4, '0')}-${fecha.month.toString().padLeft(2, '0')}-${fecha.day.toString().padLeft(2, '0')}';
+      print('   fechaStr: $fechaStr');
+      
+      final body = {
+        'mascota': mascotaId,
+        'titulo': titulo,
+        'tipo': tipo,
+        'fecha': fechaStr,
+        'hora': hora,
+        'descripcion': descripcion,
+        'prioridad': prioridad,
+        'recordatorio': {
+          'activo': recordatorioActivo,
+          'tiempoAntes': minutosAntes,
+        }
+      };
+      print('   body: ${json.encode(body)}');
+      
+      final headers = await headersWithAuth;
+      print('   headers: $headers');
+      print('   URL: $baseUrl/eventos');
+      
       final response = await http.post(
         Uri.parse('$baseUrl/eventos'),
-        headers: await headersWithAuth,
-        body: json.encode({
-          'mascota': mascotaId,
-          'titulo': titulo,
-          'tipo': tipo,
-          'fecha': fecha.toIso8601String(),
-          'hora': hora,
-          'descripcion': descripcion,
-          'prioridad': prioridad,
-          'recordatorio': {
-            'activo': recordatorioActivo,
-            'tiempoAntes': minutosAntes,
-          }
-        }),
+        headers: headers,
+        body: json.encode(body),
       );
+      
+      print('   response status: ${response.statusCode}');
+      print('   response body: ${response.body}');
+      
       return _handleResponse(response);
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('💥 Error en crearEvento: $e');
+      print('   Stack trace: $stackTrace');
       return {'success': false, 'message': 'Error de conexión: $e'};
     }
   }
@@ -380,7 +411,11 @@ class ApiService {
       final body = <String, dynamic>{};
       if (titulo != null) body['titulo'] = titulo;
       if (tipo != null) body['tipo'] = tipo;
-      if (fecha != null) body['fecha'] = fecha.toIso8601String();
+      if (fecha != null) {
+        // Enviar fecha en formato YYYY-MM-DD (solo fecha, sin hora ni timezone)
+        final fechaStr = '${fecha.year.toString().padLeft(4, '0')}-${fecha.month.toString().padLeft(2, '0')}-${fecha.day.toString().padLeft(2, '0')}';
+        body['fecha'] = fechaStr;
+      }
       if (hora != null) body['hora'] = hora;
       if (descripcion != null) body['descripcion'] = descripcion;
       if (prioridad != null) body['prioridad'] = prioridad;
@@ -404,12 +439,18 @@ class ApiService {
 
   Future<Map<String,dynamic>> eliminarEvento(String id) async {
     try {
+      print('=== ELIMINANDO EVENTO ===');
+      print('ID: $id');
+      print('URL: $baseUrl/eventos/$id');
       final response = await http.delete(
         Uri.parse('$baseUrl/eventos/$id'),
         headers: await headersWithAuth,
       );
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
       return _handleResponse(response);
     } catch (e) {
+      print('Error en eliminarEvento: $e');
       return {'success': false, 'message': 'Error de conexión: $e'};
     }
   }
@@ -844,6 +885,30 @@ class ApiService {
   // Cerrar sesión
   Future<void> cerrarSesion() async {
     await removeToken();
+  }
+
+  // Eliminar cuenta del usuario autenticado
+  Future<Map<String, dynamic>> eliminarCuenta(String id) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/usuarios/$id'),
+        headers: await headersWithAuth,
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': 'Error de conexión: $e'};
+    }
+  }
+
+  // Guardar preferencia de mantener sesión
+  Future<void> setMantenerSesion(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('keep_session', value);
+  }
+
+  Future<bool> getMantenerSesion() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('keep_session') ?? false;
   }
 
   // Helper para envolver peticiones desde UI/Providers y disparar callback si 401

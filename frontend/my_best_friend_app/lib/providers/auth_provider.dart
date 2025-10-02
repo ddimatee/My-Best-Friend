@@ -15,12 +15,14 @@ class AuthProvider with ChangeNotifier {
   bool _isAuthenticated = false;
   Map<String, dynamic>? _user;
   String? _errorMessage;
+  bool _mantenerSesion = false;
 
   // Getters
   bool get isLoading => _isLoading;
   bool get isAuthenticated => _isAuthenticated;
   Map<String, dynamic>? get user => _user;
   String? get errorMessage => _errorMessage;
+  bool get mantenerSesion => _mantenerSesion;
 
   // Constructor
   AuthProvider() {
@@ -39,6 +41,7 @@ class AuthProvider with ChangeNotifier {
     final remember = prefs.getString('remember_token');
     final correo = prefs.getString('remember_correo');
     final password = prefs.getString('remember_password');
+    _mantenerSesion = prefs.getBool('keep_session') ?? false;
     if (remember != null && correo != null && password != null) {
       // Intentar login silencioso
       await iniciarSesion(correo: correo, password: password, recordar: true, silencioso: true);
@@ -106,6 +109,11 @@ class AuthProvider with ChangeNotifier {
           await prefs.setString('remember_correo', correo);
           await prefs.setString('remember_password', password); // Nota: en producción usar cifrado
         }
+        if (_mantenerSesion) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('remember_correo', correo);
+          await prefs.setString('remember_password', password);
+        }
         _setLoading(false);
         return true;
       } else {
@@ -154,6 +162,9 @@ class AuthProvider with ChangeNotifier {
     SharedPreferences.getInstance().then((prefs) {
       prefs.remove('remember_correo');
       prefs.remove('remember_password');
+      if (!_mantenerSesion) {
+        prefs.remove('keep_session');
+      }
       // No borro remember_token para posible auditoría, pero se podría
     });
     _clearError();
@@ -166,6 +177,13 @@ class AuthProvider with ChangeNotifier {
       try { (context as dynamic).read<AlbumProvider>().clear(); } catch (_) {}
       try { (context as dynamic).read<EventosProvider>().clear(); } catch (_) {}
     }
+  }
+
+  Future<void> setMantenerSesion(bool value) async {
+    _mantenerSesion = value;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('keep_session', value);
   }
 
   // Manejo central de 401: llamado por capas superiores cuando ApiService detecta unauthorized

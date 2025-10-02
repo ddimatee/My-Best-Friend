@@ -6,17 +6,29 @@ const protegerRuta = require('../middlewares/protegerRuta');
 // Crear nuevo evento
 router.post('/', protegerRuta, async (req, res) => {
   try {
+    console.log('📝 POST /api/eventos recibido');
+    console.log('   Headers:', req.headers);
+    console.log('   Body:', req.body);
+    console.log('   Usuario ID:', req.usuario?._id);
+    
     const nuevoEvento = new Evento({
       ...req.body,
       usuario: req.usuario._id
     });
+    
+    console.log('   Evento a guardar:', nuevoEvento);
+    
     await nuevoEvento.save();
     await nuevoEvento.populate('mascota', 'nombre raza');
+    
+    console.log('   ✅ Evento guardado exitosamente');
+    
     res.status(201).json({ 
       mensaje: 'Evento creado correctamente', 
       evento: nuevoEvento 
     });
   } catch (error) {
+    console.error('   ❌ Error al crear evento:', error.message);
     res.status(400).json({ error: error.message });
   }
 });
@@ -123,12 +135,13 @@ router.delete('/:id', protegerRuta, async (req, res) => {
     });
     
     if (!evento) {
-      return res.status(404).json({ error: 'Evento no encontrado' });
+      return res.status(404).json({ error: 'Evento no encontrado o no tienes permisos' });
     }
     
-    res.json({ mensaje: 'Evento eliminado correctamente' });
+    res.json({ mensaje: 'Evento eliminado correctamente', success: true });
   } catch (error) {
-    res.status(500).json({ error: 'Error al eliminar evento' });
+    console.error('Error al eliminar evento:', error);
+    res.status(500).json({ error: 'Error al eliminar evento: ' + error.message });
   }
 });
 

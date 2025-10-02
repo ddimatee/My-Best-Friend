@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'pantallas/perfil_pantalla.dart';
-import 'pantallas/preferencias_pantalla.dart';
 import 'pantallas/contrasena_pantalla.dart';
 import 'pantallas/notificaciones_pantalla.dart';
 import 'pantallas/comentarios_soporte_pantalla.dart';
@@ -51,11 +50,6 @@ class ConfiguracionModuloPantalla extends StatelessWidget {
                     label: 'Perfil',
                     color: itemColor,
                     onTap: () => _push(context, const PerfilPantalla()),
-                  ),
-                  _ConfigItem(
-                    label: 'Preferencias',
-                    color: itemColor,
-                    onTap: () => _push(context, const PreferenciasPantalla()),
                   ),
                   _ConfigItem(
                     label: 'Contraseña',

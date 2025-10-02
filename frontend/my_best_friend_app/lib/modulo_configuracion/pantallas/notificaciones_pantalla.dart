@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class NotificacionesPantalla extends StatefulWidget {
   const NotificacionesPantalla({Key? key}) : super(key: key);
@@ -18,6 +19,50 @@ class _NotificacionesPantallaState extends State<NotificacionesPantalla> {
 
   String _frecuenciaRecordatorios = 'Diaria';
   String _horaRecordatorios = '09:00 AM';
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarConfiguracionPersistida();
+  }
+
+  Future<void> _cargarConfiguracionPersistida() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      setState(() {
+        _notificacionesGenerales = prefs.getBool('notif_generales') ?? _notificacionesGenerales;
+        _recordatoriosVacunas = prefs.getBool('notif_vacunas') ?? _recordatoriosVacunas;
+        _recordatoriosPeso = prefs.getBool('notif_peso') ?? _recordatoriosPeso;
+        _recordatoriosEventos = prefs.getBool('notif_eventos') ?? _recordatoriosEventos;
+        _recordatoriosAlimentacion = prefs.getBool('notif_alimentacion') ?? _recordatoriosAlimentacion;
+        _actualizacionesApp = prefs.getBool('notif_actualizaciones') ?? _actualizacionesApp;
+        _notificacionesMarketing = prefs.getBool('notif_marketing') ?? _notificacionesMarketing;
+        _frecuenciaRecordatorios = prefs.getString('notif_frecuencia') ?? _frecuenciaRecordatorios;
+        _horaRecordatorios = prefs.getString('notif_hora') ?? _horaRecordatorios;
+      });
+      // Reprogramar recordatorios relevantes si estaban activos
+      if (_notificacionesGenerales) {
+        await _aplicarProgramacionRecordatorios();
+      }
+    } catch (_) {
+      // Silencio: si falla la carga no se rompe la pantalla
+    }
+  }
+
+  Future<void> _aplicarProgramacionRecordenariosPeso() async {
+    // Placeholder para recordatorios de peso (ejemplo simple diario a la hora configurada)
+    // En una implementación real, programarías con NotificationService.
+    // Omitido por simplicidad mientras no haya lógica de peso.
+  }
+
+  Future<void> _aplicarProgramacionRecordatorios() async {
+    if (!_notificacionesGenerales) return;
+    // Aquí podrías cancelar primero (según necesidades) y luego reprogramar.
+    if (_recordatoriosPeso) {
+      await _aplicarProgramacionRecordenariosPeso();
+    }
+    // Se podrían añadir: vacunas, eventos, alimentación.
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -72,7 +117,16 @@ class _NotificacionesPantallaState extends State<NotificacionesPantalla> {
                   'Recibir notificaciones de la aplicación',
                   _notificacionesGenerales,
                   Icons.notifications_outlined,
-                  (value) => setState(() => _notificacionesGenerales = value),
+                  (value) async {
+                    setState(() => _notificacionesGenerales = value);
+                    await _persistir();
+                    if (!value) {
+                      // Apagar todas implica cancelar programaciones
+                      // (Aquí podríamos llamar a NotificationService().cancelAll(); si se decide globalmente)
+                    } else {
+                      await _aplicarProgramacionRecordatorios();
+                    }
+                  },
                 ),
                 
                 const SizedBox(height: 24),
@@ -93,7 +147,12 @@ class _NotificacionesPantallaState extends State<NotificacionesPantalla> {
                   'Recordatorios de citas de vacunación',
                   _recordatoriosVacunas,
                   Icons.medical_services_outlined,
-                  (value) => setState(() => _recordatoriosVacunas = value),
+                  (value) async {
+                    setState(() => _recordatoriosVacunas = value);
+                    await _persistir();
+                    await _aplicarProgramacionRecordatorios();
+                  },
+                  enabled: _notificacionesGenerales,
                 ),
                 
                 _buildSwitchTile(
@@ -101,7 +160,12 @@ class _NotificacionesPantallaState extends State<NotificacionesPantalla> {
                   'Recordatorios para registrar el peso',
                   _recordatoriosPeso,
                   Icons.monitor_weight_outlined,
-                  (value) => setState(() => _recordatoriosPeso = value),
+                  (value) async {
+                    setState(() => _recordatoriosPeso = value);
+                    await _persistir();
+                    await _aplicarProgramacionRecordatorios();
+                  },
+                  enabled: _notificacionesGenerales,
                 ),
                 
                 _buildSwitchTile(
@@ -109,7 +173,12 @@ class _NotificacionesPantallaState extends State<NotificacionesPantalla> {
                   'Recordatorios de eventos programados',
                   _recordatoriosEventos,
                   Icons.event_outlined,
-                  (value) => setState(() => _recordatoriosEventos = value),
+                  (value) async {
+                    setState(() => _recordatoriosEventos = value);
+                    await _persistir();
+                    await _aplicarProgramacionRecordatorios();
+                  },
+                  enabled: _notificacionesGenerales,
                 ),
                 
                 _buildSwitchTile(
@@ -117,7 +186,12 @@ class _NotificacionesPantallaState extends State<NotificacionesPantalla> {
                   'Recordatorios de horarios de comida',
                   _recordatoriosAlimentacion,
                   Icons.restaurant_outlined,
-                  (value) => setState(() => _recordatoriosAlimentacion = value),
+                  (value) async {
+                    setState(() => _recordatoriosAlimentacion = value);
+                    await _persistir();
+                    await _aplicarProgramacionRecordatorios();
+                  },
+                  enabled: _notificacionesGenerales,
                 ),
                 
                 const SizedBox(height: 24),
@@ -138,7 +212,12 @@ class _NotificacionesPantallaState extends State<NotificacionesPantalla> {
                   _frecuenciaRecordatorios,
                   ['Diaria', 'Semanal', 'Personalizada'],
                   Icons.repeat,
-                  (value) => setState(() => _frecuenciaRecordatorios = value!),
+                  (value) async {
+                    setState(() => _frecuenciaRecordatorios = value!);
+                    await _persistir();
+                    await _aplicarProgramacionRecordatorios();
+                  },
+                  enabled: _notificacionesGenerales,
                 ),
                 
                 const SizedBox(height: 16),
@@ -147,6 +226,7 @@ class _NotificacionesPantallaState extends State<NotificacionesPantalla> {
                   'Hora de recordatorios',
                   _horaRecordatorios,
                   Icons.access_time,
+                  enabled: _notificacionesGenerales,
                 ),
                 
                 const SizedBox(height: 24),
@@ -167,7 +247,8 @@ class _NotificacionesPantallaState extends State<NotificacionesPantalla> {
                   'Notificaciones sobre nuevas versiones',
                   _actualizacionesApp,
                   Icons.system_update_outlined,
-                  (value) => setState(() => _actualizacionesApp = value),
+                  (value) async { setState(() => _actualizacionesApp = value); await _persistir(); },
+                  enabled: _notificacionesGenerales,
                 ),
                 
                 _buildSwitchTile(
@@ -175,12 +256,14 @@ class _NotificacionesPantallaState extends State<NotificacionesPantalla> {
                   'Ofertas y consejos sobre cuidado de mascotas',
                   _notificacionesMarketing,
                   Icons.campaign_outlined,
-                  (value) => setState(() => _notificacionesMarketing = value),
+                  (value) async { setState(() => _notificacionesMarketing = value); await _persistir(); },
+                  enabled: _notificacionesGenerales,
                 ),
                 
                 const SizedBox(height: 30),
                 
                 // Botón Guardar
+                // Botón ya opcional; autosave implementado. Se deja por feedback visual.
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -217,13 +300,14 @@ class _NotificacionesPantallaState extends State<NotificacionesPantalla> {
     String descripcion,
     bool valor,
     IconData icono,
-    Function(bool) onChanged,
+    Function(bool) onChanged, {bool enabled = true}
   ) {
+    final visualDisabled = !enabled;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        color: Colors.grey.shade50.withOpacity(enabled ? 1 : 0.55),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey.shade200),
       ),
@@ -231,7 +315,7 @@ class _NotificacionesPantallaState extends State<NotificacionesPantalla> {
         children: [
           Icon(
             icono,
-            color: Colors.grey.shade600,
+            color: visualDisabled ? Colors.grey.shade400 : Colors.grey.shade600,
             size: 24,
           ),
           const SizedBox(width: 12),
@@ -252,7 +336,7 @@ class _NotificacionesPantallaState extends State<NotificacionesPantalla> {
                   descripcion,
                   style: TextStyle(
                     fontSize: 13,
-                    color: Colors.grey.shade600,
+                    color: visualDisabled ? Colors.grey.shade400 : Colors.grey.shade600,
                   ),
                 ),
               ],
@@ -260,7 +344,7 @@ class _NotificacionesPantallaState extends State<NotificacionesPantalla> {
           ),
           Switch(
             value: valor,
-            onChanged: onChanged,
+            onChanged: enabled ? onChanged : null,
             activeColor: const Color(0xFF4CAF50),
           ),
         ],
@@ -273,12 +357,12 @@ class _NotificacionesPantallaState extends State<NotificacionesPantalla> {
     String valorActual,
     List<String> opciones,
     IconData icono,
-    Function(String?) onChanged,
+    Function(String?) onChanged, {bool enabled = true}
   ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        color: Colors.grey.shade50.withOpacity(enabled ? 1 : 0.55),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey.shade200),
       ),
@@ -286,7 +370,7 @@ class _NotificacionesPantallaState extends State<NotificacionesPantalla> {
         children: [
           Icon(
             icono,
-            color: Colors.grey.shade600,
+            color: enabled ? Colors.grey.shade600 : Colors.grey.shade400,
             size: 24,
           ),
           const SizedBox(width: 12),
@@ -301,7 +385,7 @@ class _NotificacionesPantallaState extends State<NotificacionesPantalla> {
           ),
           DropdownButton<String>(
             value: valorActual,
-            onChanged: onChanged,
+            onChanged: enabled ? onChanged : null,
             underline: Container(),
             items: opciones.map<DropdownMenuItem<String>>((String value) {
               return DropdownMenuItem<String>(
@@ -315,13 +399,13 @@ class _NotificacionesPantallaState extends State<NotificacionesPantalla> {
     );
   }
 
-  Widget _buildTimeTile(String titulo, String hora, IconData icono) {
+  Widget _buildTimeTile(String titulo, String hora, IconData icono, {bool enabled = true}) {
     return GestureDetector(
-      onTap: () => _seleccionarHora(),
+      onTap: () => enabled ? _seleccionarHora() : null,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.grey.shade50,
+          color: Colors.grey.shade50.withOpacity(enabled ? 1 : 0.55),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.grey.shade200),
         ),
@@ -329,7 +413,7 @@ class _NotificacionesPantallaState extends State<NotificacionesPantalla> {
           children: [
             Icon(
               icono,
-              color: Colors.grey.shade600,
+              color: enabled ? Colors.grey.shade600 : Colors.grey.shade400,
               size: 24,
             ),
             const SizedBox(width: 12),
@@ -353,7 +437,7 @@ class _NotificacionesPantallaState extends State<NotificacionesPantalla> {
             const SizedBox(width: 8),
             Icon(
               Icons.chevron_right,
-              color: Colors.grey.shade400,
+              color: enabled ? Colors.grey.shade400 : Colors.grey.shade300,
             ),
           ],
         ),
@@ -375,6 +459,7 @@ class _NotificacionesPantallaState extends State<NotificacionesPantalla> {
   }
 
   void _guardarConfiguracionNotificaciones() {
+    _persistir();
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Configuración de notificaciones guardada'),
@@ -382,5 +467,22 @@ class _NotificacionesPantallaState extends State<NotificacionesPantalla> {
       ),
     );
     Navigator.pop(context);
+  }
+
+  Future<void> _persistir() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('notif_generales', _notificacionesGenerales);
+      await prefs.setBool('notif_vacunas', _recordatoriosVacunas);
+      await prefs.setBool('notif_peso', _recordatoriosPeso);
+      await prefs.setBool('notif_eventos', _recordatoriosEventos);
+      await prefs.setBool('notif_alimentacion', _recordatoriosAlimentacion);
+      await prefs.setBool('notif_actualizaciones', _actualizacionesApp);
+      await prefs.setBool('notif_marketing', _notificacionesMarketing);
+      await prefs.setString('notif_frecuencia', _frecuenciaRecordatorios);
+      await prefs.setString('notif_hora', _horaRecordatorios);
+    } catch (_) {
+      // Ignorar errores silenciosamente
+    }
   }
 }

@@ -64,13 +64,6 @@ class BuscadorGlobal {
           onTap: () => Navigator.pushNamed(context, '/config/perfil'),
         ),
         ResultadoBusqueda(
-          id: 'conf:preferencias',
-          titulo: 'Preferencias',
-          descripcion: 'Notificaciones e idioma',
-          icono: Icons.tune,
-          onTap: () => Navigator.pushNamed(context, '/config/preferencias'),
-        ),
-        ResultadoBusqueda(
           id: 'conf:notificaciones',
           titulo: 'Notificaciones',
           descripcion: 'Configurar recordatorios',

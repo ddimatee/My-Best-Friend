@@ -12,7 +12,6 @@ import 'modulo_general/introduccion.dart';
 import 'modulo_general/menu_principal.dart';
 import 'modulo_general/buscar.dart';
 import 'modulo_configuracion/pantallas/perfil_pantalla.dart';
-import 'modulo_configuracion/pantallas/preferencias_pantalla.dart';
 import 'modulo_configuracion/pantallas/notificaciones_pantalla.dart';
 import 'modulo_configuracion/pantallas/cuenta_sesion_pantalla.dart';
 import 'modulo_configuracion/pantallas/comentarios_soporte_pantalla.dart';
@@ -81,9 +80,9 @@ class MyApp extends StatelessWidget {
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: const [
-          Locale('es', ''), // Español genérico
+          Locale('es', ''),
         ],
-        locale: const Locale('es'), // Idioma por defecto
+        locale: const Locale('es'),
         home: OnboardingScreens(),
         routes: {
           '/menu': (_) => const MenuPrincipal(),
@@ -93,7 +92,6 @@ class MyApp extends StatelessWidget {
           '/album': (_) => const AlbumModuloPantalla(),
           '/dueno': (_) => const DuenoModuloPantalla(),
           '/config/perfil': (_) => const PerfilPantalla(),
-          '/config/preferencias': (_) => const PreferenciasPantalla(),
           '/config/notificaciones': (_) => const NotificacionesPantalla(),
           '/config/cuenta': (_) => const CuentaSesionPantalla(),
           '/config/soporte': (_) => const ComentariosSoportePantalla(),

@@ -8,6 +8,10 @@ const protegerRuta = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.usuario = await Usuario.findById(decoded.id).select('-contraseña');
+    if (req.usuario) {
+      req.usuario.ultimoAcceso = new Date();
+      try { await req.usuario.save(); } catch (e) { /* ignorar errores menores */ }
+    }
     next();
   } catch (error) {
     res.status(401).json({ error: 'Token inválido' });
