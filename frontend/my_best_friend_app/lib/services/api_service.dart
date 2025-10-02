@@ -882,12 +882,27 @@ class ApiService {
         }
 
         // Mensajes de validación (registro/login) express-validator usualmente vienen como array
-        if (body is Map && body['errors'] is List) {
-          final errors = body['errors'] as List;
+        if (body is Map) {
+          if (body['errors'] is List) {
+            final errors = body['errors'] as List;
             if (errors.isNotEmpty) {
-              // Concatenar los mensajes de validación
-              mensaje = errors.map((e) => e['msg']).join('. ');
+              mensaje = errors
+                  .map((e) => (e is Map && (e['msg'] != null)) ? e['msg'] : e.toString())
+                  .join('. ');
             }
+          } else if (body['detalles'] is List) {
+            // Backend está enviando 'detalles' en lugar de 'errors'
+            final detalles = body['detalles'] as List;
+            if (detalles.isNotEmpty) {
+              final detallesMsg = detalles
+                  .map((e) => (e is Map && (e['msg'] != null)) ? e['msg'] : e.toString())
+                  .join('. ');
+              // Evitar duplicar si mensaje principal ya es genérico
+              if (!mensaje.contains(detallesMsg)) {
+                mensaje = '$mensaje: $detallesMsg';
+              }
+            }
+          }
         }
 
         // Duplicate key Mongo (correo ya existe)

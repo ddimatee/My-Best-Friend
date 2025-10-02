@@ -39,8 +39,8 @@ class _MascotaPasoCargandoPantallaState extends State<MascotaPasoCargandoPantall
     });
     if (!mounted) return;
     if (!ok) {
-      // Mostrar error breve y regresar (o permitir reintento)
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error creando mascota. Intenta de nuevo.')));
+      final errorMsg = provider.error ?? 'Error creando mascota. Intenta de nuevo.';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorMsg)));
     }
     _irMenu();
   }
