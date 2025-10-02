@@ -10,6 +10,82 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ApiService {
   static String get baseUrl => 'offline://api';
 
+  ApiService(){
+    _seed();
+  }
+
+  void _seed(){
+    if(_usuarios.isNotEmpty) return; // evitar duplicar
+    final userId = _genId('usr', _cUsuario++);
+    final usuario = {
+      '_id': userId,
+      'nombre': 'Ana',
+      'apellido': 'Offline',
+      'correo': 'ana@example.com',
+      'celular': '111111111',
+      'fotoPerfil': null,
+      'creado': DateTime.now().toIso8601String(),
+    };
+    _usuarios.add(usuario);
+    // token automático para facilitar pruebas
+    saveToken('token_$userId');
+
+    final mascotaId = _genId('mas', _cMascota++);
+    final mascota = {
+      '_id': mascotaId,
+      'dueno': userId,
+      'nombre': 'Fido',
+      'especie': 'Perro',
+      'raza': 'Mestizo',
+      'fechaNacimiento': DateTime.now().subtract(const Duration(days: 400)).toIso8601String(),
+      'sexo': 'M',
+      'descripcion': 'Compañero leal',
+      'oculto': false,
+      'fotoPerfil': null,
+      'creado': DateTime.now().toIso8601String(),
+    };
+    _mascotas.add(mascota);
+
+    // eventos iniciales
+    for(int i=0;i<3;i++){
+      final fecha = DateTime.now().add(Duration(days: i));
+      final fechaStr='${fecha.year.toString().padLeft(4,'0')}-${fecha.month.toString().padLeft(2,'0')}-${fecha.day.toString().padLeft(2,'0')}';
+      final evento = {
+        '_id': _genId('evt', _cEvento++),
+        'mascota': mascotaId,
+        'titulo': 'Evento ${i+1}',
+        'tipo': i==0? 'consulta':'rutina',
+        'fecha': fechaStr,
+        'hora': '09:00',
+        'descripcion': 'Descripción del evento ${i+1}',
+        'prioridad': 'media',
+        'completado': false,
+        'recordatorio': {'activo': true, 'tiempoAntes': 30},
+      };
+      _eventos.add(evento);
+    }
+
+    // vacuna ejemplo
+    final vacuna = {
+      '_id': _genId('vac', _cVacuna++),
+      'mascota': mascotaId,
+      'nombre': 'Rabia',
+      'fechaAplicacion': DateTime.now().subtract(const Duration(days:30)).toIso8601String(),
+      'recordatorio': {'activo': true},
+    };
+    _vacunas.add(vacuna);
+
+    // peso inicial
+    final peso = {
+      '_id': _genId('peso', _cPeso++),
+      'mascota': mascotaId,
+      'peso': 12.4,
+      'fecha': DateTime.now().subtract(const Duration(days:7)).toIso8601String(),
+      'tipoRegistro': 'rutina',
+    };
+    _pesos.add(peso);
+  }
+
   // ================== Estado en memoria ==================
   final List<Map<String,dynamic>> _usuarios = [];
   final List<Map<String,dynamic>> _mascotas = [];
