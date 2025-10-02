@@ -1,23 +1,13 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import '../../../services/api_service.dart';
 
-// Servicio de API para autenticación/login. Mover aquí futuras llamadas.
+// Servicio de autenticación/login OFFLINE (delegando al ApiService mock).
+final ApiService _api = ApiService();
+
 Future<String?> loginUsuario(String correo, String contrasenia) async {
-  final url = Uri.parse('http://10.0.2.2:3000/api/usuarios/login');
-  try {
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json; charset=utf-8'},
-      body: jsonEncode({'correo': correo, 'contraseña': contrasenia}),
-    );
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      return data['token'] as String?;
-    } else {
-      // Puedes mapear códigos de error específicos aquí
-      return null;
-    }
-  } catch (_) {
-    return null;
+  final resp = await _api.iniciarSesion(correo: correo, password: contrasenia);
+  if (resp['success']) {
+    final data = resp['data'];
+    if (data is Map && data['token'] != null) return data['token'] as String; 
   }
+  return null;
 }
