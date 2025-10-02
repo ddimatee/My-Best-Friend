@@ -28,6 +28,8 @@ const usuarioSchema = new mongoose.Schema({
     timezone: { type: String, default: 'America/Mexico_City' }
   },
   mascotas: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Mascota' }],
+  // Tokens de dispositivos (FCM) para notificaciones push
+  deviceTokens: [{ type: String }],
   activo: { type: Boolean, default: true },
 }, {
   timestamps: true

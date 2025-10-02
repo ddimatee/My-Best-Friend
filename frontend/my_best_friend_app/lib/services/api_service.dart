@@ -95,6 +95,28 @@ class ApiService {
   }
 
   // =============== USUARIOS ===============
+  // Registrar token de dispositivo para push
+  Future<Map<String,dynamic>> registrarDeviceToken(String token) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/notificaciones/token'),
+        headers: await headersWithAuth,
+        body: json.encode({ 'token': token })
+      );
+      return _handleResponse(response);
+    } catch (e) { return { 'success': false, 'message': 'Error de conexión: $e' }; }
+  }
+
+  Future<Map<String,dynamic>> eliminarDeviceToken(String token) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/notificaciones/token'),
+        headers: await headersWithAuth,
+        body: json.encode({ 'token': token })
+      );
+      return _handleResponse(response);
+    } catch (e) { return { 'success': false, 'message': 'Error de conexión: $e' }; }
+  }
   
   // Registrar usuario
   Future<Map<String, dynamic>> registrarUsuario({

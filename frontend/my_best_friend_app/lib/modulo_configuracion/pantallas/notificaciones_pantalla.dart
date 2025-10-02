@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../services/push_service.dart';
 
 class NotificacionesPantalla extends StatefulWidget {
   const NotificacionesPantalla({Key? key}) : super(key: key);
@@ -190,6 +191,29 @@ class _NotificacionesPantallaState extends State<NotificacionesPantalla> {
                     setState(() => _recordatoriosAlimentacion = value);
                     await _persistir();
                     await _aplicarProgramacionRecordatorios();
+                  },
+                  enabled: _notificacionesGenerales,
+                ),
+
+                const SizedBox(height: 24),
+                const Text(
+                  'Promociones y consejos',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildSwitchTile(
+                  'Consejos y promociones',
+                  'Recibir tips de cuidado y novedades',
+                  _notificacionesMarketing,
+                  Icons.campaign_outlined,
+                  (value) async {
+                    setState(() => _notificacionesMarketing = value);
+                    await _persistir();
+                    try { await PushService().suscribirseConsejos(value); } catch (_) {}
                   },
                   enabled: _notificacionesGenerales,
                 ),

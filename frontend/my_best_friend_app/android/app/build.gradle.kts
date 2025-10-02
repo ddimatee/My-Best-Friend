@@ -4,16 +4,18 @@ plugins {
     id("org.jetbrains.kotlin.android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+    // Plugin de Google Services para que Firebase lea google-services.json
+    id("com.google.gms.google-services")
 }
 
 android {
-    namespace = "com.example.my_best_friend_app"
+    namespace = "com.mybestfriend.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
     defaultConfig {
         // TODO: Cambia el applicationId por uno único para tu app (https://developer.android.com/studio/build/application-id.html)
-        applicationId = "com.example.my_best_friend_app"
+        applicationId = "com.mybestfriend.app"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

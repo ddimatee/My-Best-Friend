@@ -22,6 +22,7 @@ import 'modulo_album/album_modulo_pantalla.dart';
 import 'modulo_dueno/dueno_modulo_pantalla.dart';
 import 'utils/test_conexion_screen.dart';
 import 'providers/auth_provider.dart';
+import 'services/push_service.dart';
 
 // Punto de entrada de la aplicación My Best Friend.
 
@@ -37,6 +38,7 @@ void main() async {
 Future<void> _inicializarServiciosSeguros() async {
   try {
     await NotificationService().init();
+    try { await PushService().init(); } catch (e) { debugPrint('Error init push: $e'); }
     // Inicializar múltiples localizaciones en paralelo
     await Future.wait([
       initializeDateFormatting('es', null),

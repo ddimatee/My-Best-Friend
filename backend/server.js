@@ -122,6 +122,7 @@ const albumRoutes = require('./routes/album');
 const utilsRoutes = require('./routes/utils');
 const soporteRoutes = require('./routes/soporte');
 const recordatoriosRoutes = require('./routes/recordatorios');
+const notificacionesRoutes = require('./routes/notificaciones');
 
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/mascotas', mascotasRoutes);
@@ -132,6 +133,7 @@ app.use('/api/album', albumRoutes);
 app.use('/api/utils', utilsRoutes);
 app.use('/api/soporte', soporteRoutes);
 app.use('/api/recordatorios', recordatoriosRoutes);
+app.use('/api/notificaciones', notificacionesRoutes);
 
 // Ruta de prueba
 app.get('/', (req, res) => {

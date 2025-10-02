@@ -8,6 +8,7 @@ import 'peso_provider.dart';
 import 'album_provider.dart';
 import 'eventos_provider.dart';
 import '../services/notification_service.dart';
+import '../services/push_service.dart';
 import 'recordatorios_provider.dart';
 
 class AuthProvider with ChangeNotifier {
@@ -118,6 +119,11 @@ class AuthProvider with ChangeNotifier {
         }
         _user = result['data']['usuario'];
         _isAuthenticated = true;
+        // Intentar inicializar push y registrar token FCM
+        try {
+          await PushService().init();
+          await PushService().obtenerYRegistrarTokenBackend();
+        } catch (_) {}
         // Sincronizar recordatorios del calendario con backend (best-effort)
         if (contextForProviders != null) {
           final uid = _user?['_id']?.toString();
@@ -173,6 +179,10 @@ class AuthProvider with ChangeNotifier {
   // Cerrar sesión
   Future<void> cerrarSesion({required BuildContext context}) async {
     try { await NotificationService().cancelAll(); } catch (_) {}
+    // Eliminar token FCM del backend (best-effort)
+    try {
+      // No almacenamos el token local aún; podrías guardarlo en SharedPreferences si quieres eliminarlo con precisión
+    } catch (_) {}
     await _apiService.cerrarSesion();
     _cerrarSesionLocal(context: context);
   }
