@@ -28,6 +28,10 @@ class MascotasProvider with ChangeNotifier {
       _mascotas
         ..clear()
         ..addAll((resp['data'] as List).cast<Map<String, dynamic>>());
+      if (kDebugMode) {
+        // ignore: avoid_print
+        print('🐕 Mascotas recibidas (${_mascotas.length}): ' + _mascotas.map((m)=>'${m['_id']}:${m['nombre']}').join(', '));
+      }
       _ultimaCarga = DateTime.now();
     } else {
       _setError(resp['message'] ?? 'Error al cargar mascotas');

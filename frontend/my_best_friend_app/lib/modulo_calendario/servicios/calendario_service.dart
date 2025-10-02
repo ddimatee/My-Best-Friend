@@ -22,6 +22,81 @@ class CalendarioService {
     return todos.where((e) => e.userId == null ? false : e.userId == currentUserId).toList();
   }
 
+  // Migrar eventos legacy (sin mascotaId) asignándoles uno específico cuando el usuario
+  // abre la vista filtrada por esa mascota. Devuelve número de eventos actualizados.
+  static Future<int> migrarEventosSinMascota({required String mascotaId, String? mascotaNombre, String? mascotaFoto}) async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? eventosJson = prefs.getString(_keyEventosCalendario);
+    if (eventosJson == null || eventosJson.isEmpty) return 0;
+    final List<dynamic> eventosList = json.decode(eventosJson);
+    bool huboCambios = false;
+    final eventos = eventosList.map((e) => EventoCalendario.fromJson(Map<String,dynamic>.from(e))).toList();
+    for (int i=0; i<eventos.length; i++) {
+      final ev = eventos[i];
+      if (ev.mascotaId == null) {
+        eventos[i] = EventoCalendario(
+          id: ev.id,
+          titulo: ev.titulo,
+          descripcion: ev.descripcion,
+          categoria: ev.categoria,
+          fechaHora: ev.fechaHora,
+          tipoRecordatorio: ev.tipoRecordatorio,
+          frecuencia: ev.frecuencia,
+          avisos: ev.avisos,
+          activo: ev.activo,
+          userId: ev.userId,
+          mascotaId: mascotaId,
+          mascotaNombre: mascotaNombre,
+          mascotaFoto: mascotaFoto,
+        );
+        huboCambios = true;
+      }
+    }
+    if (huboCambios) {
+      await prefs.setString(_keyEventosCalendario, json.encode(eventos.map((e) => e.toJson()).toList()));
+      return eventos.where((e) => e.mascotaId == mascotaId).length;
+    }
+    return 0;
+  }
+
+  // Actualizar el nombre (y opcionalmente foto) de una mascota en todos los eventos que la referencian.
+  // Devuelve cuántos eventos fueron modificados.
+  static Future<int> actualizarNombreMascotaEnEventos(String mascotaId, String nuevoNombre, {String? nuevaFoto}) async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? eventosJson = prefs.getString(_keyEventosCalendario);
+    if (eventosJson == null || eventosJson.isEmpty) return 0;
+    final List<dynamic> eventosList = json.decode(eventosJson);
+    bool huboCambios = false;
+    int modificados = 0;
+    final eventos = eventosList.map((e) => EventoCalendario.fromJson(Map<String,dynamic>.from(e))).toList();
+    for (int i=0; i<eventos.length; i++) {
+      final ev = eventos[i];
+      if (ev.mascotaId == mascotaId && ev.mascotaNombre != nuevoNombre) {
+        eventos[i] = EventoCalendario(
+          id: ev.id,
+          titulo: ev.titulo,
+          descripcion: ev.descripcion,
+          categoria: ev.categoria,
+          fechaHora: ev.fechaHora,
+          tipoRecordatorio: ev.tipoRecordatorio,
+          frecuencia: ev.frecuencia,
+          avisos: ev.avisos,
+          activo: ev.activo,
+          userId: ev.userId,
+          mascotaId: ev.mascotaId,
+          mascotaNombre: nuevoNombre,
+          mascotaFoto: nuevaFoto ?? ev.mascotaFoto,
+        );
+        huboCambios = true;
+        modificados++;
+      }
+    }
+    if (huboCambios) {
+      await prefs.setString(_keyEventosCalendario, json.encode(eventos.map((e) => e.toJson()).toList()));
+    }
+    return modificados;
+  }
+
   // Obtener todos los eventos (método de instancia)
   Future<List<EventoCalendario>> obtenerEventosInstancia({String? currentUserId}) async {
     return await CalendarioService.obtenerEventos(currentUserId: currentUserId);
@@ -43,6 +118,10 @@ class CalendarioService {
         avisos: evento.avisos,
         activo: evento.activo,
         userId: currentUserId ?? evento.userId,
+        // NUEVO: copiar campos de mascota para que no se pierdan al persistir
+        mascotaId: evento.mascotaId,
+        mascotaNombre: evento.mascotaNombre,
+        mascotaFoto: evento.mascotaFoto,
       );
       eventos.add(withUser);
       

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'confirmacion_final_calendario.dart';
+import 'modelos/evento_calendario.dart';
 
 class ConfiguracionAvanzadaCalendario extends StatefulWidget {
   final String descripcion;
@@ -10,6 +11,8 @@ class ConfiguracionAvanzadaCalendario extends StatefulWidget {
   final bool notificacionActivada;
   final String tipoNotificacion;
   final int minutosAntes;
+  final EventoCalendario? recordatorioParaEditar; // Recordatorio a editar (opcional)
+  final Map<String, dynamic>? mascota; // Información de la mascota seleccionada
   
   const ConfiguracionAvanzadaCalendario({
     Key? key,
@@ -21,6 +24,8 @@ class ConfiguracionAvanzadaCalendario extends StatefulWidget {
     required this.notificacionActivada,
     required this.tipoNotificacion,
     required this.minutosAntes,
+    this.recordatorioParaEditar,
+    this.mascota,
   }) : super(key: key);
 
   @override
@@ -38,6 +43,14 @@ class _ConfiguracionAvanzadaCalendarioState extends State<ConfiguracionAvanzadaC
   String _categoriaNotificacion = 'recordatorios';
   bool _repetirSiNoSeVe = false;
   int _intervalosRepeticion = 5;
+
+  @override
+  void initState() {
+    super.initState();
+    // Si estamos editando, podríamos precargar configuraciones avanzadas
+    // Por ahora dejamos los valores por defecto, ya que el modelo EventoCalendario
+    // no incluye estas propiedades avanzadas
+  }
 
   void _continuar() {
     Navigator.push(
@@ -59,6 +72,8 @@ class _ConfiguracionAvanzadaCalendarioState extends State<ConfiguracionAvanzadaC
           categoriaNotificacion: _categoriaNotificacion,
           repetirSiNoSeVe: _repetirSiNoSeVe,
           intervalosRepeticion: _intervalosRepeticion,
+          recordatorioParaEditar: widget.recordatorioParaEditar,
+          mascota: widget.mascota,
         ),
       ),
     );

@@ -2,17 +2,22 @@ import 'package:flutter/material.dart';
 import '../modulo_general/widgets/bottom_nav_global.dart';
 import '../modulo_peso/widgets/calendario_selector.dart';
 import 'configuracion_avanzada_calendario.dart';
+import 'modelos/evento_calendario.dart';
 
 class ConfiguracionRecordatorioCalendario extends StatefulWidget {
   final String descripcion;
   final String categoria;
   final String frecuencia;
+  final EventoCalendario? recordatorioParaEditar; // Recordatorio a editar (opcional)
+  final Map<String, dynamic>? mascota; // Información de la mascota seleccionada
   
   const ConfiguracionRecordatorioCalendario({
     Key? key, 
     required this.descripcion,
     required this.categoria,
     required this.frecuencia,
+    this.recordatorioParaEditar,
+    this.mascota,
   }) : super(key: key);
 
   @override
@@ -28,6 +33,30 @@ class _ConfiguracionRecordatorioCalendarioState extends State<ConfiguracionRecor
   bool _notificacionActivada = true;
   String _tipoNotificacion = 'push';
   int _minutosAntes = 15;
+
+  @override
+  void initState() {
+    super.initState();
+    // Si estamos editando, precargar los datos existentes
+    if (widget.recordatorioParaEditar != null) {
+      final recordatorio = widget.recordatorioParaEditar!;
+      _fechaSeleccionada = DateTime(recordatorio.fechaHora.year, recordatorio.fechaHora.month, recordatorio.fechaHora.day);
+      _horaSeleccionada = TimeOfDay(hour: recordatorio.fechaHora.hour, minute: recordatorio.fechaHora.minute);
+      _notificacionActivada = recordatorio.avisos.isNotEmpty;
+      
+      // Buscar el tipo de aviso para configurar notificaciones
+      if (recordatorio.avisos.isNotEmpty) {
+        final primerAviso = recordatorio.avisos.first;
+        if (primerAviso.tipo == 'a_la_hora') {
+          _tipoNotificacion = 'push';
+          _minutosAntes = 0;
+        } else if (primerAviso.tipo == 'antes_de') {
+          _tipoNotificacion = 'push';
+          _minutosAntes = primerAviso.minutos;
+        }
+      }
+    }
+  }
 
   Future<void> _seleccionarFecha() async {
     final DateTime? fecha = await mostrarCalendarioPeso(
@@ -68,6 +97,8 @@ class _ConfiguracionRecordatorioCalendarioState extends State<ConfiguracionRecor
           notificacionActivada: _notificacionActivada,
           tipoNotificacion: _tipoNotificacion,
           minutosAntes: _minutosAntes,
+          recordatorioParaEditar: widget.recordatorioParaEditar,
+          mascota: widget.mascota,
         ),
       ),
     );

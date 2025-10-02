@@ -5,6 +5,7 @@ import 'modelos/evento_calendario.dart';
 import 'servicios/calendario_service.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/mascotas_provider.dart';
 import '../modulo_eventos/modelos/evento.dart';
 import '../providers/eventos_provider.dart';
 import 'calendario_modulo_pantalla.dart';
@@ -591,7 +592,19 @@ class _CalendarioPantallaState extends State<CalendarioPantalla> {
 
     if (event is EventoCalendario) {
       titulo = event.titulo;
-      subtitulo = '${event.categoria} • ${DateFormat('HH:mm').format(event.fechaHora)}';
+      // Intentar obtener nombre actualizado de la mascota si existe en provider
+      String mascota = (event.mascotaNombre ?? '').trim();
+      if (event.mascotaId != null) {
+        try {
+          final prov = Provider.of<MascotasProvider>(context, listen: false);
+            final m = prov.buscarPorId(event.mascotaId!);
+            if (m != null && (m['nombre']?.toString().isNotEmpty ?? false)) {
+              mascota = m['nombre'].toString();
+            }
+        } catch (_) {}
+      }
+      final hora = DateFormat('HH:mm').format(event.fechaHora);
+      subtitulo = '${event.categoria} • $hora${mascota.isNotEmpty ? ' • $mascota' : ''}';
       icono = Icons.check_circle_outline;
       color = Colors.orange;
     } else if (event is Evento) {

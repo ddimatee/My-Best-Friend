@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
 import 'configuracion_recordatorio_calendario.dart';
+import 'modelos/evento_calendario.dart';
 
 class OpcionesProgramacionCalendario extends StatefulWidget {
   final String descripcion;
   final String categoria;
+  final EventoCalendario? recordatorioParaEditar; // Recordatorio a editar (opcional)
+  final Map<String, dynamic>? mascota; // Información de la mascota seleccionada
   
   const OpcionesProgramacionCalendario({
     Key? key, 
     required this.descripcion,
     required this.categoria,
+    this.recordatorioParaEditar,
+    this.mascota,
   }) : super(key: key);
 
   @override
@@ -53,6 +58,15 @@ class _OpcionesProgramacionCalendarioState extends State<OpcionesProgramacionCal
     },
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    // Si estamos editando, precargar la frecuencia existente
+    if (widget.recordatorioParaEditar != null) {
+      _opcionSeleccionada = widget.recordatorioParaEditar!.frecuencia;
+    }
+  }
+
   void _seleccionarOpcion(String opcion) {
     setState(() {
       _opcionSeleccionada = opcion;
@@ -68,6 +82,8 @@ class _OpcionesProgramacionCalendarioState extends State<OpcionesProgramacionCal
             descripcion: widget.descripcion,
             categoria: widget.categoria,
             frecuencia: _opcionSeleccionada!,
+            recordatorioParaEditar: widget.recordatorioParaEditar,
+            mascota: widget.mascota,
           ),
         ),
       );

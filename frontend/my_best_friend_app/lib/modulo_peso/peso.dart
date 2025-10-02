@@ -28,6 +28,7 @@ class _PesoPantallaState extends State<PesoPantalla> {
   List<Map<String, dynamic>> _registrosPeso = [];
   bool _guardando = false;
   String? _mascotaSeleccionada; // id de la mascota elegida
+  bool _cargandoPesosMascota = false; // indica si se está cargando el cambio de mascota
 
   @override
   void initState() {
@@ -48,6 +49,7 @@ class _PesoPantallaState extends State<PesoPantalla> {
         setState(() {
           _mascotaSeleccionada = (mascProv.mascotas.first['_id'] ?? mascProv.mascotas.first['id']).toString();
         });
+        await _cargarRegistrosDeMascota();
       }
     });
   }
@@ -667,6 +669,19 @@ class _PesoPantallaState extends State<PesoPantalla> {
               const SizedBox(width: 8),
               const Text('Mascota', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               const Spacer(),
+              IconButton(
+                tooltip: 'Refrescar',
+                icon: const Icon(Icons.refresh, size: 20),
+                onPressed: mascProv.cargando ? null : () async {
+                  await mascProv.cargarMascotas(forzar: true);
+                  // Imprimir lista para depuración
+                  for (final m in mascProv.mascotas) {
+                    // ignore: avoid_print
+                    print('🐕 Mascota cargada: id=' + (m['_id']?.toString() ?? m['id']?.toString() ?? '??') + ' nombre=' + (m['nombre']?.toString() ?? '')); 
+                  }
+                  setState(() {});
+                },
+              ),
               if (mascProv.cargando)
                 const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth:2)),
             ],
@@ -685,18 +700,31 @@ class _PesoPantallaState extends State<PesoPantalla> {
               items: mascotas.map((m) {
                 final id = (m['_id'] ?? m['id']).toString();
                 final nombre = m['nombre']?.toString() ?? 'Sin nombre';
+                // Log puntual para revisar si aún existe 'jose'
+                if (nombre.toLowerCase() == 'jose') {
+                  // ignore: avoid_print
+                  print('⚠️  Aún presente nombre "jose" en dropdown con id=$id');
+                }
                 return DropdownMenuItem<String>(
                   value: id,
                   child: Text(nombre),
                 );
               }).toList(),
-              onChanged: (val) {
-                setState(() { _mascotaSeleccionada = val; });
+              onChanged: (val) async {
+                if (val == null || val == _mascotaSeleccionada) return;
+                setState(() { _mascotaSeleccionada = val; _cargandoPesosMascota = true; });
+                await _cargarRegistrosDeMascota();
+                if (mounted) setState(() { _cargandoPesosMascota = false; });
               },
             ),
           const SizedBox(height: 4),
           if (_mascotaSeleccionada == null)
             const Text('Debes seleccionar una mascota para guardar el peso', style: TextStyle(fontSize: 12, color: Colors.orange)),
+          if (_cargandoPesosMascota)
+            const Padding(
+              padding: EdgeInsets.only(top: 8),
+              child: LinearProgressIndicator(minHeight: 4),
+            ),
         ],
       ),
     );
@@ -707,6 +735,22 @@ class _PesoPantallaState extends State<PesoPantalla> {
     _pesoController.dispose();
     _notasController.dispose();
     super.dispose();
+  }
+
+  Future<void> _cargarRegistrosDeMascota() async {
+    final mascotaId = _mascotaSeleccionada;
+    if (mascotaId == null) return;
+    final pesoProv = context.read<PesoProvider>();
+    await pesoProv.cargar(mascotaId: mascotaId, forzar: true);
+    // Sincronizar lista local para que la lógica de estado vacío funcione correctamente
+    final registros = pesoProv.registros(mascotaId);
+    setState(() {
+      _registrosPeso = List.from(registros);
+      if (_registrosPeso.isNotEmpty) {
+        // Si había estado vacío y ahora hay registros, aseguramos mostrar vista principal
+        _showForm = _showForm; // no cambiar si usuario abrió el formulario
+      }
+    });
   }
 }
 

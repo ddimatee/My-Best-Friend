@@ -9,6 +9,9 @@ class EventoCalendario {
   final List<TipoAviso> avisos;
   final bool activo;
   final String? userId; // Id del usuario dueño (para aislar datos entre cuentas)
+  final String? mascotaId; // Id de la mascota asociada
+  final String? mascotaNombre; // Nombre de la mascota para mostrar
+  final String? mascotaFoto; // URL/path de la foto de la mascota
 
   EventoCalendario({
     required this.id,
@@ -21,6 +24,9 @@ class EventoCalendario {
     required this.avisos,
     this.activo = true,
     this.userId,
+    this.mascotaId,
+    this.mascotaNombre,
+    this.mascotaFoto,
   });
 
   Map<String, dynamic> toJson() {
@@ -35,6 +41,9 @@ class EventoCalendario {
       'avisos': avisos.map((aviso) => aviso.toJson()).toList(),
       'activo': activo,
       if (userId != null) 'userId': userId,
+      if (mascotaId != null) 'mascotaId': mascotaId,
+      if (mascotaNombre != null) 'mascotaNombre': mascotaNombre,
+      if (mascotaFoto != null) 'mascotaFoto': mascotaFoto,
     };
   }
 
@@ -50,6 +59,9 @@ class EventoCalendario {
       avisos: (json['avisos'] as List).map((aviso) => TipoAviso.fromJson(aviso)).toList(),
       activo: json['activo'] ?? true,
       userId: json['userId'],
+      mascotaId: json['mascotaId'],
+      mascotaNombre: json['mascotaNombre'],
+      mascotaFoto: json['mascotaFoto'],
     );
   }
 }

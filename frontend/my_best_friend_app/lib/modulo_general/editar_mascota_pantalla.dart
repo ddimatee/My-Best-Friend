@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/mascotas_provider.dart';
+import '../../modulo_calendario/servicios/calendario_service.dart';
 import '../widgets/custom_date_picker.dart';
 
 class EditarMascotaPantalla extends StatefulWidget {
@@ -74,6 +75,21 @@ class _EditarMascotaPantallaState extends State<EditarMascotaPantalla> {
     if (!mounted) return;
     setState(() => _guardando = false);
     if (ok) {
+      // Forzar recarga de mascotas para que cualquier caché se invalide
+      try {
+        await prov.cargarMascotas(forzar: true);
+      } catch (_) {}
+      // Backfill de nombre en eventos locales (recordatorios) si existe el id y nuevo nombre
+      try {
+        final mascotaActualizada = prov.buscarPorId(widget.mascotaId);
+        if (mascotaActualizada != null) {
+          final nuevoNombre = (mascotaActualizada['nombre'] ?? '').toString();
+          final nuevaFoto = (mascotaActualizada['fotoPerfil'] ?? mascotaActualizada['foto'] ?? '').toString();
+          if (nuevoNombre.isNotEmpty) {
+            await CalendarioService.actualizarNombreMascotaEnEventos(widget.mascotaId, nuevoNombre, nuevaFoto: nuevaFoto.isEmpty ? null : nuevaFoto);
+          }
+        }
+      } catch (_) {}
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Mascota actualizada')));
     } else {

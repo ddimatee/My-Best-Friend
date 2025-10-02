@@ -20,6 +20,7 @@ class _AlbumModuloPantallaState extends State<AlbumModuloPantalla> {
   String? _mascotaSeleccionada;
   List<Map<String, dynamic>> _fotos = [];
   int _anioActual = DateTime.now().year;
+  bool _cargandoMascotas = false;
 
   @override
   void initState() {
@@ -27,7 +28,9 @@ class _AlbumModuloPantallaState extends State<AlbumModuloPantalla> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final mascProv = context.read<MascotasProvider>();
       if (mascProv.mascotas.isEmpty) {
+        setState(() => _cargandoMascotas = true);
         await mascProv.cargarMascotas();
+        if (mounted) setState(() => _cargandoMascotas = false);
       }
       if (mascProv.mascotas.isNotEmpty) {
         _mascotaSeleccionada = (mascProv.mascotas.first['_id'] ?? mascProv.mascotas.first['id']).toString();
@@ -110,24 +113,112 @@ class _AlbumModuloPantallaState extends State<AlbumModuloPantalla> {
       ),
       body: _cargando
           ? const Center(child: CircularProgressIndicator(color: Colors.white))
-          : Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 0.85,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
+          : Column(
+              children: [
+                _buildSelectorMascota(),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    child: GridView.builder(
+                      key: ValueKey(_mascotaSeleccionada),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        childAspectRatio: 0.85,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                      ),
+                      itemCount: 12,
+                      itemBuilder: (context, index) {
+                        final mes = index + 1;
+                        final fotosMes = _fotosDelMes(mes);
+                        return _buildMesCard(mes, fotosMes);
+                      },
+                    ),
+                  ),
                 ),
-                itemCount: 12,
-                itemBuilder: (context, index) {
-                  final mes = index + 1;
-                  final fotosMes = _fotosDelMes(mes);
-                  return _buildMesCard(mes, fotosMes);
+              ],
+            ),
+      bottomNavigationBar: const BottomNavGlobal(selectedIndex: 0),
+    );
+  }
+
+  Widget _buildSelectorMascota() {
+    final mascProv = context.watch<MascotasProvider>();
+    final lista = mascProv.mascotas;
+    if (_cargandoMascotas) {
+      return const Padding(
+        padding: EdgeInsets.all(16.0),
+        child: LinearProgressIndicator(minHeight: 6, backgroundColor: Colors.white54),
+      );
+    }
+    if (lista.isEmpty) {
+      return Container(
+        margin: const EdgeInsets.fromLTRB(16,16,16,8),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: const Text('No hay mascotas. Crea una para comenzar a subir fotos.', style: TextStyle(color: Colors.black87)),
+      );
+    }
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16,16,16,8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 6, offset: const Offset(0,2)),
+        ],
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.photo_library, color: Colors.black54),
+          const SizedBox(width: 12),
+          Expanded(
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _mascotaSeleccionada,
+                isExpanded: true,
+                icon: const Icon(Icons.expand_more),
+                items: lista.map((m) {
+                  final id = (m['_id'] ?? m['id']).toString();
+                  final nombre = (m['nombre'] ?? 'Mascota').toString();
+                  return DropdownMenuItem<String>(
+                    value: id,
+                    child: Text(nombre, style: const TextStyle(fontWeight: FontWeight.w600)),
+                  );
+                }).toList(),
+                onChanged: (val) async {
+                  if (val == null) return;
+                  setState(() { _mascotaSeleccionada = val; _cargando = true; });
+                  await context.read<AlbumProvider>().cargar(mascotaId: _mascotaSeleccionada);
+                  if (mounted) {
+                    _refrescar();
+                    setState(() { _cargando = false; });
+                  }
                 },
               ),
             ),
-      bottomNavigationBar: const BottomNavGlobal(selectedIndex: 0),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: _greenColor.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              _anioActual.toString(),
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.green.shade800,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

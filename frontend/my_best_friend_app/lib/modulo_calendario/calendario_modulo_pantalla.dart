@@ -1,19 +1,23 @@
 import 'package:flutter/material.dart';
 import '../modulo_general/widgets/bottom_nav_global.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import '../providers/mascotas_provider.dart';
 import 'formulario_descripcion_calendario.dart';
 import 'detalle_recordatorio_calendario.dart';
 import 'servicios/calendario_service.dart';
 import 'modelos/evento_calendario.dart';
 
 class CalendarioModuloPantalla extends StatefulWidget {
-  const CalendarioModuloPantalla({Key? key}) : super(key: key);
+  final Map<String, dynamic>? mascota; // Información de la mascota seleccionada
+  
+  const CalendarioModuloPantalla({Key? key, this.mascota}) : super(key: key);
 
   @override
   State<CalendarioModuloPantalla> createState() => _CalendarioModuloPantallaState();
 }
 
-class _CalendarioModuloPantallaState extends State<CalendarioModuloPantalla> {
+class _CalendarioModuloPantallaState extends State<CalendarioModuloPantalla> with WidgetsBindingObserver {
   final Color _greenColor = const Color(0xFF4CAF50); // Verde consistente con la app
   List<EventoCalendario> _recordatorios = [];
   bool _cargando = true;
@@ -21,17 +25,77 @@ class _CalendarioModuloPantallaState extends State<CalendarioModuloPantalla> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _cargarRecordatorios();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Recargar cuando la app vuelve al primer plano
+      _cargarRecordatorios();
+    }
+  }
+  
+  // Método que se llama cuando la ruta vuelve a estar visible
+  @override
+  void didUpdateWidget(CalendarioModuloPantalla oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Recargar si cambió la mascota
+    if (oldWidget.mascota != widget.mascota) {
+      _cargarRecordatorios();
+    }
   }
 
   Future<void> _cargarRecordatorios() async {
     try {
       final recordatorios = await CalendarioService.obtenerEventos();
+      print('📅 Total recordatorios cargados: ${recordatorios.length}');
+      
+      // Filtrar recordatorios por mascota si hay una mascota seleccionada
+      List<EventoCalendario> recordatoriosFiltrados = recordatorios;
+      if (widget.mascota != null) {
+        final mascotaId = widget.mascota!['_id']?.toString() ?? widget.mascota!['id']?.toString();
+        print('🐕 Mascota ID para filtrar: $mascotaId');
+        print('🐕 Mascota nombre: ${widget.mascota!['nombre']}');
+        // Intentar migrar eventos legacy sin mascotaId asignándolos a la mascota activa
+        if (mascotaId != null) {
+          final migrados = await CalendarioService.migrarEventosSinMascota(
+            mascotaId: mascotaId,
+            mascotaNombre: widget.mascota!['nombre']?.toString(),
+            mascotaFoto: widget.mascota!['foto']?.toString(),
+          );
+          if (migrados > 0) {
+            print('🔄 Migrados $migrados eventos legacy a la mascota $mascotaId');
+          }
+        }
+        
+        recordatoriosFiltrados = recordatorios.where((recordatorio) {
+          print('📝 Recordatorio: ${recordatorio.descripcion}, MascotaID: ${recordatorio.mascotaId}');
+          // Mostrar también recordatorios legacy (mascotaId null) para que el usuario pueda editarlos y asignar mascota.
+          final coincide = recordatorio.mascotaId == mascotaId;
+          final legacy = recordatorio.mascotaId == null; 
+          if (legacy) {
+            print('⚠️  Recordatorio legacy sin mascotaId, se mostrará temporalmente.');
+          }
+          return coincide || legacy;
+        }).toList();
+        
+        print('🔍 Recordatorios filtrados para ${widget.mascota!['nombre']}: ${recordatoriosFiltrados.length}');
+      }
+      
       setState(() {
-        _recordatorios = recordatorios;
+        _recordatorios = recordatoriosFiltrados;
         _cargando = false;
       });
     } catch (e) {
+      print('❌ Error cargando recordatorios: $e');
       setState(() {
         _cargando = false;
       });
@@ -40,16 +104,18 @@ class _CalendarioModuloPantallaState extends State<CalendarioModuloPantalla> {
 
   void _navegarAFormulario() async {
     HapticFeedback.lightImpact();
-    final resultado = await Navigator.push(
+    await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => const FormularioDescripcionCalendario(),
+        builder: (context) => FormularioDescripcionCalendario(
+          mascota: widget.mascota,
+        ),
       ),
     );
     
-    if (resultado == true) {
-      _cargarRecordatorios(); // Recargar la lista si se guardó algo
-    }
+    // Siempre recargar después de regresar del formulario
+    print('🔄 Recargando recordatorios después de volver del formulario...');
+    await _cargarRecordatorios();
   }
 
   void _navegarADetalle(EventoCalendario recordatorio) async {
@@ -151,9 +217,11 @@ class _CalendarioModuloPantallaState extends State<CalendarioModuloPantalla> {
             color: const Color(0xFFFFC107),
             borderRadius: BorderRadius.circular(20),
           ),
-          child: const Text(
-            'Calendario',
-            style: TextStyle(
+          child: Text(
+            widget.mascota != null 
+                ? 'Recordatorios de ${widget.mascota!['nombre']}'
+                : 'Calendario',
+            style: const TextStyle(
               color: Colors.black,
               fontWeight: FontWeight.bold,
               fontSize: 16,
@@ -269,6 +337,17 @@ class _RecordatorioCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Resolver nombre actual de la mascota si existe en provider (para reflejar renombres)
+    String? nombreMascotaActual = recordatorio.mascotaNombre;
+    if (recordatorio.mascotaId != null) {
+      try {
+        final prov = Provider.of<MascotasProvider>(context, listen: false);
+        final m = prov.buscarPorId(recordatorio.mascotaId!);
+        if (m != null && (m['nombre']?.toString().isNotEmpty ?? false)) {
+          nombreMascotaActual = m['nombre'].toString();
+        }
+      } catch (_) {}
+    }
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       child: Material(
@@ -343,11 +422,37 @@ class _RecordatorioCard extends StatelessWidget {
                         ),
                       ),
                       
+                      // Categoría y mascota
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 4,
+                        runSpacing: 0,
+                        children: [
+                          Text(
+                            nombreCategoria,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: color,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          if (nombreMascotaActual != null && nombreMascotaActual.trim().isNotEmpty)
+                            Text(
+                              '• $nombreMascotaActual',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                        ],
+                      ),
+                      
                       const SizedBox(height: 2),
                       
                       // Hora
                       Text(
-                        '$hora PM',
+                        hora, // Ya viene formateada (24h) desde arriba
                         style: TextStyle(
                           fontSize: 13,
                           color: Colors.grey.shade600,

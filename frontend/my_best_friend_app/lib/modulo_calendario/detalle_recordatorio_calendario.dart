@@ -87,12 +87,13 @@ class _DetalleRecordatorioCalendarioState extends State<DetalleRecordatorioCalen
   void _modificarRecordatorio() async {
     HapticFeedback.lightImpact();
     
-    // Por simplicidad, navegar al formulario de descripción
-    // En un app más complejo, tendríamos un formulario de edición específico
+    // Navegar al formulario de edición con los datos existentes
     final resultado = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => const FormularioDescripcionCalendario(),
+        builder: (context) => FormularioDescripcionCalendario(
+          recordatorioParaEditar: widget.recordatorio, // Pasar el recordatorio existente
+        ),
       ),
     );
     

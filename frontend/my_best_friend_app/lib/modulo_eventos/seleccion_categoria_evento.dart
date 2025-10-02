@@ -38,48 +38,74 @@ class _SeleccionCategoriaEventoState extends State<SeleccionCategoriaEvento> {
 
   Widget _buildCategoriaButton(Map<String, dynamic> categoria) {
     final bool isSelected = _categoriaSeleccionada == categoria['nombre'];
-    
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _categoriaSeleccionada = categoria['nombre'];
-        });
-      },
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.white : Colors.white.withOpacity(0.8),
-          borderRadius: BorderRadius.circular(20),
-          border: isSelected 
-              ? Border.all(color: _greenColor, width: 2)
-              : Border.all(color: Colors.transparent, width: 2),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOut,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isSelected ? _greenColor : Colors.grey.shade200,
+          width: isSelected ? 2 : 1,
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              categoria['icono'],
-              color: categoria['color'],
-              size: 20,
+        boxShadow: [
+          BoxShadow(
+            color: isSelected ? _greenColor.withOpacity(0.25) : Colors.black12,
+            blurRadius: isSelected ? 10 : 6,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () => setState(() => _categoriaSeleccionada = categoria['nombre']),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: (categoria['color'] as Color).withOpacity(0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  padding: const EdgeInsets.all(10),
+                  child: Icon(
+                    categoria['icono'],
+                    color: categoria['color'],
+                    size: 26,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  categoria['nombre'],
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                    color: Colors.black.withOpacity(0.85),
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 6),
+                AnimatedOpacity(
+                  opacity: isSelected ? 1 : 0,
+                  duration: const Duration(milliseconds: 200),
+                  child: Container(
+                    height: 6,
+                    width: 6,
+                    decoration: BoxDecoration(
+                      color: _greenColor,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 8),
-            Text(
-              categoria['nombre'],
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                color: Colors.black87,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -97,50 +123,77 @@ class _SeleccionCategoriaEventoState extends State<SeleccionCategoriaEvento> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
+      body: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 20),
-            const Center(
-              child: Text(
-                '¿Qué te gustaría\nregistrar?',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Text(
+                    '¿Qué te gustaría registrar?',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: .2,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    _categoriaSeleccionada == null
+                        ? 'Selecciona una categoría para continuar'
+                        : 'Has seleccionado: $_categoriaSeleccionada',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.black.withOpacity(0.75),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 4),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: GridView.builder(
+                  physics: const BouncingScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 14,
+                    crossAxisSpacing: 14,
+                    childAspectRatio: 1.05,
+                  ),
+                  itemCount: _categorias.length,
+                  itemBuilder: (context, index) => _buildCategoriaButton(_categorias[index]),
                 ),
               ),
             ),
-            const SizedBox(height: 40),
-            Wrap(
-              alignment: WrapAlignment.center,
-              runSpacing: 8,
-              spacing: 8,
-              children: _categorias.map((categoria) => _buildCategoriaButton(categoria)).toList(),
-            ),
-            const SizedBox(height: 110), // Espacio fijo controlado
-            SizedBox(
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
               width: double.infinity,
-              child: ElevatedButton(
+              child: ElevatedButton.icon(
                 onPressed: _seleccionarCategoria,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: _greenColor,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                  elevation: 2,
-                ),
-                child: const Text(
+                icon: const Icon(Icons.arrow_forward, size: 20),
+                label: const Text(
                   'Continuar',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: _greenColor,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(22),
+                  ),
+                  elevation: 4,
                 ),
               ),
             ),

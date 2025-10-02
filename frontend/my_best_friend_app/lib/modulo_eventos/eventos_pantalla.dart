@@ -24,6 +24,7 @@ class _EventosPantallaState extends State<EventosPantalla> {
   String? _mascotaSeleccionada;
   DateTime _fechaActual = DateTime.now();
   bool _mostrarTodos = true; // nuevo: mostrar todos los eventos
+  bool _cargandoMascotas = false;
 
   @override
   void initState() {
@@ -36,6 +37,7 @@ class _EventosPantallaState extends State<EventosPantalla> {
         
         if (masc.mascotas.isEmpty) {
           print('Cargando mascotas desde API...');
+          setState(() => _cargandoMascotas = true);
           await masc.cargarMascotas().timeout(
             const Duration(seconds: 10),
             onTimeout: () {
@@ -43,6 +45,7 @@ class _EventosPantallaState extends State<EventosPantalla> {
               throw TimeoutException('Tiempo de espera agotado al cargar mascotas');
             },
           );
+          if (mounted) setState(() => _cargandoMascotas = false);
           print('Mascotas cargadas: ${masc.mascotas.length}');
         }
         
@@ -224,6 +227,94 @@ class _EventosPantallaState extends State<EventosPantalla> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSelectorMascota() {
+    final mascProv = context.watch<MascotasProvider>();
+    final lista = mascProv.mascotas;
+    if (_cargandoMascotas) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: LinearProgressIndicator(minHeight: 6, backgroundColor: Colors.white54),
+      );
+    }
+    if (lista.isEmpty) {
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Text(
+          'No hay mascotas. Crea una para comenzar a registrar eventos.',
+          style: TextStyle(color: Colors.black87),
+        ),
+      );
+    }
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 6,
+            offset: const Offset(0,2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.pets, color: Colors.black54),
+          const SizedBox(width: 12),
+          Expanded(
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _mascotaSeleccionada,
+                isExpanded: true,
+                icon: const Icon(Icons.expand_more),
+                items: lista.map((m) {
+                  final id = (m['_id'] ?? m['id']).toString();
+                  final nombre = (m['nombre'] ?? 'Mascota').toString();
+                  return DropdownMenuItem<String>(
+                    value: id,
+                    child: Text(nombre, style: const TextStyle(fontWeight: FontWeight.w600)),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  if (val == null) return;
+                  setState(() { _mascotaSeleccionada = val; });
+                  _cargarEventos();
+                },
+              ),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: _greenColor.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              _mostrarTodos ? 'Todos' : DateFormat('dd/MM').format(_fechaActual),
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Color.fromARGB(
+                  255,
+                  (_greenColor.red * 0.8).round(),
+                  (_greenColor.green * 0.8).round(),
+                  (_greenColor.blue * 0.8).round(),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -430,10 +521,12 @@ class _EventosPantallaState extends State<EventosPantalla> {
           : _eventos.isEmpty
               ? _buildEmptyState()
               : ListView.builder(
-                  padding: const EdgeInsets.only(top: 16),
-                  itemCount: _eventos.length,
+                  padding: const EdgeInsets.only(top: 8, bottom: 90),
+                  itemCount: _eventos.length + 1,
                   itemBuilder: (context, index) {
-                    return _buildEventoCard(_eventos[index]);
+                    if (index == 0) return _buildSelectorMascota();
+                    final ev = _eventos[index - 1];
+                    return _buildEventoCard(ev);
                   },
                 ),
       bottomNavigationBar: const BottomNavGlobal(selectedIndex: 0),

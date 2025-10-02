@@ -20,6 +20,7 @@ class _FormularioVacunaState extends State<FormularioVacuna> {
   final _nombreController = TextEditingController();
   final _descripcionController = TextEditingController();
   final _ubicacionController = TextEditingController();
+  String? _mascotaSeleccionadaId; // Mascota a la que se asignará la vacuna
   
   DateTime _fechaSeleccionada = DateTime.now();
   TimeOfDay _horaRecordatorio = TimeOfDay(hour: 9, minute: 0); // 9:00 AM por defecto
@@ -35,6 +36,13 @@ class _FormularioVacunaState extends State<FormularioVacuna> {
       _nombreController.text = (v['nombre'] ?? '').toString();
       _descripcionController.text = (v['observaciones'] ?? v['descripcion'] ?? '').toString();
       _ubicacionController.text = (v['ubicacion'] ?? '').toString();
+      // Obtener id de mascota de la vacuna (puede venir como string o como objeto anidado)
+      final mascotaData = v['mascota'];
+      if (mascotaData is Map) {
+        _mascotaSeleccionadaId = (mascotaData['_id'] ?? mascotaData['id'])?.toString();
+      } else if (mascotaData != null) {
+        _mascotaSeleccionadaId = mascotaData.toString();
+      }
       
       // Convertir fechaAplicacion de UTC a hora local
       final fechaAplicacionUTC = DateTime.tryParse(v['fechaAplicacion']?.toString() ?? '');
@@ -51,6 +59,21 @@ class _FormularioVacunaState extends State<FormularioVacuna> {
         }
       }
     }
+    // Cargar mascotas y seleccionar una por defecto si es creación
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final mProv = context.read<MascotasProvider>();
+      if (mProv.mascotas.isEmpty) {
+        mProv.cargarMascotas(forzar: true).then((_) {
+          if (mounted && widget.vacuna == null && _mascotaSeleccionadaId == null && mProv.mascotas.isNotEmpty) {
+            setState(() {
+              _mascotaSeleccionadaId = (mProv.mascotas.first['_id'] ?? mProv.mascotas.first['id']).toString();
+            });
+          }
+        });
+      } else if (widget.vacuna == null && _mascotaSeleccionadaId == null && mProv.mascotas.isNotEmpty) {
+        _mascotaSeleccionadaId = (mProv.mascotas.first['_id'] ?? mProv.mascotas.first['id']).toString();
+      }
+    });
   }
 
   @override
@@ -110,8 +133,11 @@ class _FormularioVacunaState extends State<FormularioVacuna> {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Primero crea una mascota.')));
       return;
     }
-    // Por ahora tomamos la primera mascota si no hay selección avanzada
-    final mascotaId = (mascotasProv.mascotas.first['_id'] ?? mascotasProv.mascotas.first['id']).toString();
+    if (_mascotaSeleccionadaId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Selecciona la mascota.')));
+      return;
+    }
+    final mascotaId = _mascotaSeleccionadaId!;
 
     setState(() => _isLoading = true);
     
@@ -350,6 +376,9 @@ class _FormularioVacunaState extends State<FormularioVacuna> {
               ),
               
               // Campo: ¿Cuál es la vacuna?
+              // Selector de Mascota (solo creación)
+              _buildSelectorMascota(context, esEdicion),
+
               _buildTextField(
                 controller: _nombreController,
                 label: '¿Cuál es la vacuna?',
@@ -500,6 +529,78 @@ class _FormularioVacunaState extends State<FormularioVacuna> {
       ),
       
       bottomNavigationBar: const BottomNavGlobal(selectedIndex: 0),
+    );
+  }
+
+  Widget _buildSelectorMascota(BuildContext context, bool esEdicion) {
+    final mascotasProv = context.watch<MascotasProvider>();
+    final mascotas = mascotasProv.mascotas;
+    final cargando = mascotasProv.cargando && mascotas.isEmpty;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(bottom: 8),
+            child: Text(
+              '¿Para qué mascota?',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: Colors.black,
+              ),
+            ),
+          ),
+          if (cargando)
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Center(child: CircularProgressIndicator()),
+            )
+          else if (mascotas.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Text(
+                'No tienes mascotas registradas. Crea una primero.',
+                style: TextStyle(color: Colors.black54),
+              ),
+            )
+          else
+            DropdownButtonFormField<String>(
+              value: _mascotaSeleccionadaId,
+              onChanged: esEdicion ? null : (val) {
+                setState(() { _mascotaSeleccionadaId = val; });
+              },
+              validator: (val) => val == null ? 'Selecciona una mascota' : null,
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+              items: mascotas.map((m) {
+                final id = (m['_id'] ?? m['id']).toString();
+                final nombre = (m['nombre'] ?? 'Mascota').toString();
+                return DropdownMenuItem<String>(
+                  value: id,
+                  child: Text(nombre, style: const TextStyle(color: Colors.black)),
+                );
+              }).toList(),
+            ),
+        ],
+      ),
     );
   }
 }

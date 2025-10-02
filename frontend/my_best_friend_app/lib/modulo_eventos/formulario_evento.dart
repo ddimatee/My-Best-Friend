@@ -54,7 +54,31 @@ class _FormularioEventoState extends State<FormularioEvento> {
   final rec = e['recordatorio'];
   if (rec is Map && rec['tiempoAntes'] is int) _minutosAntes = rec['tiempoAntes'];
   if (e['tipo'] != null) _tipoSeleccionado = e['tipo'];
+  // Intentar obtener mascota del evento si no fue pasada explícitamente
+  if (_mascotaSeleccionada == null) {
+    final m = e['mascota'];
+    if (m is Map) {
+      _mascotaSeleccionada = (m['_id'] ?? m['id'])?.toString();
+    } else if (m != null) {
+      _mascotaSeleccionada = m.toString();
     }
+  }
+    }
+    // Si estamos creando, cargar mascotas si no hay
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final mProv = context.read<MascotasProvider>();
+      if (mProv.mascotas.isEmpty) {
+        mProv.cargarMascotas(forzar: true).then((_) {
+          if (mounted && widget.evento == null && _mascotaSeleccionada == null && mProv.mascotas.isNotEmpty) {
+            setState(() {
+              _mascotaSeleccionada = (mProv.mascotas.first['_id'] ?? mProv.mascotas.first['id']).toString();
+            });
+          }
+        });
+      } else if (widget.evento == null && _mascotaSeleccionada == null && mProv.mascotas.isNotEmpty) {
+        _mascotaSeleccionada = (mProv.mascotas.first['_id'] ?? mProv.mascotas.first['id']).toString();
+      }
+    });
   }
 
   @override
@@ -398,6 +422,10 @@ class _FormularioEventoState extends State<FormularioEvento> {
               ),
               
               const SizedBox(height: 8),
+
+              // Selector de Mascota (visible siempre, pero bloqueado en edición)
+              _buildSelectorMascota(context),
+              const SizedBox(height: 8),
               
               // Campo: Fecha
               _buildDateField(),
@@ -478,14 +506,8 @@ class _FormularioEventoState extends State<FormularioEvento> {
                   ],
                 ),
               ),
-
-              SwitchListTile(
-                value: _crearRecordatorio,
-                title: const Text('Recordatorio activo'),
-                activeColor: _greenColor,
-                onChanged: (v) => setState(() => _crearRecordatorio = v),
-                contentPadding: EdgeInsets.zero,
-              ),
+              const SizedBox(height: 8),
+              _buildRecordatorioToggle(),
               
               const SizedBox(height: 32),
               
@@ -551,6 +573,131 @@ class _FormularioEventoState extends State<FormularioEvento> {
               icon: Icons.settings,
               selected: false,
               onTap: () {},
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSelectorMascota(BuildContext context) {
+    final mascotasProv = context.watch<MascotasProvider>();
+    final lista = mascotasProv.mascotas;
+    final cargando = mascotasProv.cargando && lista.isEmpty;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(bottom: 8),
+            child: Text(
+              '¿Para qué mascota?',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: Colors.black,
+              ),
+            ),
+          ),
+          if (cargando)
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+              child: const Center(child: CircularProgressIndicator()),
+            )
+          else if (lista.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+              child: const Text('No tienes mascotas registradas. Crea una primero.', style: TextStyle(color: Colors.black54)),
+            )
+          else
+            DropdownButtonFormField<String>(
+              value: _mascotaSeleccionada,
+              onChanged: widget.evento != null ? null : (val) { setState(()=>_mascotaSeleccionada = val); },
+              validator: (val) => val == null ? 'Selecciona una mascota' : null,
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+              items: lista.map((m) {
+                final id = (m['_id'] ?? m['id']).toString();
+                final nombre = (m['nombre'] ?? 'Mascota').toString();
+                return DropdownMenuItem<String>(value: id, child: Text(nombre, style: const TextStyle(color: Colors.black)));
+              }).toList(),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRecordatorioToggle() {
+    return GestureDetector(
+      onTap: () => setState(() => _crearRecordatorio = !_crearRecordatorio),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: _crearRecordatorio ? _greenColor : Colors.grey.shade400,
+            width: 1.5,
+          ),
+          boxShadow: _crearRecordatorio
+              ? [BoxShadow(color: _greenColor.withOpacity(0.25), blurRadius: 8, offset: const Offset(0,2))]
+              : [const BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0,2))],
+        ),
+        child: Row(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                color: _crearRecordatorio ? _greenColor : Colors.grey.shade300,
+                shape: BoxShape.circle,
+              ),
+              padding: const EdgeInsets.all(8),
+              child: Icon(
+                _crearRecordatorio ? Icons.notifications_active : Icons.notifications_off,
+                size: 24,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Recordatorio',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black.withOpacity(0.85),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _crearRecordatorio ? 'Activo • Se avisará ${{5:'5',10:'10',15:'15',30:'30',45:'45',60:'60'}[_minutosAntes]} min antes' : 'Desactivado',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: _crearRecordatorio ? _greenColor : Colors.black54,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Switch(
+              value: _crearRecordatorio,
+              onChanged: (v) => setState(() => _crearRecordatorio = v),
+              activeColor: Colors.white,
+              activeTrackColor: _greenColor,
             ),
           ],
         ),

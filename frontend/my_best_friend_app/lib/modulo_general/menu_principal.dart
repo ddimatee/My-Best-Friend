@@ -448,18 +448,18 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _FeatureButton(label: 'Peso', onTap: () => _openFeature('Peso')),
-                    _FeatureButton(label: 'Vacunas', onTap: () => _openFeature('Vacunas')),
-                    _FeatureButton(label: 'Albúm', onTap: () => _openFeature('Albúm')),
+                    _FeatureButton(label: 'Peso', onTap: () => _openFeature('Peso', m)),
+                    _FeatureButton(label: 'Vacunas', onTap: () => _openFeature('Vacunas', m)),
+                    _FeatureButton(label: 'Albúm', onTap: () => _openFeature('Albúm', m)),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _FeatureButton(label: 'Recordatorios', onTap: () => _openFeature('Recordatorios')),
-                    _FeatureButton(label: 'Eventos', onTap: () => _openFeature('Eventos')),
-                    _FeatureButton(label: 'Dueño', onTap: () => _openFeature('Dueño')),
+                    _FeatureButton(label: 'Recordatorios', onTap: () => _openFeature('Recordatorios', m)),
+                    _FeatureButton(label: 'Eventos', onTap: () => _openFeature('Eventos', m)),
+                    _FeatureButton(label: 'Dueño', onTap: () => _openFeature('Dueño', m)),
                   ],
                 ),
               ],
@@ -480,7 +480,7 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
     );
   }
 
-  void _openFeature(String title) {
+  void _openFeature(String title, Map<String, dynamic> mascota) {
     if (title == 'Peso') {
       Navigator.push(
         context,
@@ -499,7 +499,7 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
   } else if (title == 'Recordatorios') { // Caso para módulo de recordatorios/calendario
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => const CalendarioModuloPantalla()),
+        MaterialPageRoute(builder: (_) => CalendarioModuloPantalla(mascota: mascota)),
       );
     } else if (title == 'Albúm') { // NUEVO caso álbum
       Navigator.push(

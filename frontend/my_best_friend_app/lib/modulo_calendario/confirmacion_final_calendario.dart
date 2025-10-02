@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'servicios/calendario_service.dart';
-import '../services/api_service.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import 'modelos/evento_calendario.dart';
-import 'calendario_modulo_pantalla.dart';
 
 class ConfirmacionFinalCalendario extends StatefulWidget {
   final String descripcion;
@@ -22,6 +20,8 @@ class ConfirmacionFinalCalendario extends StatefulWidget {
   final String categoriaNotificacion;
   final bool repetirSiNoSeVe;
   final int intervalosRepeticion;
+  final EventoCalendario? recordatorioParaEditar; // Recordatorio a editar (opcional)
+  final Map<String, dynamic>? mascota; // Información de la mascota seleccionada
   
   const ConfirmacionFinalCalendario({
     Key? key,
@@ -40,6 +40,8 @@ class ConfirmacionFinalCalendario extends StatefulWidget {
     required this.categoriaNotificacion,
     required this.repetirSiNoSeVe,
     required this.intervalosRepeticion,
+    this.recordatorioParaEditar,
+    this.mascota,
   }) : super(key: key);
 
   @override
@@ -51,7 +53,6 @@ class _ConfirmacionFinalCalendarioState extends State<ConfirmacionFinalCalendari
   final Color _grayColor = const Color(0xFFE5E5E5);
   final CalendarioService _calendarioService = CalendarioService();
   bool _guardando = false;
-  final _api = ApiService();
 
   Future<void> _guardarEvento() async {
     setState(() {
@@ -61,8 +62,16 @@ class _ConfirmacionFinalCalendarioState extends State<ConfirmacionFinalCalendari
     try {
       final auth = context.read<AuthProvider>();
       final userId = auth.user?['_id']?.toString();
+      
+      print('🐕 Widget mascota: ${widget.mascota}');
+      print('🐕 Mascota ID intentando guardar: ${widget.mascota?['_id']} o ${widget.mascota?['id']}');
+      
+      // Si estamos editando, usar el ID existente; si no, crear uno nuevo
+      final eventoId = widget.recordatorioParaEditar?.id ?? 
+                      DateTime.now().millisecondsSinceEpoch.toString();
+      
       final evento = EventoCalendario(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        id: eventoId,
         titulo: widget.descripcion,
         descripcion: widget.descripcion,
         categoria: widget.categoria,
@@ -84,50 +93,55 @@ class _ConfirmacionFinalCalendarioState extends State<ConfirmacionFinalCalendari
         )] : [],
         activo: true,
         userId: userId,
+        mascotaId: widget.mascota?['_id']?.toString() ?? widget.mascota?['id']?.toString(),
+        mascotaNombre: widget.mascota?['nombre']?.toString(),
+        mascotaFoto: widget.mascota?['foto']?.toString(),
       );
 
-      // Guardar local
-      await _calendarioService.crearEvento(evento, currentUserId: userId);
-      // Intentar guardar inmediatamente en backend
-      try {
-        await _api.crearRecordatorioBackend(
-          titulo: evento.titulo,
-          descripcion: evento.descripcion,
-          categoria: evento.categoria,
-          fechaHora: evento.fechaHora,
-          tipoRecordatorio: evento.tipoRecordatorio,
-          frecuencia: evento.frecuencia,
-          avisos: evento.avisos.map((a)=>{
-            'tipo': a.tipo,
-            'minutos': a.minutos,
-            'descripcion': a.descripcion,
-          }).toList(),
-          activo: evento.activo,
-        );
-      } catch (e) {
-        // Silencioso: se sincronizará después
-        // print('Fallo guardado backend recordatorio: $e');
+      print('💾 Guardando evento para mascota: ${evento.mascotaNombre}');
+      print('💾 ID de mascota guardado: ${evento.mascotaId}');
+      print('💾 Descripción: ${evento.descripcion}');
+
+      if (widget.recordatorioParaEditar != null) {
+        // Actualizar recordatorio existente
+        final resultado = await CalendarioService.actualizarEvento(evento);
+        if (!resultado) {
+          throw Exception('No se pudo actualizar el recordatorio');
+        }
+      } else {
+        // Crear nuevo recordatorio
+        await _calendarioService.crearEvento(evento, currentUserId: userId);
       }
       
       // Mostrar mensaje de éxito
+      final mensajeExito = widget.recordatorioParaEditar != null 
+          ? '¡Recordatorio actualizado correctamente!'
+          : '¡Recordatorio guardado correctamente!';
+          
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('¡Recordatorio guardado correctamente!'),
-          backgroundColor: Color(0xFF4CAF50), // Verde para mejor visibilidad
-          duration: Duration(seconds: 2),
+        SnackBar(
+          content: Text(mensajeExito),
+          backgroundColor: const Color(0xFF4CAF50), // Verde para mejor visibilidad
+          duration: const Duration(seconds: 2),
         ),
       );
 
-      // Regresar al módulo calendario después de un breve delay
-      Future.delayed(const Duration(seconds: 2), () {
-        // Usar pop múltiple para volver a la pantalla anterior (CalendarioModuloPantalla)
-        // Esto mantiene el stack de navegación intacto
-        Navigator.of(context).pop(); // Salir de confirmación
-        Navigator.of(context).pop(); // Salir del formulario
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const CalendarioModuloPantalla()),
-        );
-      });
+      // Regresar al módulo calendario después de guardar exitosamente
+      if (mounted) {
+        // Navegar de vuelta con un delay mínimo
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) {
+            // Simplemente hacer pop múltiple para volver
+            Navigator.of(context)
+              ..pop() // Salir de confirmación
+              ..pop() // Salir de avanzada
+              ..pop() // Salir de configuración
+              ..pop() // Salir de opciones
+              ..pop() // Salir de categoría
+              ..pop(); // Salir de descripción
+          }
+        });
+      }
 
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(

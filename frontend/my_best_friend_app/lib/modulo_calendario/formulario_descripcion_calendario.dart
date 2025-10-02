@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'seleccion_categoria_calendario.dart';
+import 'modelos/evento_calendario.dart';
 
 class FormularioDescripcionCalendario extends StatefulWidget {
-  const FormularioDescripcionCalendario({Key? key}) : super(key: key);
+  final EventoCalendario? recordatorioParaEditar; // Recordatorio a editar (opcional)
+  final Map<String, dynamic>? mascota; // Información de la mascota seleccionada
+  
+  const FormularioDescripcionCalendario({
+    Key? key, 
+    this.recordatorioParaEditar,
+    this.mascota,
+  }) : super(key: key);
 
   @override
   State<FormularioDescripcionCalendario> createState() => _FormularioDescripcionCalendarioState();
@@ -28,6 +36,13 @@ class _FormularioDescripcionCalendarioState extends State<FormularioDescripcionC
   void initState() {
     super.initState();
     
+    print('🐕 FormularioDescripcion - Mascota recibida: ${widget.mascota}');
+    
+    // Si estamos editando, precargar los datos
+    if (widget.recordatorioParaEditar != null) {
+      _descripcionController.text = widget.recordatorioParaEditar!.descripcion;
+    }
+    
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
@@ -48,6 +63,9 @@ class _FormularioDescripcionCalendarioState extends State<FormularioDescripcionC
     ).animate(CurvedAnimation(parent: _slideController, curve: Curves.elasticOut));
     
     _descripcionController.addListener(_validateForm);
+    
+    // Validar formulario inicial si hay datos precargados
+    _validateForm();
     
     // Iniciar animaciones
     _fadeController.forward();
@@ -80,7 +98,11 @@ class _FormularioDescripcionCalendarioState extends State<FormularioDescripcionC
         context,
         PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) => 
-            SeleccionCategoriaCalendario(descripcion: _descripcionController.text.trim()),
+            SeleccionCategoriaCalendario(
+              descripcion: _descripcionController.text.trim(),
+              recordatorioParaEditar: widget.recordatorioParaEditar, // Pasar el recordatorio a editar
+              mascota: widget.mascota, // Pasar información de la mascota
+            ),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return SlideTransition(
               position: Tween<Offset>(
