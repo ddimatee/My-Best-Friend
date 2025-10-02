@@ -611,4 +611,12 @@ class ApiService {
 
   // ================== UTILIDADES ==================
   Future<Map<String,dynamic>> verificarConexion() async => _wrapOk({'modo':'offline','descripcion':'Sin backend'});
+
+  // ================== DISPOSITIVOS ==================
+  Future<Map<String,dynamic>> registrarDeviceToken(String token) async {
+    return _wrapOk({'mensaje':'Token push registrado (offline)','token': token});
+  }
+  Future<Map<String,dynamic>> eliminarDeviceToken(String token) async {
+    return _wrapOk({'mensaje':'Token push eliminado (offline)','token': token});
+  }
 }
