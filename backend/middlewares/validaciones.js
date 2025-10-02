@@ -43,6 +43,12 @@ const validarRegistroUsuario = [
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
     .withMessage('La contraseña debe contener al menos una minúscula, una mayúscula y un número'),
   
+  body('comoLlegaste')
+    .optional()
+    .trim()
+    .isLength({ max: 200 })
+    .withMessage('El campo "¿Cómo llegaste?" no puede exceder 200 caracteres'),
+  
   manejarErrores
 ];
 

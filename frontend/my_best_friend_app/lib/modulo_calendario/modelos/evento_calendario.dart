@@ -8,6 +8,7 @@ class EventoCalendario {
   final String frecuencia; // "cada_dia", "cada_semana", "cada_mes", "cada_año"
   final List<TipoAviso> avisos;
   final bool activo;
+  final String? userId; // Id del usuario dueño (para aislar datos entre cuentas)
 
   EventoCalendario({
     required this.id,
@@ -19,6 +20,7 @@ class EventoCalendario {
     required this.frecuencia,
     required this.avisos,
     this.activo = true,
+    this.userId,
   });
 
   Map<String, dynamic> toJson() {
@@ -32,6 +34,7 @@ class EventoCalendario {
       'frecuencia': frecuencia,
       'avisos': avisos.map((aviso) => aviso.toJson()).toList(),
       'activo': activo,
+      if (userId != null) 'userId': userId,
     };
   }
 
@@ -46,6 +49,7 @@ class EventoCalendario {
       frecuencia: json['frecuencia'],
       avisos: (json['avisos'] as List).map((aviso) => TipoAviso.fromJson(aviso)).toList(),
       activo: json['activo'] ?? true,
+      userId: json['userId'],
     );
   }
 }

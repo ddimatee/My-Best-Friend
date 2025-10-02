@@ -7,6 +7,32 @@ const Mascota = require('../models/mascota');
 const { validarRegistroUsuario, validarLoginUsuario } = require('../middlewares/validaciones');
 const crypto = require('crypto');
 const { enviarCodigoRecuperacion } = require('../services/emailService');
+// Dependencias para subir foto de perfil
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// ==== Configuración de subida de foto de perfil de usuario ====
+const uploadUserDir = path.join(__dirname, '..', 'uploads', 'usuarios');
+if (!fs.existsSync(uploadUserDir)) {
+  fs.mkdirSync(uploadUserDir, { recursive: true });
+}
+const storageUsuario = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadUserDir),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    cb(null, `${Date.now()}-${Math.round(Math.random()*1e9)}${ext}`);
+  }
+});
+const fileFilterUsuario = (req, file, cb) => {
+  if (/^image\/(jpeg|png|webp|gif)$/.test(file.mimetype)) return cb(null, true);
+  cb(new Error('Formato de imagen no permitido'));
+};
+const uploadUsuario = multer({
+  storage: storageUsuario,
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
+  fileFilter: fileFilterUsuario
+});
 
 // Registro de usuario
 router.post('/registro', validarRegistroUsuario, async (req, res) => {
@@ -217,6 +243,28 @@ router.delete('/:id', protegerRuta, async (req, res) => {
     res.json({ mensaje: 'Usuario y mascotas asociadas eliminadas correctamente' });
   } catch (error) {
     res.status(500).json({ error: 'Error al eliminar usuario' });
+  }
+});
+
+// Subir / actualizar foto de perfil del usuario autenticado
+router.post('/:id/foto', protegerRuta, uploadUsuario.single('foto'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (req.usuario._id.toString() !== id) {
+      return res.status(403).json({ error: 'No autorizado' });
+    }
+    if (!req.file) return res.status(400).json({ error: 'No se recibió archivo' });
+
+    const usuario = await Usuario.findByIdAndUpdate(
+      id,
+      { fotoPerfil: `/uploads/usuarios/${req.file.filename}` },
+      { new: true }
+    ).select('-contraseña');
+    if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
+    res.json({ mensaje: 'Foto de perfil actualizada', usuario });
+  } catch (e) {
+    console.error('Error subiendo foto de perfil usuario:', e);
+    res.status(500).json({ error: 'Error al subir foto' });
   }
 });
 

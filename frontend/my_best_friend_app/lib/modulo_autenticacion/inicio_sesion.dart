@@ -66,6 +66,7 @@ class _LoginScreenState extends State<LoginScreen> {
 			final exito = await authProvider.iniciarSesion(
 				correo: correoController.text.trim(),
 				password: contrasenaController.text,
+				contextForProviders: context,
 			);
 
 			if (exito) {

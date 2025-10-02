@@ -20,16 +20,15 @@ const usuarioSchema = new mongoose.Schema({
   },
   contraseña: { type: String, required: true },
   fotoPerfil: { type: String, default: '' },
+  // Campo opcional: cómo llegó el usuario a la app (referencia de marketing / adquisición)
+  comoLlegaste: { type: String, trim: true, maxlength: 200 },
   preferencias: {
-    tema: { type: String, enum: ['claro', 'oscuro'], default: 'claro' },
-    inicioSemana: { type: String, enum: ['domingo', 'lunes'], default: 'lunes' },
     notificaciones: { type: Boolean, default: true },
     idioma: { type: String, enum: ['es', 'en'], default: 'es' },
     timezone: { type: String, default: 'America/Mexico_City' }
   },
   mascotas: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Mascota' }],
   activo: { type: Boolean, default: true },
-  ultimoAcceso: { type: Date, default: Date.now }
 }, {
   timestamps: true
 });

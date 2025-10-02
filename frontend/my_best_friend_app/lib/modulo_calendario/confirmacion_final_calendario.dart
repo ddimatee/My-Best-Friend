@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'servicios/calendario_service.dart';
+import '../services/api_service.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
 import 'modelos/evento_calendario.dart';
 import 'calendario_modulo_pantalla.dart';
 
@@ -48,6 +51,7 @@ class _ConfirmacionFinalCalendarioState extends State<ConfirmacionFinalCalendari
   final Color _grayColor = const Color(0xFFE5E5E5);
   final CalendarioService _calendarioService = CalendarioService();
   bool _guardando = false;
+  final _api = ApiService();
 
   Future<void> _guardarEvento() async {
     setState(() {
@@ -55,6 +59,8 @@ class _ConfirmacionFinalCalendarioState extends State<ConfirmacionFinalCalendari
     });
 
     try {
+      final auth = context.read<AuthProvider>();
+      final userId = auth.user?['_id']?.toString();
       final evento = EventoCalendario(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         titulo: widget.descripcion,
@@ -77,9 +83,31 @@ class _ConfirmacionFinalCalendarioState extends State<ConfirmacionFinalCalendari
               : '${widget.minutosAntes} minutos antes',
         )] : [],
         activo: true,
+        userId: userId,
       );
 
-      await _calendarioService.crearEvento(evento);
+      // Guardar local
+      await _calendarioService.crearEvento(evento, currentUserId: userId);
+      // Intentar guardar inmediatamente en backend
+      try {
+        await _api.crearRecordatorioBackend(
+          titulo: evento.titulo,
+          descripcion: evento.descripcion,
+          categoria: evento.categoria,
+          fechaHora: evento.fechaHora,
+          tipoRecordatorio: evento.tipoRecordatorio,
+          frecuencia: evento.frecuencia,
+          avisos: evento.avisos.map((a)=>{
+            'tipo': a.tipo,
+            'minutos': a.minutos,
+            'descripcion': a.descripcion,
+          }).toList(),
+          activo: evento.activo,
+        );
+      } catch (e) {
+        // Silencioso: se sincronizará después
+        // print('Fallo guardado backend recordatorio: $e');
+      }
       
       // Mostrar mensaje de éxito
       ScaffoldMessenger.of(context).showSnackBar(

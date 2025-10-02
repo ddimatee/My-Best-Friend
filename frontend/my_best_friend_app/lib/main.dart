@@ -8,6 +8,7 @@ import 'providers/vacunas_provider.dart';
 import 'providers/peso_provider.dart';
 import 'providers/album_provider.dart';
 import 'providers/eventos_provider.dart';
+import 'providers/recordatorios_provider.dart';
 import 'modulo_general/introduccion.dart';
 import 'modulo_general/menu_principal.dart';
 import 'modulo_general/buscar.dart';
@@ -63,6 +64,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => PesoProvider()),
         ChangeNotifierProvider(create: (_) => AlbumProvider()),
         ChangeNotifierProvider(create: (_) => EventosProvider()),
+  ChangeNotifierProvider(create: (_) => RecordatoriosProvider()),
       ],
       child: MaterialApp(
         navigatorKey: appNavigatorKey,

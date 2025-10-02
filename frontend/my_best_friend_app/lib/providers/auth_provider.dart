@@ -7,6 +7,8 @@ import 'vacunas_provider.dart';
 import 'peso_provider.dart';
 import 'album_provider.dart';
 import 'eventos_provider.dart';
+import '../services/notification_service.dart';
+import 'recordatorios_provider.dart';
 
 class AuthProvider with ChangeNotifier {
   final ApiService _apiService = ApiService();
@@ -55,6 +57,7 @@ class AuthProvider with ChangeNotifier {
     required String correo,
     required String celular,
     required String password,
+    String? comoLlegaste,
   }) async {
     _setLoading(true);
     _clearError();
@@ -66,6 +69,7 @@ class AuthProvider with ChangeNotifier {
         correo: correo,
         celular: celular,
         password: password,
+        comoLlegaste: comoLlegaste,
       );
 
       if (result['success']) {
@@ -89,6 +93,7 @@ class AuthProvider with ChangeNotifier {
     required String password,
     bool recordar = false,
     bool silencioso = false,
+    BuildContext? contextForProviders,
   }) async {
     _setLoading(true);
     if (!silencioso) _clearError();
@@ -101,8 +106,25 @@ class AuthProvider with ChangeNotifier {
       );
 
       if (result['success']) {
+        // Siempre cancelar notificaciones del usuario anterior
+        try { await NotificationService().cancelAll(); } catch (_) {}
+        // Se limpia primero providers para evitar mostrar datos rezagados
+        if (contextForProviders != null) {
+          try { (contextForProviders as dynamic).read<MascotasProvider>().clear(); } catch (_) {}
+          try { (contextForProviders as dynamic).read<VacunasProvider>().clear(); } catch (_) {}
+          try { (contextForProviders as dynamic).read<PesoProvider>().clear(); } catch (_) {}
+          try { (contextForProviders as dynamic).read<AlbumProvider>().clear(); } catch (_) {}
+          try { (contextForProviders as dynamic).read<EventosProvider>().clear(); } catch (_) {}
+        }
         _user = result['data']['usuario'];
         _isAuthenticated = true;
+        // Sincronizar recordatorios del calendario con backend (best-effort)
+        if (contextForProviders != null) {
+          final uid = _user?['_id']?.toString();
+          if (uid != null && uid.isNotEmpty) {
+            try { (contextForProviders as dynamic).read<RecordatoriosProvider>().sincronizar(userId: uid); } catch (_) {}
+          }
+        }
         // Intentar reprogramar recordatorios (necesitamos context externo normalmente, se puede diferir)
         if (recordar) {
           final prefs = await SharedPreferences.getInstance();
@@ -150,6 +172,7 @@ class AuthProvider with ChangeNotifier {
 
   // Cerrar sesión
   Future<void> cerrarSesion({required BuildContext context}) async {
+    try { await NotificationService().cancelAll(); } catch (_) {}
     await _apiService.cerrarSesion();
     _cerrarSesionLocal(context: context);
   }
@@ -216,6 +239,15 @@ class AuthProvider with ChangeNotifier {
     if (apellido != null) _user!['apellido'] = apellido;
     if (correo != null) _user!['correo'] = correo;
     if (celular != null) _user!['celular'] = celular;
+    notifyListeners();
+  }
+
+  void mergeUserData(Map<String,dynamic> data) {
+    if (_user == null) {
+      _user = data;
+    } else {
+      _user!.addAll(data);
+    }
     notifyListeners();
   }
 }

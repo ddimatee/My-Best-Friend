@@ -65,6 +65,7 @@ class _RegisterScreen2State extends State<RegisterScreen2> {
         correo: widget.correo.trim(),
         celular: celularController.text.trim(),
         password: contrasenaController.text,
+        comoLlegaste: comoLlegasteController.text.trim(),
       );
 
       if (ok) {

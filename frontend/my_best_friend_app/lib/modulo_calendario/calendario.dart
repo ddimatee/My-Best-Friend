@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
 import 'modelos/evento_calendario.dart';
 import 'servicios/calendario_service.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
 import '../modulo_eventos/modelos/evento.dart';
 import '../providers/eventos_provider.dart';
 import 'calendario_modulo_pantalla.dart';
@@ -52,11 +53,17 @@ class _CalendarioPantallaState extends State<CalendarioPantalla> {
     setState(() => _isLoading = true);
     try {
       // Cargar todo en paralelo para mejor rendimiento
-      final recordatorios = await CalendarioService.obtenerEventos();
+      final auth = mounted ? context.read<AuthProvider>() : null;
+      final currentUserId = auth?.user?['_id']?.toString();
+      // Purga inicial (descarta eventos de otros usuarios si existían en SharedPreferences)
+      if (currentUserId != null) {
+        await CalendarioService.purgarEventosDeOtrosUsuarios(currentUserId);
+      }
+      final recordatorios = await CalendarioService.obtenerEventos(currentUserId: currentUserId);
       final recordatoriosVacunas = await CalendarioService.obtenerRecordatoriosVacunas();
       
       setState(() {
-        _recordatorios = recordatorios;
+  _recordatorios = recordatorios;
         _recordatoriosVacunas = recordatoriosVacunas;
       });
       

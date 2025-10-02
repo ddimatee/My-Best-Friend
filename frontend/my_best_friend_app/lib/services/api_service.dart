@@ -103,6 +103,7 @@ class ApiService {
     required String correo,
     required String celular,
     required String password,
+    String? comoLlegaste,
   }) async {
     try {
       final response = await http.post(
@@ -114,6 +115,7 @@ class ApiService {
           'correo': correo,
           'celular': celular,
           'contraseña': password,
+          if (comoLlegaste != null && comoLlegaste.trim().isNotEmpty) 'comoLlegaste': comoLlegaste.trim(),
         }),
       );
 
@@ -197,6 +199,34 @@ class ApiService {
       return _handleResponse(response);
     } catch (e) {
       return {'success': false, 'message': 'Error de conexión: $e'};
+    }
+  }
+
+  // Subir foto de perfil (multipart)
+  Future<Map<String, dynamic>> subirFotoPerfilUsuario({
+    required String id,
+    required List<int> bytes,
+    required String filename,
+    String? mimeType,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/usuarios/$id/foto');
+      final request = http.MultipartRequest('POST', uri);
+      final headersAuth = await headersWithAuth; // contiene Authorization
+      // Quitar content-type json para multipart
+      headersAuth.remove('Content-Type');
+      request.headers.addAll(headersAuth);
+      final multipartFile = http.MultipartFile.fromBytes(
+        'foto',
+        bytes,
+        filename: filename,
+      );
+      request.files.add(multipartFile);
+      final streamed = await request.send();
+      final resp = await http.Response.fromStream(streamed);
+      return _handleResponse(resp);
+    } catch (e) {
+      return {'success': false, 'message': 'Error subiendo foto: $e'};
     }
   }
 
@@ -918,5 +948,82 @@ class ApiService {
       await onUnauthorized();
     }
     return resp;
+  }
+
+  // ================= RECORDATORIOS (Calenario local sincronizado) ================
+  Future<Map<String,dynamic>> crearRecordatorioBackend({
+    required String titulo,
+    required String descripcion,
+    required String categoria,
+    required DateTime fechaHora,
+    required String tipoRecordatorio,
+    required String frecuencia,
+    required List<Map<String,dynamic>> avisos,
+    bool activo = true,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/recordatorios'),
+        headers: await headersWithAuth,
+        body: json.encode({
+          'titulo': titulo,
+          'descripcion': descripcion,
+          'categoria': categoria,
+            'fechaHora': fechaHora.toIso8601String(),
+          'tipoRecordatorio': tipoRecordatorio,
+          'frecuencia': frecuencia,
+          'avisos': avisos,
+          'activo': activo,
+        })
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': 'Error de conexión: $e'};
+    }
+  }
+
+  Future<Map<String,dynamic>> listarRecordatoriosBackend({DateTime? desde, DateTime? hasta, bool? activo}) async {
+    final params = <String,String>{};
+    if (desde != null) params['desde'] = desde.toIso8601String();
+    if (hasta != null) params['hasta'] = hasta.toIso8601String();
+    if (activo != null) params['activo'] = activo.toString();
+    final qs = params.isEmpty ? '' : ('?' + params.entries.map((e)=>'${e.key}=${Uri.encodeComponent(e.value)}').join('&'));
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/recordatorios$qs'),
+        headers: await headersWithAuth,
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': 'Error de conexión: $e'};
+    }
+  }
+
+  Future<Map<String,dynamic>> actualizarRecordatorioBackend({
+    required String id,
+    Map<String,dynamic>? cambios,
+  }) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/recordatorios/$id'),
+        headers: await headersWithAuth,
+        body: json.encode(cambios ?? {}),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': 'Error de conexión: $e'};
+    }
+  }
+
+  Future<Map<String,dynamic>> eliminarRecordatorioBackend(String id) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/recordatorios/$id'),
+        headers: await headersWithAuth,
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': 'Error de conexión: $e'};
+    }
   }
 }

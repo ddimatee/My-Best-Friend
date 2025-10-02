@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 import '../../../providers/auth_provider.dart';
+import '../../../services/api_service.dart';
 
 class PerfilPantalla extends StatefulWidget {
   const PerfilPantalla({Key? key}) : super(key: key);
@@ -13,6 +16,9 @@ class _PerfilPantallaState extends State<PerfilPantalla> {
   final TextEditingController _nombreController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _telefonoController = TextEditingController();
+  File? _nuevaFotoFile;
+  bool _guardando = false;
+  final _picker = ImagePicker();
 
   @override
   void initState() {
@@ -68,63 +74,7 @@ class _PerfilPantallaState extends State<PerfilPantalla> {
           const SizedBox(height: 20),
           
           // Avatar del usuario
-          Stack(
-            children: [
-              Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.person,
-                  size: 50,
-                  color: Colors.grey,
-                ),
-              ),
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: GestureDetector(
-                  onTap: () {
-                    // Acción para cambiar foto
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Función para cambiar foto próximamente'),
-                      ),
-                    );
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 4,
-                          offset: const Offset(0, 1),
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      Icons.camera_alt,
-                      size: 20,
-                      color: green,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+          _buildAvatar(green),
           
           const SizedBox(height: 30),
           
@@ -175,7 +125,7 @@ class _PerfilPantallaState extends State<PerfilPantalla> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: _guardarCambios,
+                        onPressed: _guardando ? null : _guardarCambios,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: green,
                           foregroundColor: Colors.white,
@@ -184,13 +134,15 @@ class _PerfilPantallaState extends State<PerfilPantalla> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: const Text(
-                          'Guardar Cambios',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                        child: _guardando
+                            ? const SizedBox(height:20,width:20,child:CircularProgressIndicator(strokeWidth:2,color:Colors.white))
+                            : const Text(
+                                'Guardar Cambios',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                       ),
                     ),
                     
@@ -232,14 +184,143 @@ class _PerfilPantallaState extends State<PerfilPantalla> {
   }
 
   void _guardarCambios() {
-    // TODO: Implementar endpoint de actualización de perfil en ApiService.
-    // De momento sólo mostramos snackbar y regresamos.
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Cambios guardados (solo local, falta API).'),
-        backgroundColor: Color(0xFF4CAF50),
-      ),
+    final auth = context.read<AuthProvider>();
+    final user = auth.user;
+    if (user == null) return;
+    setState(() { _guardando = true; });
+    () async {
+      try {
+        // Separar nombre y apellido (simple: último token como apellido)
+        final nombreCompleto = _nombreController.text.trim();
+        String nombre = nombreCompleto;
+        String apellido = '';
+        if (nombreCompleto.contains(' ')) {
+          final partes = nombreCompleto.split(' ');
+            if (partes.length > 1) {
+              apellido = partes.removeLast();
+              nombre = partes.join(' ');
+            }
+        }
+        final api = ApiService();
+        // Actualizar campos básicos
+        final resp = await api.actualizarPerfil(
+          id: user['_id'],
+          nombre: nombre,
+          apellido: apellido.isEmpty ? user['apellido'] : apellido,
+          correo: _emailController.text.trim(),
+          celular: _telefonoController.text.trim(),
+        );
+        if (!(resp['success'] ?? false)) {
+          throw resp['message'] ?? 'Error actualizando perfil';
+        }
+        Map<String,dynamic>? usuarioActualizado = resp['data']?['usuario'] ?? resp['data'];
+        // Subir foto si hay nueva
+        if (_nuevaFotoFile != null) {
+          final bytes = await _nuevaFotoFile!.readAsBytes();
+            final up = await api.subirFotoPerfilUsuario(
+              id: user['_id'],
+              bytes: bytes,
+              filename: _nuevaFotoFile!.path.split('/').last,
+            );
+            if (up['success'] ?? false) {
+              usuarioActualizado = up['data']?['usuario'] ?? up['data'] ?? usuarioActualizado;
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Foto no subida: ${up['message']}')));
+            }
+        }
+        // Refrescar auth provider (reemplazar user)
+        if (usuarioActualizado != null) {
+          auth.mergeUserData(usuarioActualizado);
+        } else {
+          await auth.obtenerPerfil();
+        }
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Perfil actualizado')));
+          Navigator.pop(context);
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+        }
+      } finally {
+        if (mounted) setState(() { _guardando = false; });
+      }
+    }();
+  }
+
+  Widget _buildAvatar(Color green) {
+    final auth = context.watch<AuthProvider>();
+    final tieneFotoRemota = auth.user?['fotoPerfil'] != null && (auth.user!['fotoPerfil'] as String).isNotEmpty;
+    ImageProvider? foto;
+    if (_nuevaFotoFile != null) {
+      foto = Image.file(_nuevaFotoFile!, fit: BoxFit.cover).image;
+    } else if (tieneFotoRemota) {
+      foto = NetworkImage(_resolveFotoUrl(auth.user!['fotoPerfil']));
+    }
+    return Stack(
+      children: [
+        Container(
+          width: 110,
+          height: 110,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.15),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: CircleAvatar(
+            backgroundColor: Colors.white,
+            backgroundImage: foto,
+            child: foto == null ? const Icon(Icons.person, size: 50, color: Colors.grey) : null,
+          ),
+        ),
+        Positioned(
+          bottom: 4,
+          right: 4,
+          child: GestureDetector(
+            onTap: _seleccionarFoto,
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 4,
+                    offset: const Offset(0,1),
+                  ),
+                ],
+              ),
+              child: Icon(Icons.camera_alt, size: 22, color: green),
+            ),
+          ),
+        )
+      ],
     );
-    Navigator.pop(context);
+  }
+
+  Future<void> _seleccionarFoto() async {
+    try {
+      final picked = await _picker.pickImage(source: ImageSource.gallery, maxWidth: 800, imageQuality: 85);
+      if (picked != null) {
+        setState(() {
+          _nuevaFotoFile = File(picked.path);
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error seleccionando imagen: $e')));
+    }
+  }
+
+  String _resolveFotoUrl(String path) {
+    if (path.startsWith('http')) return path;
+    // Base API sin /api
+    final base = ApiService.baseUrl.replaceFirst('/api', '');
+    return '$base$path';
   }
 }
