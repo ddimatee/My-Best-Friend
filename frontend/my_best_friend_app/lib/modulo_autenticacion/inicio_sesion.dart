@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'registro_1.dart';
-import 'recuperar_contrasena_correo.dart';
 import '../modulo_general/menu_principal.dart';
 import '../modulo_general/componentes/avisos.dart';
 import '../providers/auth_provider.dart';
@@ -109,35 +108,6 @@ class _LoginScreenState extends State<LoginScreen> {
 							child: Column(
 								mainAxisAlignment: MainAxisAlignment.spaceBetween,
 								children: [
-									// Botón "¿Olvidaste tu contraseña?" en la parte superior derecha
-									Align(
-										alignment: Alignment.topRight,
-										child: TextButton(
-											onPressed: () {
-												Navigator.push(
-													context,
-													MaterialPageRoute(builder: (_) => const RecoverPasswordEmailScreen()),
-												);
-											},
-											child: const Text(
-												'¿Olvidaste tu\ncontraseña?',
-												style: TextStyle(
-													color: Colors.white,
-													fontSize: 14,
-													fontWeight: FontWeight.w500,
-													shadows: [
-														Shadow(
-															blurRadius: 1,
-															color: Colors.black26,
-															offset: Offset(0, 1),
-														),
-													],
-												),
-												textAlign: TextAlign.right,
-											),
-										),
-									),
-                
 									// Contenido principal centrado
 									Column(
 										children: [

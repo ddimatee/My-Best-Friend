@@ -3,7 +3,8 @@ import '../modulo_autenticacion/inicio_sesion.dart';
 
 // Onboarding con 5 pantallas en español. La última ofrece "Empezar" e "Iniciar sesión".
 class OnboardingScreens extends StatefulWidget {
-	const OnboardingScreens({Key? key}) : super(key: key);
+	final VoidCallback? onFinish;
+	const OnboardingScreens({Key? key, this.onFinish}) : super(key: key);
 
 	@override
 	_OnboardingScreensState createState() => _OnboardingScreensState();
@@ -277,7 +278,11 @@ class _OnboardingScreensState extends State<OnboardingScreens> {
 					),
 					const Spacer(flex: 1),
 					ElevatedButton(
-						onPressed: () {
+						onPressed: () async {
+							// Marcar onboarding visto si se proporciona callback (flujo principal)
+							if (widget.onFinish != null) {
+								widget.onFinish!();
+							}
 							Navigator.pushReplacement(
 								context,
 								MaterialPageRoute(builder: (context) => LoginScreen()),

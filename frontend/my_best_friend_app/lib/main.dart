@@ -12,6 +12,7 @@ import 'providers/recordatorios_provider.dart';
 import 'modulo_general/introduccion.dart';
 import 'modulo_general/menu_principal.dart';
 import 'modulo_general/buscar.dart';
+import 'modulo_autenticacion/inicio_sesion.dart';
 import 'modulo_configuracion/pantallas/perfil_pantalla.dart';
 import 'modulo_configuracion/pantallas/notificaciones_pantalla.dart';
 import 'modulo_configuracion/pantallas/cuenta_sesion_pantalla.dart';
@@ -23,6 +24,7 @@ import 'modulo_dueno/dueno_modulo_pantalla.dart';
 import 'utils/test_conexion_screen.dart';
 import 'providers/auth_provider.dart';
 import 'services/push_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // Punto de entrada de la aplicación My Best Friend.
 
@@ -53,11 +55,46 @@ Future<void> _inicializarServiciosSeguros() async {
   }
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
   @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  bool _loadingPref = true;
+  bool _showOnboarding = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarPreferenciaOnboarding();
+  }
+
+  Future<void> _cargarPreferenciaOnboarding() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final seen = prefs.getBool('has_seen_onboarding') ?? false;
+      setState(() {
+        _showOnboarding = !seen; // Mostrar onboarding si NO lo ha visto
+        _loadingPref = false;
+      });
+    } catch (e) {
+      setState(() { _loadingPref = false; _showOnboarding = true; });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_loadingPref) {
+      return const MaterialApp(
+        home: Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        ),
+      );
+    }
+
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
@@ -66,7 +103,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => PesoProvider()),
         ChangeNotifierProvider(create: (_) => AlbumProvider()),
         ChangeNotifierProvider(create: (_) => EventosProvider()),
-  ChangeNotifierProvider(create: (_) => RecordatoriosProvider()),
+        ChangeNotifierProvider(create: (_) => RecordatoriosProvider()),
       ],
       child: MaterialApp(
         navigatorKey: appNavigatorKey,
@@ -76,8 +113,6 @@ class MyApp extends StatelessWidget {
           useMaterial3: true,
           colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF4CAF50)),
         ),
-        // Configuración de localizaciones (nuestro delegate personalizado va después
-        // para sobreescribir las abreviaturas del calendario)
         localizationsDelegates: const [
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,
@@ -87,7 +122,7 @@ class MyApp extends StatelessWidget {
           Locale('es', ''),
         ],
         locale: const Locale('es'),
-        home: OnboardingScreens(),
+  home: _showOnboarding ? OnboardingScreens(onFinish: _marcarOnboardingVisto) : LoginScreen(),
         routes: {
           '/menu': (_) => const MenuPrincipal(),
           '/buscar': (_) => const BuscarPantalla(),
@@ -103,5 +138,13 @@ class MyApp extends StatelessWidget {
         },
       ),
     );
+  }
+
+  Future<void> _marcarOnboardingVisto() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('has_seen_onboarding', true);
+    if (mounted) {
+      setState(() { _showOnboarding = false; });
+    }
   }
 }

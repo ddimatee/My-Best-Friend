@@ -6,7 +6,6 @@ const protegerRuta = require('../middlewares/protegerRuta');
 const Mascota = require('../models/mascota');
 const { validarRegistroUsuario, validarLoginUsuario } = require('../middlewares/validaciones');
 const crypto = require('crypto');
-const { enviarCodigoRecuperacion } = require('../services/emailService');
 // Dependencias para subir foto de perfil
 const multer = require('multer');
 const path = require('path');
@@ -38,6 +37,8 @@ const uploadUsuario = multer({
 router.post('/registro', validarRegistroUsuario, async (req, res) => {
   try {
     const nuevoUsuario = new Usuario(req.body);
+    // El usuario ya vio el onboarding (porque llega después de él) así que lo marcamos
+    nuevoUsuario.hasSeenOnboarding = true;
     await nuevoUsuario.save();
     res.status(201).json({ mensaje: 'Usuario registrado correctamente' });
   } catch (error) {
@@ -59,8 +60,11 @@ router.post('/login', validarLoginUsuario, async (req, res) => {
       return res.status(401).json({ error: 'Contraseña incorrecta' });
     }
 
-    // Actualizar último acceso
+    // Actualizar último acceso y marcar onboarding visto si aún no
     usuario.ultimoAcceso = new Date();
+    if (!usuario.hasSeenOnboarding) {
+      usuario.hasSeenOnboarding = true;
+    }
 
     const token = generarToken(usuario._id);
     let rememberToken;
@@ -74,93 +78,6 @@ router.post('/login', validarLoginUsuario, async (req, res) => {
     res.json({ mensaje: 'Login exitoso', usuario, token, rememberToken });
   } catch (error) {
     res.status(500).json({ error: 'Error en el servidor' });
-  }
-});
-
-// Solicitar código de recuperación
-router.post('/password/solicitar', async (req, res) => {
-  const { correo } = req.body;
-  if (!correo) return res.status(400).json({ error: 'Correo requerido' });
-  try {
-    const usuario = await Usuario.findOne({ correo });
-    if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    usuario.resetPasswordCode = code;
-    usuario.resetPasswordExpira = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
-    await usuario.save();
-    // Log en consola para desarrollo
-    if (process.env.NODE_ENV !== 'production') {
-      console.log(`🔐 Código de recuperación para ${correo}: ${code}`);
-    }
-  const forceReturn = process.env.RETURN_RESET_CODE_ALWAYS === '1';
-  const showDev = process.env.SHOW_DEV_RESET_CODE === '1';
-
-    // Intentar envío de correo
-    let envioCorreo = { enviado: false, motivo: 'no configurado' };
-    try {
-      envioCorreo = await enviarCodigoRecuperacion({ correo, codigo: code });
-    } catch (err) {
-      console.warn('⚠️  Falló el envío de correo:', err.message);
-      envioCorreo = { enviado: false, motivo: 'error_envio', error: err.message };
-    }
-    res.json({
-      mensaje: 'Código generado y enviado',
-  code: (process.env.NODE_ENV !== 'production' && showDev) || forceReturn ? code : undefined,
-      correoEnviado: envioCorreo.enviado,
-      detalleCorreo: envioCorreo.enviado ? undefined : envioCorreo.motivo
-    });
-  } catch (e) {
-    res.status(500).json({ error: 'Error generando código' });
-  }
-});
-
-// Verificar código
-router.post('/password/verificar', async (req, res) => {
-  const { correo, code } = req.body;
-  if (!correo || !code) return res.status(400).json({ error: 'Datos incompletos' });
-  try {
-    // IMPORTANTE: los campos resetPasswordCode y resetPasswordExpira tienen select:false en el schema,
-    // por eso hay que incluirlos explícitamente o siempre parecerán "no definidos" y dará
-    // el error "No hay código activo" aunque sí se haya generado.
-    const usuario = await Usuario.findOne({ correo })
-      .select('+resetPasswordCode +resetPasswordExpira');
-    if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
-    if (!usuario.resetPasswordCode || !usuario.resetPasswordExpira) {
-      return res.status(400).json({ error: 'No hay código activo' });
-    }
-    if (usuario.resetPasswordExpira < new Date()) {
-      return res.status(400).json({ error: 'Código expirado' });
-    }
-    if (usuario.resetPasswordCode !== code) {
-      return res.status(401).json({ error: 'Código incorrecto' });
-    }
-    res.json({ mensaje: 'Código válido' });
-  } catch (e) {
-    res.status(500).json({ error: 'Error verificando código' });
-  }
-});
-
-// Resetear contraseña
-router.post('/password/reset', async (req, res) => {
-  const { correo, code, nuevaContraseña } = req.body;
-  if (!correo || !code || !nuevaContraseña) return res.status(400).json({ error: 'Datos incompletos' });
-  try {
-    const usuario = await Usuario.findOne({ correo })
-      .select('+resetPasswordCode +resetPasswordExpira');
-    if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
-    if (!usuario.resetPasswordCode || usuario.resetPasswordCode !== code) {
-      return res.status(401).json({ error: 'Código inválido' });
-    }
-    if (usuario.resetPasswordExpira < new Date()) {
-      return res.status(400).json({ error: 'Código expirado' });
-    }
-    usuario.contraseña = nuevaContraseña; // se hashea en pre-save
-    usuario.resetPasswordCode = undefined;
-    usuario.resetPasswordExpira = undefined;
-    await usuario.save();
-    res.json({ mensaje: 'Contraseña actualizada' });
-  } catch (e) {
-    res.status(500).json({ error: 'Error al resetear contraseña' });
   }
 });
 

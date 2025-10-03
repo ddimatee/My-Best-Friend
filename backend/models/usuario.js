@@ -31,15 +31,10 @@ const usuarioSchema = new mongoose.Schema({
   // Tokens de dispositivos (FCM) para notificaciones push
   deviceTokens: [{ type: String }],
   activo: { type: Boolean, default: true },
+  // Flag para indicar si el usuario ya completó el onboarding en el dispositivo
+  hasSeenOnboarding: { type: Boolean, default: false },
 }, {
   timestamps: true
-});
-
-// Campos adicionales para recuperación y recordar sesión
-usuarioSchema.add({
-  resetPasswordCode: { type: String, select: false },
-  resetPasswordExpira: { type: Date, select: false },
-  rememberToken: { type: String, select: false }
 });
 
 // Encriptar contraseña antes de guardar
