@@ -37,7 +37,9 @@ flutter:
     - assets/images/
     - assets/icon/logo.png
 
-flutter_icons:
+flutter_launcher_icons:
   android: true
   ios: false
   image_path: assets/icon/logo.png
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: assets/icon/logo.png

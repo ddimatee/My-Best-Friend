@@ -20,8 +20,6 @@ const usuarioSchema = new mongoose.Schema({
   },
   contraseña: { type: String, required: true },
   fotoPerfil: { type: String, default: '' },
-  // Campo opcional: cómo llegó el usuario a la app (referencia de marketing / adquisición)
-  comoLlegaste: { type: String, trim: true, maxlength: 200 },
   preferencias: {
     notificaciones: { type: Boolean, default: true },
     idioma: { type: String, enum: ['es', 'en'], default: 'es' },

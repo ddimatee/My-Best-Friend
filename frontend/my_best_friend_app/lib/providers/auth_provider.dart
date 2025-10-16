@@ -58,7 +58,6 @@ class AuthProvider with ChangeNotifier {
     required String correo,
     required String celular,
     required String password,
-    String? comoLlegaste,
   }) async {
     _setLoading(true);
     _clearError();
@@ -70,7 +69,6 @@ class AuthProvider with ChangeNotifier {
         correo: correo,
         celular: celular,
         password: password,
-        comoLlegaste: comoLlegaste,
       );
 
       if (result['success']) {

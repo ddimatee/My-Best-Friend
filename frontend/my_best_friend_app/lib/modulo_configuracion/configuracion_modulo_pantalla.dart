@@ -4,6 +4,7 @@ import 'pantallas/contrasena_pantalla.dart';
 import 'pantallas/notificaciones_pantalla.dart';
 import 'pantallas/comentarios_soporte_pantalla.dart';
 import 'pantallas/cuenta_sesion_pantalla.dart';
+import 'pantallas/acerca_de_pantalla.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 
@@ -72,6 +73,11 @@ class ConfiguracionModuloPantalla extends StatelessWidget {
                     label: 'Cuenta y Sesión',
                     color: itemColor,
                     onTap: () => _push(context, const CuentaSesionPantalla()),
+                  ),
+                  _ConfigItem(
+                    label: 'Acerca de',
+                    color: itemColor,
+                    onTap: () => _push(context, const AcercaDePantalla()),
                   ),
                 ],
               ),

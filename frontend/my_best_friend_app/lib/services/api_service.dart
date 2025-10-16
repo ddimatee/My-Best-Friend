@@ -125,7 +125,6 @@ class ApiService {
     required String correo,
     required String celular,
     required String password,
-    String? comoLlegaste,
   }) async {
     try {
       final response = await http.post(
@@ -137,7 +136,6 @@ class ApiService {
           'correo': correo,
           'celular': celular,
           'contraseña': password,
-          if (comoLlegaste != null && comoLlegaste.trim().isNotEmpty) 'comoLlegaste': comoLlegaste.trim(),
         }),
       );
 

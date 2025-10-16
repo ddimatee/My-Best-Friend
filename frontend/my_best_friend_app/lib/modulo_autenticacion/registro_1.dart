@@ -260,11 +260,19 @@ class _RegisterScreen1State extends State<RegisterScreen1> {
                 Column(
                   children: [
                     Container(
-                      height: size.height * 0.15,
+                      height: size.height * 0.12,
                       margin: EdgeInsets.only(bottom: size.height * 0.02),
-                      child: Image.asset(
-                        'assets/images/perro.png',
-                        fit: BoxFit.contain,
+                      clipBehavior: Clip.hardEdge,
+                      decoration: BoxDecoration(),
+                      child: ClipRect(
+                        child: Align(
+                          alignment: Alignment.topCenter,
+                          heightFactor: 0.65, // Recorta más para eliminar la franja amarilla
+                          child: Image.asset(
+                            'assets/images/perro.png',
+                            fit: BoxFit.contain,
+                          ),
+                        ),
                       ),
                     ),
                     

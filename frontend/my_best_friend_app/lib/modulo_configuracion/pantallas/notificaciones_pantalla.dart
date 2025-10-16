@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../services/push_service.dart';
 
 class NotificacionesPantalla extends StatefulWidget {
   const NotificacionesPantalla({Key? key}) : super(key: key);
@@ -16,7 +15,6 @@ class _NotificacionesPantallaState extends State<NotificacionesPantalla> {
   bool _recordatoriosEventos = true;
   bool _recordatoriosAlimentacion = true;
   bool _actualizacionesApp = false;
-  bool _notificacionesMarketing = false;
 
   String _frecuenciaRecordatorios = 'Diaria';
   String _horaRecordatorios = '09:00 AM';
@@ -37,7 +35,6 @@ class _NotificacionesPantallaState extends State<NotificacionesPantalla> {
         _recordatoriosEventos = prefs.getBool('notif_eventos') ?? _recordatoriosEventos;
         _recordatoriosAlimentacion = prefs.getBool('notif_alimentacion') ?? _recordatoriosAlimentacion;
         _actualizacionesApp = prefs.getBool('notif_actualizaciones') ?? _actualizacionesApp;
-        _notificacionesMarketing = prefs.getBool('notif_marketing') ?? _notificacionesMarketing;
         _frecuenciaRecordatorios = prefs.getString('notif_frecuencia') ?? _frecuenciaRecordatorios;
         _horaRecordatorios = prefs.getString('notif_hora') ?? _horaRecordatorios;
       });
@@ -196,29 +193,6 @@ class _NotificacionesPantallaState extends State<NotificacionesPantalla> {
                 ),
 
                 const SizedBox(height: 24),
-                const Text(
-                  'Promociones y consejos',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _buildSwitchTile(
-                  'Consejos y promociones',
-                  'Recibir tips de cuidado y novedades',
-                  _notificacionesMarketing,
-                  Icons.campaign_outlined,
-                  (value) async {
-                    setState(() => _notificacionesMarketing = value);
-                    await _persistir();
-                    try { await PushService().suscribirseConsejos(value); } catch (_) {}
-                  },
-                  enabled: _notificacionesGenerales,
-                ),
-                
-                const SizedBox(height: 24),
                 
                 // Configuración de horarios
                 const Text(
@@ -272,15 +246,6 @@ class _NotificacionesPantallaState extends State<NotificacionesPantalla> {
                   _actualizacionesApp,
                   Icons.system_update_outlined,
                   (value) async { setState(() => _actualizacionesApp = value); await _persistir(); },
-                  enabled: _notificacionesGenerales,
-                ),
-                
-                _buildSwitchTile(
-                  'Promociones',
-                  'Ofertas y consejos sobre cuidado de mascotas',
-                  _notificacionesMarketing,
-                  Icons.campaign_outlined,
-                  (value) async { setState(() => _notificacionesMarketing = value); await _persistir(); },
                   enabled: _notificacionesGenerales,
                 ),
                 
@@ -502,7 +467,6 @@ class _NotificacionesPantallaState extends State<NotificacionesPantalla> {
       await prefs.setBool('notif_eventos', _recordatoriosEventos);
       await prefs.setBool('notif_alimentacion', _recordatoriosAlimentacion);
       await prefs.setBool('notif_actualizaciones', _actualizacionesApp);
-      await prefs.setBool('notif_marketing', _notificacionesMarketing);
       await prefs.setString('notif_frecuencia', _frecuenciaRecordatorios);
       await prefs.setString('notif_hora', _horaRecordatorios);
     } catch (_) {

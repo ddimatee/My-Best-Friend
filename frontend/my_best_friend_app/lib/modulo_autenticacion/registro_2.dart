@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-// Registro 2/3: celular, ¿cómo llegaste?, contraseña
+// Registro 2/3: celular y contraseña
 // import removido (formulario mascota) - ya no se navega ahí directamente
 import '../modulo_general/componentes/avisos.dart';
 import '../providers/auth_provider.dart';
@@ -24,7 +24,6 @@ class RegisterScreen2 extends StatefulWidget {
 
 class _RegisterScreen2State extends State<RegisterScreen2> {
   final celularController = TextEditingController();
-  final comoLlegasteController = TextEditingController();
   final contrasenaController = TextEditingController();
   bool _isLoading = false;
 
@@ -65,7 +64,6 @@ class _RegisterScreen2State extends State<RegisterScreen2> {
         correo: widget.correo.trim(),
         celular: celularController.text.trim(),
         password: contrasenaController.text,
-        comoLlegaste: comoLlegasteController.text.trim(),
       );
 
       if (ok) {
@@ -218,56 +216,6 @@ class _RegisterScreen2State extends State<RegisterScreen2> {
                     ),
                     
                     Container(
-                      margin: EdgeInsets.only(bottom: size.height * 0.025),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: EdgeInsets.only(left: 16, bottom: 8),
-                            child: Text(
-                              '¿Cómo llegaste a esta aplicación?',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.black,
-                                fontWeight: FontWeight.w700,
-                                shadows: [
-                                  Shadow(
-                                    blurRadius: 1,
-                                    color: Colors.white30,
-                                    offset: Offset(0, 1),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(30),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
-                                  spreadRadius: 0,
-                                  blurRadius: 10,
-                                  offset: Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: TextField(
-                              controller: comoLlegasteController,
-                              style: const TextStyle(fontSize: 16, color: Colors.black87),
-                              decoration: const InputDecoration(
-                                border: InputBorder.none,
-                                contentPadding: EdgeInsets.symmetric(horizontal: 24, vertical: 18),
-                                prefixIcon: Icon(Icons.explore_outlined, color: Colors.grey),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    
-                    Container(
                       margin: EdgeInsets.only(bottom: size.height * 0.02),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -351,11 +299,19 @@ class _RegisterScreen2State extends State<RegisterScreen2> {
                 Column(
                   children: [
                     Container(
-                      height: size.height * 0.15,
+                      height: size.height * 0.12,
                       margin: EdgeInsets.only(bottom: size.height * 0.02),
-                      child: Image.asset(
-                        'assets/images/perro.png',
-                        fit: BoxFit.contain,
+                      clipBehavior: Clip.hardEdge,
+                      decoration: BoxDecoration(),
+                      child: ClipRect(
+                        child: Align(
+                          alignment: Alignment.topCenter,
+                          heightFactor: 0.65,
+                          child: Image.asset(
+                            'assets/images/perro.png',
+                            fit: BoxFit.contain,
+                          ),
+                        ),
                       ),
                     ),
                     

@@ -303,11 +303,19 @@ class _LoginScreenState extends State<LoginScreen> {
 										children: [
 											// Imagen del perro
 											Container(
-												height: size.height * 0.18,
+												height: size.height * 0.14,
 												margin: EdgeInsets.only(bottom: size.height * 0.02),
-												child: Image.asset(
-													'assets/images/perro.png',
-													fit: BoxFit.contain,
+												clipBehavior: Clip.hardEdge,
+												decoration: BoxDecoration(),
+												child: ClipRect(
+													child: Align(
+														alignment: Alignment.topCenter,
+														heightFactor: 0.65,
+														child: Image.asset(
+															'assets/images/perro.png',
+															fit: BoxFit.contain,
+														),
+													),
 												),
 											),
                     

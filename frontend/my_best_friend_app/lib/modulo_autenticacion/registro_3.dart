@@ -6,7 +6,6 @@ class RegisterScreen3 extends StatefulWidget {
   final String apellido;
   final String correo;
   final String celular;
-  final String comoLlegaste;
   final String contrasena;
 
   const RegisterScreen3({
@@ -15,7 +14,6 @@ class RegisterScreen3 extends StatefulWidget {
     required this.apellido,
     required this.correo,
     required this.celular,
-    required this.comoLlegaste,
     required this.contrasena,
   }) : super(key: key);
 
@@ -204,11 +202,19 @@ class _RegisterScreen3State extends State<RegisterScreen3> {
                 Column(
                   children: [
                     Container(
-                      height: size.height * 0.15,
+                      height: size.height * 0.12,
                       margin: EdgeInsets.only(bottom: size.height * 0.02),
-                      child: Image.asset(
-                        'assets/images/perro.png',
-                        fit: BoxFit.contain,
+                      clipBehavior: Clip.hardEdge,
+                      decoration: BoxDecoration(),
+                      child: ClipRect(
+                        child: Align(
+                          alignment: Alignment.topCenter,
+                          heightFactor: 0.65,
+                          child: Image.asset(
+                            'assets/images/perro.png',
+                            fit: BoxFit.contain,
+                          ),
+                        ),
                       ),
                     ),
                     
