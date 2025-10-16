@@ -21,7 +21,6 @@ import 'modulo_calendario/calendario_modulo_pantalla.dart';
 import 'modulo_eventos/eventos_pantalla.dart';
 import 'modulo_album/album_modulo_pantalla.dart';
 import 'modulo_dueno/dueno_modulo_pantalla.dart';
-import 'utils/test_conexion_screen.dart';
 import 'providers/auth_provider.dart';
 import 'services/push_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -134,7 +133,6 @@ class _MyAppState extends State<MyApp> {
           '/config/notificaciones': (_) => const NotificacionesPantalla(),
           '/config/cuenta': (_) => const CuentaSesionPantalla(),
           '/config/soporte': (_) => const ComentariosSoportePantalla(),
-          '/test-conexion': (_) => const TestConexionScreen(),
         },
       ),
     );
