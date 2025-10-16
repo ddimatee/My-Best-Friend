@@ -1,2 +1,3 @@
 # My-Best-Friend
-Proyecto flutter
+
+My Best Friend es una aplicación móvil desarrollada en Flutter que permite a los dueños de mascotas gestionar de manera integral el cuidado de sus compañeros peludos. La app ofrece funcionalidades como registro de perfiles de mascotas, recordatorios de citas veterinarias y vacunas, seguimiento de alimentación y peso, galería de fotos, historial médico completo y notificaciones personalizadas. Construida con tecnologías modernas como Flutter 3.x, Provider para gestión de estado, MongoDB para almacenamiento local y Firebase para notificaciones push, esta aplicación busca facilitar la vida de los amantes de los animales asegurando que nunca olviden un aspecto importante del cuidado de sus mascotas. El proyecto está abierto a contribuciones y sigue las mejores prácticas de desarrollo móvil multiplataforma.
