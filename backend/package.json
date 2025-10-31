@@ -1,0 +1,23 @@
+{
+  "name": "my-best-friend-backend",
+  "version": "1.0.0",
+  "description": "Scripts de configuración de base de datos MongoDB Atlas para My Best Friend",
+  "main": "setup-database.js",
+  "scripts": {
+    "setup": "node setup-database.js",
+    "test": "echo \"No tests available yet\""
+  },
+  "keywords": [
+    "mongodb",
+    "atlas",
+    "database",
+    "setup",
+    "collections"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "mongodb": "^6.3.0",
+    "dotenv": "^16.3.1"
+  }
+}
