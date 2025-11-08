@@ -1,0 +1,34 @@
+use ("My-Best-Friend");
+
+const usuarioTest = db.usuarios.findOne({});
+const userIdTest = usuarioTest ? usuarioTest._id : ObjectId();
+const mascotaTest = db.mascotas.findOne({});
+const mascotaIdTest = mascotaTest ? mascotaTest._id : ObjectId();
+
+db.recordatorios_calendario.insertOne({
+  userId: userIdTest,
+  mascotaId: mascotaIdTest,
+  mascotaNombre: "Max",
+  mascotaFoto: "https://example.com/mascotas/max.jpg",
+  titulo: "Dar medicamento",
+  descripcion: "Antibiotico cada 12 horas",
+  categoria: "medicamentos",
+  fechaHora: new Date("2025-11-09T08:00:00"),
+  tipoRecordatorio: "repetir",
+  frecuencia: "diario",
+  avisos: [
+    {
+      tipo: "a_la_hora",
+      minutos: 0,
+      descripcion: "A la hora del medicamento"
+    },
+    {
+      tipo: "antes_de",
+      minutos: 15,
+      descripcion: "15 minutos antes"
+    }
+  ],
+  activo: true,
+  fechaCreacion: new Date(),
+  fechaActualizacion: new Date()
+});

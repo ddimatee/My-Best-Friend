@@ -1,0 +1,17 @@
+use ("My-Best-Friend");
+
+const usuarioTest = db.usuarios.findOne({});
+const userIdTest = usuarioTest ? usuarioTest._id : ObjectId();
+const mascotaTest = db.mascotas.findOne({});
+const mascotaIdTest = mascotaTest ? mascotaTest._id : ObjectId();
+
+db.vacunas.insertOne({
+  userId: userIdTest,
+  mascotaId: mascotaIdTest,
+  nombre: "Vacuna Octuple",
+  fechaAplicacion: new Date("2025-06-15"),
+  descripcion: "Proteccion contra parvovirus, moquillo, hepatitis, leptospirosis",
+  ubicacion: "Clinica Veterinaria PetCare",
+  tieneRecordatorio: true,
+  fechaCreacion: new Date()
+});

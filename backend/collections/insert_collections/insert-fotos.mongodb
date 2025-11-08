@@ -1,0 +1,20 @@
+use ("My-Best-Friend");
+
+const usuarioTest = db.usuarios.findOne({});
+const userIdTest = usuarioTest ? usuarioTest._id : ObjectId();
+const mascotaTest = db.mascotas.findOne({});
+const mascotaIdTest = mascotaTest ? mascotaTest._id : ObjectId();
+
+db.fotos_album.insertOne({
+  userId: userIdTest,
+  mascotaId: mascotaIdTest,
+  mes: "Noviembre",
+  ano: "2025",
+  rutasImagenes: [
+    "https://example.com/album/foto1.jpg",
+    "https://example.com/album/foto2.jpg",
+    "https://example.com/album/foto3.jpg"
+  ],
+  descripcion: "Fotos del parque y paseos",
+  fechaSubida: new Date()
+});

@@ -1,0 +1,29 @@
+use ("My-Best-Friend");
+
+const usuarioTest = db.usuarios.findOne({});
+const userIdTest = usuarioTest ? usuarioTest._id : ObjectId();
+const mascotaTest = db.mascotas.findOne({});
+const mascotaIdTest = mascotaTest ? mascotaTest._id : ObjectId();
+
+db.eventos.insertOne({
+  userId: userIdTest,
+  mascotaId: mascotaIdTest,
+  titulo: "Vacuna antirrabica",
+  tipo: "vacunas",
+  fecha: new Date("2025-12-15"),
+  hora: "10:30",
+  descripcion: "Vacuna anual contra la rabia",
+  completado: false,
+  prioridad: "alta",
+  recordatorio: {
+    activo: true,
+    minutosAntes: 60
+  },
+  mascota: {
+    id: mascotaIdTest.toString(),
+    nombre: "Max",
+    foto: "https://example.com/mascotas/max.jpg"
+  },
+  fechaCreacion: new Date(),
+  fechaActualizacion: new Date()
+});

@@ -1,0 +1,15 @@
+use ("My-Best-Friend");
+
+db.usuarios.insertOne({
+  nombre: "Juan",
+  apellido: "Perez",
+  correo: "juan.perez@example.com",
+  password: "$2b$10$abcdefghijklmnopqrstuvwxyz1234567890",
+  celular: "+573001234567",
+  fotoPerfil: "https://example.com/fotos/juan.jpg",
+  direccion: "Calle 123 #45-67, Bogota",
+  rol: "dueno",
+  fcmToken: "fcm_token_example_1234567890",
+  fechaCreacion: new Date(),
+  ultimoAcceso: new Date()
+});

@@ -1,0 +1,15 @@
+use ("My-Best-Friend");
+
+const usuarioTest = db.usuarios.findOne({});
+const userIdTest = usuarioTest ? usuarioTest._id : ObjectId();
+const mascotaTest = db.mascotas.findOne({});
+const mascotaIdTest = mascotaTest ? mascotaTest._id : ObjectId();
+
+db.registros_peso.insertOne({
+  userId: userIdTest,
+  mascotaId: mascotaIdTest,
+  peso: 25.5,
+  fecha: new Date("2025-11-08"),
+  notas: "Peso estable, mascota saludable",
+  fechaCreacion: new Date()
+});

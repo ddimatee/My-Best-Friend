@@ -1,0 +1,21 @@
+use ("My-Best-Friend");
+
+const usuarioTest = db.usuarios.findOne({});
+const userIdTest = usuarioTest ? usuarioTest._id : ObjectId();
+
+db.mascotas.insertOne({
+  userId: userIdTest,
+  nombre: "Max",
+  imagenPath: "https://example.com/mascotas/max.jpg",
+  cumpleanos: new Date("2020-05-15"),
+  situacion: "Ya conozco bien a mi perro",
+  sexo: "Macho",
+  raza: "Labrador Retriever",
+  seguimiento: true,
+  estiloVida: ["Activo", "Jugueton", "Familiar"],
+  coCuidado: false,
+  rol: "Dueño",
+  oculto: false,
+  fechaCreacion: new Date(),
+  fechaActualizacion: new Date()
+});

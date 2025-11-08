@@ -1,23 +1,14 @@
-/**
- * Script de configuración de base de datos MongoDB Atlas
- * Ejecuta todos los scripts de creación de colecciones
- * 
- * Uso:
- * 1. Instalar dependencias: npm install mongodb dotenv
- * 2. Crear archivo .env con MONGODB_URI
- * 3. Ejecutar: node setup-database.js
- */
 
 require('dotenv').config();
 const { MongoClient } = require('mongodb');
 const fs = require('fs');
 const path = require('path');
 
-// URI de conexión desde variable de entorno
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://<usuario>:<password>@<cluster>.mongodb.net/<database>';
-const DATABASE_NAME = process.env.DATABASE_NAME || 'my_best_friend';
 
-// Colecciones en orden de creación
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://ddimatee:1069729798@cluster0.9gantq5.mongodb.net/';
+const DATABASE_NAME = process.env.DATABASE_NAME || 'My_Best_Friend';
+
+
 const collections = [
   'usuarios',
   'mascotas',
@@ -33,9 +24,9 @@ async function createCollections() {
 
   try {
     // Conectar a MongoDB
-    console.log('🔄 Conectando a MongoDB Atlas...\n');
+    console.log('Conectando a MongoDB Atlas...\n');
     await client.connect();
-    console.log('✅ Conexión exitosa!\n');
+    console.log('Conexión exitosa!\n');
 
     const db = client.db(DATABASE_NAME);
 
@@ -45,11 +36,11 @@ async function createCollections() {
 
     // Crear cada colección
     for (const collectionName of collections) {
-      console.log(`📋 Procesando colección: ${collectionName}`);
+      console.log(`Procesando colección: ${collectionName}`);
 
       // Verificar si ya existe
       if (existingNames.includes(collectionName)) {
-        console.log(`   ⚠️  La colección '${collectionName}' ya existe. Omitiendo...\n`);
+        console.log(` La colección '${collectionName}' ya existe. Omitiendo...\n`);
         continue;
       }
 
@@ -57,7 +48,7 @@ async function createCollections() {
       const scriptPath = path.join(__dirname, 'collections', `${collectionName}.js`);
       
       if (!fs.existsSync(scriptPath)) {
-        console.log(`   ❌ No se encontró el archivo: ${scriptPath}\n`);
+        console.log(`No se encontró el archivo: ${scriptPath}\n`);
         continue;
       }
 
@@ -65,31 +56,31 @@ async function createCollections() {
       const definitions = getCollectionDefinition(collectionName);
       
       if (!definitions) {
-        console.log(`   ❌ No se pudo cargar la definición de ${collectionName}\n`);
+        console.log(`No se pudo cargar la definición de ${collectionName}\n`);
         continue;
       }
 
       try {
         // Crear colección con validación
         await db.createCollection(collectionName, definitions.validator);
-        console.log(`   ✅ Colección creada`);
+        console.log(`Colección creada`);
 
         // Crear índices
         if (definitions.indexes && definitions.indexes.length > 0) {
           for (const index of definitions.indexes) {
             await db.collection(collectionName).createIndex(index.key, index.options || {});
           }
-          console.log(`   ✅ ${definitions.indexes.length} índice(s) creado(s)`);
+          console.log(`${definitions.indexes.length} índice(s) creado(s)`);
         }
 
-        console.log(`   ✅ '${collectionName}' configurada exitosamente!\n`);
+        console.log(`'${collectionName}' configurada exitosamente!\n`);
       } catch (err) {
-        console.log(`   ❌ Error al crear '${collectionName}': ${err.message}\n`);
+        console.log(`Error al crear '${collectionName}': ${err.message}\n`);
       }
     }
 
     // Mostrar resumen
-    console.log('\n📊 RESUMEN');
+    console.log('\nRESUMEN');
     console.log('═'.repeat(50));
     const finalCollections = await db.listCollections().toArray();
     console.log(`Total de colecciones en la base de datos: ${finalCollections.length}`);
@@ -99,11 +90,11 @@ async function createCollections() {
     });
 
   } catch (error) {
-    console.error('❌ Error:', error.message);
+    console.error('Error:', error.message);
     process.exit(1);
   } finally {
     await client.close();
-    console.log('\n🔒 Conexión cerrada.');
+    console.log('\nConexión cerrada.');
   }
 }
 
@@ -322,11 +313,11 @@ if (require.main === module) {
   console.log('═'.repeat(50));
   createCollections()
     .then(() => {
-      console.log('\n✅ ¡Configuración completada exitosamente!');
+      console.log('\n¡Configuración completada exitosamente!');
       process.exit(0);
     })
     .catch(err => {
-      console.error('\n❌ Error fatal:', err);
+      console.error('\nError fatal:', err);
       process.exit(1);
     });
 }
