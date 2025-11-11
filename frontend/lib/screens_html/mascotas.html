@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CRUD Mascotas | My Best Friend</title>
+  <link rel="stylesheet" href="base.css" />
+  <link rel="stylesheet" href="mascotas.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Mascotas</h1>
+
+    <section class="box mascotas-form">
+      <h2>Formulario</h2>
+      <div class="row">
+        <div>
+          <label>User ID (dueño)</label>
+          <input id="userId" placeholder="ObjectId del usuario" />
+        </div>
+        <div>
+          <label>Nombre</label>
+          <input id="nombre" placeholder="Max" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Imagen (URL)</label>
+          <input id="imagenPath" placeholder="https://..." />
+        </div>
+        <div>
+          <label>Cumpleaños</label>
+          <input id="cumpleanos" type="date" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Situación</label>
+          <select id="situacion">
+            <option value="">(Seleccione)</option>
+            <option>Acabo de tener un perro</option>
+            <option>Ya conozco bien a mi perro</option>
+          </select>
+        </div>
+        <div>
+          <label>Sexo</label>
+          <select id="sexo">
+            <option value="">(Seleccione)</option>
+            <option>Macho</option>
+            <option>Hembra</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Raza</label>
+          <input id="raza" placeholder="Labrador..." />
+        </div>
+        <div>
+          <label>Rol</label>
+          <select id="rol">
+            <option value="">(Opcional)</option>
+            <option>Dueño</option>
+            <option>Cuidador</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Estilo de vida (coma para separar)</label>
+          <input id="estiloVida" placeholder="Activo, Jugueton, Familiar" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label><input type="checkbox" id="seguimiento" /> Seguimiento</label>
+        </div>
+        <div>
+          <label><input type="checkbox" id="coCuidado" /> Co-cuidado</label>
+        </div>
+        <div>
+          <label><input type="checkbox" id="oculto" /> Oculto</label>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-primary" id="saveBtn">Guardar</button>
+        <button class="btn btn-secondary" id="clearBtn">Limpiar</button>
+        <span id="status" class="muted"></span>
+      </div>
+      <input type="hidden" id="_id" />
+      <div class="muted">API: <span id="apiBase" class="mono">http://localhost:3000</span></div>
+    </section>
+
+    <section class="box">
+      <div style="display:flex; justify-content: space-between; align-items:center; gap:8px;">
+        <h2>Lista de mascotas</h2>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input id="filterUserId" placeholder="Filtrar por userId" style="max-width:260px;" />
+          <button class="btn" id="refreshBtn">Recargar</button>
+        </div>
+      </div>
+      <div class="scroll-area">
+        <table>
+          <thead>
+            <tr>
+              <th>Mascota</th>
+              <th>Dueño</th>
+              <th>Info</th>
+              <th>Estados</th>
+              <th>Creación</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script src="mascotas.js"></script>
+</body>
+</html>

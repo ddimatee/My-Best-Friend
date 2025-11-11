@@ -31,7 +31,7 @@ final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Inicialización protegida para evitar que la app no arranque silenciosamente
+
   await _inicializarServiciosSeguros();
   runApp(const MyApp());
 }

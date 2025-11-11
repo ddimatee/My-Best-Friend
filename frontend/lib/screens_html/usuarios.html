@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CRUD Usuarios | My Best Friend</title>
+  <link rel="stylesheet" href="base.css" />
+  <link rel="stylesheet" href="usuarios.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Usuarios</h1>
+
+    <section class="box usuarios-form">
+      <h2>Formulario</h2>
+      <div class="row">
+        <div>
+          <label for="nombre">Nombre</label>
+          <input id="nombre" placeholder="Juan" />
+        </div>
+        <div>
+          <label for="apellido">Apellido</label>
+          <input id="apellido" placeholder="Pérez" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="correo">Correo</label>
+          <input id="correo" placeholder="correo@ejemplo.com" />
+        </div>
+        <div>
+          <label for="celular">Celular</label>
+          <input id="celular" placeholder="+57..." />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="password">Password</label>
+          <input id="password" type="password" placeholder="********" />
+        </div>
+        <div>
+          <label for="rol">Rol</label>
+          <select id="rol">
+            <option value="dueno">Dueño</option>
+            <option value="cuidador">Cuidador</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="fotoPerfil">Foto perfil (URL)</label>
+          <input id="fotoPerfil" placeholder="https://..." />
+        </div>
+        <div>
+          <label for="direccion">Dirección</label>
+          <input id="direccion" placeholder="Calle 123..." />
+        </div>
+      </div>
+      <div>
+        <label for="fcmToken">FCM Token</label>
+        <input id="fcmToken" placeholder="token..." />
+      </div>
+      <div class="actions">
+        <button class="btn btn-primary" id="saveBtn">Guardar</button>
+        <button class="btn btn-secondary" id="clearBtn">Limpiar</button>
+        <span id="status" class="muted"></span>
+      </div>
+      <input type="hidden" id="_id" />
+      <div class="muted">API: <span id="apiBase" class="mono">http://localhost:3000</span></div>
+    </section>
+
+    <section class="box">
+      <div style="display:flex; justify-content: space-between; align-items:center;">
+        <h2>Lista de usuarios</h2>
+        <button class="btn" id="refreshBtn">Recargar</button>
+      </div>
+      <div class="scroll-area">
+        <table>
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Correo</th>
+              <th>Celular</th>
+              <th>Rol</th>
+              <th>Creación</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script src="usuarios.js"></script>
+</body>
+</html>

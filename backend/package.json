@@ -5,6 +5,8 @@
   "main": "setup-database.js",
   "scripts": {
     "setup": "node setup-database.js",
+    "dev": "node server.js",
+    "start": "node server.js",
     "test": "echo \"No tests available yet\""
   },
   "keywords": [
@@ -18,6 +20,8 @@
   "license": "ISC",
   "dependencies": {
     "mongodb": "^6.3.0",
-    "dotenv": "^16.3.1"
+    "dotenv": "^16.3.1",
+    "express": "^4.19.2",
+    "cors": "^2.8.5"
   }
 }
