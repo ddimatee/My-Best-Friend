@@ -614,13 +614,13 @@ class _CalendarioPantallaState extends State<CalendarioPantalla> {
       color = _greenColor;
     } else if (event is Map<String, dynamic>) {
       // Puede ser un evento del backend o un recordatorio de vacuna
-      titulo = event['titulo'] ?? 'Recordatorio';
+      titulo = (event['titulo'] ?? event['nombre'] ?? event['descripcion'] ?? 'Recordatorio').toString();
       
       // Verificar si es un recordatorio de vacuna (tiene 'fechaHora')
       if (event.containsKey('fechaHora')) {
         final fechaUTC = DateTime.parse(event['fechaHora']);
         final fechaLocal = fechaUTC.toLocal();
-        final mascotaNombre = event['mascota']?['nombre'] ?? 'mascota';
+        final mascotaNombre = _obtenerNombreMascotaDesdeMapa(event);
         subtitulo = 'Vacuna • ${DateFormat('HH:mm').format(fechaLocal)} • $mascotaNombre';
         icono = Icons.vaccines;
         color = Colors.purple;
@@ -628,7 +628,7 @@ class _CalendarioPantallaState extends State<CalendarioPantalla> {
         // Es un evento del backend
         final tipo = (event['tipo'] ?? event['categoria'] ?? 'evento').toString();
         final hora = event['hora'] ?? '';
-        final mascotaNombre = event['mascota']?['nombre'] ?? '';
+        final mascotaNombre = _obtenerNombreMascotaDesdeMapa(event);
         subtitulo = '$tipo • $hora${mascotaNombre.isNotEmpty ? ' • $mascotaNombre' : ''}';
         icono = _getIconoCategoria(tipo);
         color = _greenColor;
@@ -681,6 +681,37 @@ class _CalendarioPantallaState extends State<CalendarioPantalla> {
       default:
         return Icons.event;
     }
+  }
+
+  String _obtenerNombreMascotaDesdeMapa(Map<String, dynamic> event) {
+    final mascota = event['mascota'];
+    if (mascota is Map) {
+      final nombre = mascota['nombre']?.toString() ?? '';
+      if (nombre.isNotEmpty) return nombre;
+      final idMap = (mascota['_id'] ?? mascota['id'])?.toString();
+      if (idMap != null && idMap.isNotEmpty) {
+        try {
+          final prov = Provider.of<MascotasProvider>(context, listen: false);
+          final m = prov.buscarPorId(idMap);
+          if (m != null && (m['nombre']?.toString().isNotEmpty ?? false)) {
+            return m['nombre'].toString();
+          }
+        } catch (_) {}
+      }
+      return '';
+    }
+
+    final id = (event['mascotaId'] ?? mascota)?.toString();
+    if (id != null && id.isNotEmpty) {
+      try {
+        final prov = Provider.of<MascotasProvider>(context, listen: false);
+        final m = prov.buscarPorId(id);
+        if (m != null && (m['nombre']?.toString().isNotEmpty ?? false)) {
+          return m['nombre'].toString();
+        }
+      } catch (_) {}
+    }
+    return '';
   }
 
   @override

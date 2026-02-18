@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'servicios/calendario_service.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/mascotas_provider.dart';
 import 'modelos/evento_calendario.dart';
+import '../services/api_service.dart';
 
 class ConfirmacionFinalCalendario extends StatefulWidget {
   final String descripcion;
@@ -52,7 +54,12 @@ class _ConfirmacionFinalCalendarioState extends State<ConfirmacionFinalCalendari
   final Color _greenColor = const Color(0xFF4CAF50); // Verde que combina con los recordatorios
   final Color _grayColor = const Color(0xFFE5E5E5);
   final CalendarioService _calendarioService = CalendarioService();
+  final ApiService _apiService = ApiService();
   bool _guardando = false;
+
+  bool _esObjectIdValido(String id) {
+    return RegExp(r'^[a-fA-F0-9]{24}$').hasMatch(id);
+  }
 
   Future<void> _guardarEvento() async {
     setState(() {
@@ -62,6 +69,18 @@ class _ConfirmacionFinalCalendarioState extends State<ConfirmacionFinalCalendari
     try {
       final auth = context.read<AuthProvider>();
       final userId = auth.user?['_id']?.toString();
+
+      final mascotasProv = context.read<MascotasProvider>();
+      Map<String, dynamic>? mascotaSeleccionada = widget.mascota;
+      if (mascotaSeleccionada == null && mascotasProv.mascotas.isNotEmpty) {
+        mascotaSeleccionada = mascotasProv.mascotas.first;
+      }
+
+      final mascotaIdSeleccionada =
+          mascotaSeleccionada?['_id']?.toString() ?? mascotaSeleccionada?['id']?.toString();
+      if (mascotaIdSeleccionada == null || mascotaIdSeleccionada.isEmpty) {
+        throw Exception('Debes seleccionar una mascota para guardar el recordatorio');
+      }
       
       print('🐕 Widget mascota: ${widget.mascota}');
       print('🐕 Mascota ID intentando guardar: ${widget.mascota?['_id']} o ${widget.mascota?['id']}');
@@ -93,9 +112,9 @@ class _ConfirmacionFinalCalendarioState extends State<ConfirmacionFinalCalendari
         )] : [],
         activo: true,
         userId: userId,
-        mascotaId: widget.mascota?['_id']?.toString() ?? widget.mascota?['id']?.toString(),
-        mascotaNombre: widget.mascota?['nombre']?.toString(),
-        mascotaFoto: widget.mascota?['foto']?.toString(),
+        mascotaId: mascotaIdSeleccionada,
+        mascotaNombre: mascotaSeleccionada?['nombre']?.toString(),
+        mascotaFoto: mascotaSeleccionada?['foto']?.toString(),
       );
 
       print('💾 Guardando evento para mascota: ${evento.mascotaNombre}');
@@ -107,6 +126,25 @@ class _ConfirmacionFinalCalendarioState extends State<ConfirmacionFinalCalendari
         final resultado = await CalendarioService.actualizarEvento(evento);
         if (!resultado) {
           throw Exception('No se pudo actualizar el recordatorio');
+        }
+
+        // Sincronizar en backend cuando el id corresponde a Mongo ObjectId
+        if (_esObjectIdValido(eventoId)) {
+          await _apiService.actualizarRecordatorioBackend(
+            id: eventoId,
+            cambios: {
+              'titulo': evento.titulo,
+              'descripcion': evento.descripcion,
+              'categoria': evento.categoria,
+              'fechaHora': evento.fechaHora.toIso8601String(),
+              'tipoRecordatorio': evento.tipoRecordatorio,
+              'frecuencia': evento.frecuencia,
+              'avisos': evento.avisos.map((a) => a.toJson()).toList(),
+              'activo': evento.activo,
+              if (evento.mascotaId != null) 'mascotaId': evento.mascotaId,
+              if (evento.mascotaNombre != null) 'mascotaNombre': evento.mascotaNombre,
+            },
+          );
         }
       } else {
         // Crear nuevo recordatorio
@@ -131,14 +169,12 @@ class _ConfirmacionFinalCalendarioState extends State<ConfirmacionFinalCalendari
         // Navegar de vuelta con un delay mínimo
         Future.delayed(const Duration(seconds: 2), () {
           if (mounted) {
-            // Simplemente hacer pop múltiple para volver
-            Navigator.of(context)
-              ..pop() // Salir de confirmación
-              ..pop() // Salir de avanzada
-              ..pop() // Salir de configuración
-              ..pop() // Salir de opciones
-              ..pop() // Salir de categoría
-              ..pop(); // Salir de descripción
+            // Hacer pop múltiple devolviendo `true` para refrescar pantallas previas
+            for (int i = 0; i < 6; i++) {
+              if (Navigator.of(context).canPop()) {
+                Navigator.of(context).pop(true);
+              }
+            }
           }
         });
       }

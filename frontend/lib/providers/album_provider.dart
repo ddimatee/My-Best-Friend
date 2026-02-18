@@ -16,21 +16,45 @@ class AlbumProvider with ChangeNotifier {
 
   List<Map<String, dynamic>> fotos(String mascotaId) => List.unmodifiable(_fotosPorMascota[mascotaId] ?? const []);
 
+  Map<String, dynamic> _normalizarFoto(Map<String, dynamic> foto) {
+    final id = (foto['_id'] ?? foto['id'])?.toString();
+    final mascota = foto['mascota'];
+    final mascotaId = (foto['mascotaId'] ??
+            (mascota is Map ? mascota['_id'] ?? mascota['id'] : mascota))
+        ?.toString();
+
+    final out = Map<String, dynamic>.from(foto);
+    if (id != null) {
+      out['_id'] = id;
+      out['id'] = id;
+    }
+    if (mascotaId != null) out['mascotaId'] = mascotaId;
+    return out;
+  }
+
   Future<void> cargar({String? mascotaId, bool forzar = false}) async {
     if (_cargando) return;
     _setCargando(true); _setError(null);
     final resp = await _api.obtenerFotos(mascotaId: mascotaId, limite: 100); // carga inicial
     if (resp['success']) {
-      final lista = (resp['data']['fotos'] ?? resp['data']) as List; // estadística o listado simple
-      final cast = lista.cast<Map<String, dynamic>>();
+      final data = resp['data'];
+      final List<dynamic> lista = (data is List)
+          ? data
+          : ((data is Map && data['fotos'] is List) ? data['fotos'] as List : const []);
+      final cast = lista
+          .whereType<Map>()
+          .map((f) => _normalizarFoto(Map<String, dynamic>.from(f)))
+          .toList();
       if (mascotaId != null) {
         _fotosPorMascota[mascotaId] = cast;
       } else {
         // distribuir por mascota
         _fotosPorMascota.clear();
         for (final f in cast) {
-          final mid = (f['mascota'] is Map) ? f['mascota']['_id'] : f['mascota'];
-          if (mid != null) {
+          final mid = (f['mascotaId'] ??
+                  ((f['mascota'] is Map) ? f['mascota']['_id'] ?? f['mascota']['id'] : f['mascota']))
+              ?.toString();
+          if (mid != null && mid.isNotEmpty) {
             _fotosPorMascota.putIfAbsent(mid, () => []).add(f);
           }
         }
@@ -64,11 +88,13 @@ class AlbumProvider with ChangeNotifier {
     if (resp['success']) {
       final foto = resp['data']['foto'] ?? resp['data'];
       if (foto is Map<String, dynamic>) {
-        _fotosPorMascota.putIfAbsent(mascotaId, () => []).insert(0, foto);
+        final normalizada = _normalizarFoto(foto);
+        final mid = (normalizada['mascotaId'] ?? mascotaId).toString();
+        _fotosPorMascota.putIfAbsent(mid, () => []).insert(0, normalizada);
         // Si es portada, desmarcar otras localmente
-        if (foto['esPortada'] == true) {
-          for (final f in _fotosPorMascota[mascotaId]!) {
-            if (f['_id'] != foto['_id']) f['esPortada'] = false;
+        if (normalizada['esPortada'] == true) {
+          for (final f in _fotosPorMascota[mid]!) {
+            if (f['_id'] != normalizada['_id']) f['esPortada'] = false;
           }
         }
         notifyListeners();
@@ -92,7 +118,10 @@ class AlbumProvider with ChangeNotifier {
       esPortada: cambios['esPortada'],
     );
     if (resp['success']) {
-      _replace(fotoId, resp['data']['foto'] ?? resp['data']);
+      final foto = resp['data']['foto'] ?? resp['data'];
+      if (foto is Map<String, dynamic>) {
+        _replace(fotoId, _normalizarFoto(foto));
+      }
       _setSincronizando(false);
       return true;
     } else {
@@ -107,7 +136,7 @@ class AlbumProvider with ChangeNotifier {
     final resp = await _api.eliminarFoto(fotoId);
     if (resp['success']) {
       for (final lista in _fotosPorMascota.values) {
-        lista.removeWhere((f) => f['_id'] == fotoId);
+        lista.removeWhere((f) => (f['_id']?.toString() == fotoId || f['id']?.toString() == fotoId));
       }
       notifyListeners();
       _setSincronizando(false);
@@ -121,9 +150,13 @@ class AlbumProvider with ChangeNotifier {
 
   void _replace(String id, Map<String, dynamic> nueva) {
     for (final lista in _fotosPorMascota.values) {
-      final idx = lista.indexWhere((f) => f['_id'] == id);
+      final idx = lista.indexWhere((f) => (f['_id']?.toString() == id || f['id']?.toString() == id));
       if (idx != -1) {
-        final mascotaId = (lista[idx]['mascota'] is Map) ? lista[idx]['mascota']['_id'] : lista[idx]['mascota'];
+        final mascotaId = (nueva['mascotaId'] ??
+                ((lista[idx]['mascota'] is Map)
+                    ? (lista[idx]['mascota']['_id'] ?? lista[idx]['mascota']['id'])
+                    : lista[idx]['mascota']))
+            ?.toString();
         lista[idx] = nueva;
         if (nueva['esPortada'] == true && mascotaId != null) {
           // desmarcar otras

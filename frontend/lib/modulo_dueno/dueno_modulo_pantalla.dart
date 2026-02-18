@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:io';
+import 'dart:io' show File;
 import 'package:flutter/foundation.dart';
 import 'servicios/dueno_service.dart'; // Queda para potencial persistencia futura
 import 'modelos/dueno_model.dart';
@@ -190,6 +190,8 @@ class _DuenoModuloPantallaState extends State<DuenoModuloPantalla> {
           );
         },
       );
+    } else if (kIsWeb) {
+      return const Icon(Icons.person, size: 50, color: Colors.grey);
     } else {
       return Image.file(
         File(rutaImagen),

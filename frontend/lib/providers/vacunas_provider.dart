@@ -15,6 +15,24 @@ class VacunasProvider with ChangeNotifier {
   String? get error => _error;
 
   List<Map<String, dynamic>> vacunasDe(String mascotaId) => List.unmodifiable(_vacunasPorMascota[mascotaId] ?? const []);
+
+  Map<String, dynamic> _normalizarVacuna(Map<String, dynamic> vacuna) {
+    final id = (vacuna['_id'] ?? vacuna['id'])?.toString();
+    final mascota = vacuna['mascota'];
+    final mascotaId = (vacuna['mascotaId'] ??
+            (mascota is Map ? mascota['_id'] ?? mascota['id'] : mascota))
+        ?.toString();
+
+    final out = Map<String, dynamic>.from(vacuna);
+    if (id != null) {
+      out['_id'] = id;
+      out['id'] = id;
+    }
+    if (mascotaId != null) {
+      out['mascotaId'] = mascotaId;
+    }
+    return out;
+  }
   
   // Obtener todas las vacunas de todas las mascotas
   List<Map<String, dynamic>> todasLasVacunas() {
@@ -31,17 +49,24 @@ class VacunasProvider with ChangeNotifier {
     _setError(null);
     final resp = await _api.obtenerVacunas(mascotaId: mascotaId);
     if (resp['success']) {
-      final lista = (resp['data'] as List).cast<Map<String, dynamic>>();
+      final lista = ((resp['data'] as List?) ?? const [])
+          .whereType<Map>()
+          .map((v) => _normalizarVacuna(Map<String, dynamic>.from(v)))
+          .toList();
       if (mascotaId != null) {
         _vacunasPorMascota[mascotaId] = lista;
       } else {
-        // Si no se filtra por mascota, distribuir por _id.mascota
+        // Si no se filtra por mascota, distribuir por mascotaId
         _vacunasPorMascota.clear();
         for (final v in lista) {
-          final mid = (v['mascota'] is Map) ? v['mascota']['_id'] : v['mascota'];
-            if (mid != null) {
-              _vacunasPorMascota.putIfAbsent(mid, () => []).add(v);
-            }
+          final mid = (v['mascotaId'] ??
+                  ((v['mascota'] is Map)
+                      ? (v['mascota']['_id'] ?? v['mascota']['id'])
+                      : v['mascota']))
+              ?.toString();
+          if (mid != null && mid.isNotEmpty) {
+            _vacunasPorMascota.putIfAbsent(mid, () => []).add(v);
+          }
         }
       }
       notifyListeners();
@@ -75,7 +100,9 @@ class VacunasProvider with ChangeNotifier {
     if (resp['success']) {
       final vacuna = resp['data']['vacuna'] ?? resp['data'];
       if (vacuna is Map<String, dynamic>) {
-        _vacunasPorMascota.putIfAbsent(mascotaId, () => []).add(vacuna);
+        final normalizada = _normalizarVacuna(vacuna);
+        final mid = (normalizada['mascotaId'] ?? mascotaId).toString();
+        _vacunasPorMascota.putIfAbsent(mid, () => []).add(normalizada);
         notifyListeners();
       }
       _setSincronizando(false);
@@ -91,6 +118,7 @@ class VacunasProvider with ChangeNotifier {
     _setSincronizando(true);
     final resp = await _api.actualizarVacuna(
       vacunaId: vacunaId,
+      mascotaId: cambios['mascotaId'],
       nombre: cambios['nombre'],
       fechaAplicacion: cambios['fechaAplicacion'],
       fechaVencimiento: cambios['fechaVencimiento'],
@@ -100,7 +128,10 @@ class VacunasProvider with ChangeNotifier {
       horaRecordatorio: cambios['horaRecordatorio'] as TimeOfDay?,
     );
     if (resp['success']) {
-      _replace(vacunaId, resp['data']['vacuna'] ?? resp['data']);
+      final vacuna = resp['data']['vacuna'] ?? resp['data'];
+      if (vacuna is Map<String, dynamic>) {
+        _replace(vacunaId, _normalizarVacuna(vacuna));
+      }
       _setSincronizando(false);
       return true;
     } else {
@@ -115,7 +146,7 @@ class VacunasProvider with ChangeNotifier {
     final resp = await _api.eliminarVacuna(vacunaId);
     if (resp['success']) {
       for (final lista in _vacunasPorMascota.values) {
-        lista.removeWhere((v) => v['_id'] == vacunaId);
+        lista.removeWhere((v) => (v['_id']?.toString() == vacunaId || v['id']?.toString() == vacunaId));
       }
       notifyListeners();
       _setSincronizando(false);
@@ -128,14 +159,30 @@ class VacunasProvider with ChangeNotifier {
   }
 
   void _replace(String id, Map<String, dynamic> vacuna) {
-    for (final lista in _vacunasPorMascota.values) {
-      final idx = lista.indexWhere((v) => v['_id'] == id);
+    String? oldMascotaId;
+    for (final entry in _vacunasPorMascota.entries) {
+      final idx = entry.value.indexWhere((v) =>
+          v['_id']?.toString() == id ||
+          v['id']?.toString() == id);
       if (idx != -1) {
-        lista[idx] = vacuna;
-        notifyListeners();
-        return;
+        oldMascotaId = entry.key;
+        entry.value.removeAt(idx);
+        break;
       }
     }
+
+    final newMascotaId = (vacuna['mascotaId'] ??
+            ((vacuna['mascota'] is Map)
+                ? (vacuna['mascota']['_id'] ?? vacuna['mascota']['id'])
+                : vacuna['mascota']))
+        ?.toString();
+
+    if (newMascotaId != null && newMascotaId.isNotEmpty) {
+      _vacunasPorMascota.putIfAbsent(newMascotaId, () => []).add(vacuna);
+    } else if (oldMascotaId != null) {
+      _vacunasPorMascota.putIfAbsent(oldMascotaId, () => []).add(vacuna);
+    }
+    notifyListeners();
   }
 
   void clear() {

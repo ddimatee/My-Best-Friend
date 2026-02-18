@@ -481,20 +481,21 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
   }
 
   void _openFeature(String title, Map<String, dynamic> mascota) {
+    final mascotaId = (mascota['_id'] ?? mascota['id'])?.toString();
     if (title == 'Peso') {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => const ListaPesosPantalla()),
+        MaterialPageRoute(builder: (_) => ListaPesosPantalla(mascotaId: mascotaId)),
       );
     } else if (title == 'Vacunas') { // NUEVO caso
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => const VacunasPantalla()),
+        MaterialPageRoute(builder: (_) => VacunasPantalla(mascotaId: mascotaId, bloquearMascota: true)),
       );
     } else if (title == 'Eventos') { // NUEVO caso
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => const EventosPantalla()),
+        MaterialPageRoute(builder: (_) => EventosPantalla(mascotaId: mascotaId, bloquearMascota: true)),
       );
   } else if (title == 'Recordatorios') { // Caso para módulo de recordatorios/calendario
       Navigator.push(
@@ -504,7 +505,7 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
     } else if (title == 'Albúm') { // NUEVO caso álbum
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => const AlbumModuloPantalla()),
+        MaterialPageRoute(builder: (_) => AlbumModuloPantalla(mascotaId: mascotaId, bloquearMascota: true)),
       );
     } else if (title == 'Dueño') { // NUEVO caso dueño
       Navigator.push(

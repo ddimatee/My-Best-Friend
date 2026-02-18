@@ -582,6 +582,7 @@ class ApiService {
 
   Future<Map<String, dynamic>> actualizarVacuna({
   required String vacunaId,
+  String? mascotaId,
   String? nombre,
   DateTime? fechaAplicacion,
   DateTime? fechaVencimiento,
@@ -597,6 +598,10 @@ class ApiService {
   }) async {
     try {
       final body = <String, dynamic>{};
+      if (mascotaId != null) {
+        body['mascota'] = mascotaId;
+        body['mascotaId'] = mascotaId;
+      }
       if (nombre != null) body['nombre'] = nombre;
       if (fechaAplicacion != null) body['fechaAplicacion'] = fechaAplicacion.toIso8601String();
       if (fechaVencimiento != null) body['fechaVencimiento'] = fechaVencimiento.toIso8601String();
@@ -722,7 +727,7 @@ class ApiService {
       final body = {
         'mascota': mascotaId,
         'peso': peso,
-        if (fecha != null) 'fecha': fecha.toIso8601String(),
+        if (fecha != null) 'fecha': _formatearFechaLocal(fecha.toLocal()),
         if (observaciones != null) 'observaciones': observaciones,
         'tipoRegistro': tipoRegistro,
       };
@@ -747,7 +752,7 @@ class ApiService {
     try {
       final body = <String, dynamic>{};
       if (peso != null) body['peso'] = peso;
-      if (fecha != null) body['fecha'] = fecha.toIso8601String();
+      if (fecha != null) body['fecha'] = _formatearFechaLocal(fecha.toLocal());
       if (observaciones != null) body['observaciones'] = observaciones;
       if (tipoRegistro != null) body['tipoRegistro'] = tipoRegistro;
       final response = await http.put(
@@ -885,6 +890,16 @@ class ApiService {
       final body = json.decode(response.body);
       
       if (response.statusCode >= 200 && response.statusCode < 300) {
+        if (body is Map<String, dynamic> && (body.containsKey('success') || body.containsKey('data'))) {
+          final dynamic nestedSuccess = body['success'];
+          return {
+            'success': nestedSuccess is bool ? nestedSuccess : true,
+            'data': body.containsKey('data') ? body['data'] : body,
+            if (body['message'] != null) 'message': body['message'],
+            if (body['error'] != null) 'error': body['error'],
+            'statusCode': response.statusCode,
+          };
+        }
         return {
           'success': true,
           'data': body,
@@ -892,7 +907,12 @@ class ApiService {
         };
       } else {
         // Extraer mensaje del backend (puede venir en 'message' o 'error')
-        String mensaje = (body['message'] ?? body['error'] ?? 'Error del servidor').toString();
+        String mensaje;
+        if (body is Map) {
+          mensaje = (body['message'] ?? body['error'] ?? 'Error del servidor').toString();
+        } else {
+          mensaje = 'Error del servidor';
+        }
 
         // Normalizar mensajes específicos de login
         if (response.statusCode == 404 && mensaje.toLowerCase().contains('usuario no encontrado')) {
@@ -994,6 +1014,9 @@ class ApiService {
     required String tipoRecordatorio,
     required String frecuencia,
     required List<Map<String,dynamic>> avisos,
+    required String mascotaId,
+    String? mascotaNombre,
+    String? userId,
     bool activo = true,
   }) async {
     try {
@@ -1008,6 +1031,9 @@ class ApiService {
           'tipoRecordatorio': tipoRecordatorio,
           'frecuencia': frecuencia,
           'avisos': avisos,
+          'mascotaId': mascotaId,
+          if (mascotaNombre != null) 'mascotaNombre': mascotaNombre,
+          if (userId != null) 'userId': userId,
           'activo': activo,
         })
       );
@@ -1017,8 +1043,9 @@ class ApiService {
     }
   }
 
-  Future<Map<String,dynamic>> listarRecordatoriosBackend({DateTime? desde, DateTime? hasta, bool? activo}) async {
+  Future<Map<String,dynamic>> listarRecordatoriosBackend({String? mascotaId, DateTime? desde, DateTime? hasta, bool? activo}) async {
     final params = <String,String>{};
+    if (mascotaId != null && mascotaId.isNotEmpty) params['mascotaId'] = mascotaId;
     if (desde != null) params['desde'] = desde.toIso8601String();
     if (hasta != null) params['hasta'] = hasta.toIso8601String();
     if (activo != null) params['activo'] = activo.toString();

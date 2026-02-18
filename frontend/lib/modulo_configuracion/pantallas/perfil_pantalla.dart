@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
+import 'dart:io' show File;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../../providers/auth_provider.dart';
 import '../../../services/api_service.dart';
 
@@ -252,7 +253,7 @@ class _PerfilPantallaState extends State<PerfilPantalla> {
     final auth = context.watch<AuthProvider>();
     final tieneFotoRemota = auth.user?['fotoPerfil'] != null && (auth.user!['fotoPerfil'] as String).isNotEmpty;
     ImageProvider? foto;
-    if (_nuevaFotoFile != null) {
+    if (_nuevaFotoFile != null && !kIsWeb) {
       foto = Image.file(_nuevaFotoFile!, fit: BoxFit.cover).image;
     } else if (tieneFotoRemota) {
       foto = NetworkImage(_resolveFotoUrl(auth.user!['fotoPerfil']));
@@ -309,7 +310,7 @@ class _PerfilPantallaState extends State<PerfilPantalla> {
       final picked = await _picker.pickImage(source: ImageSource.gallery, maxWidth: 800, imageQuality: 85);
       if (picked != null) {
         setState(() {
-          _nuevaFotoFile = File(picked.path);
+          _nuevaFotoFile = kIsWeb ? null : File(picked.path);
         });
       }
     } catch (e) {

@@ -8,8 +8,9 @@ import '../modulo_peso/widgets/calendario_selector.dart';
 
 class FormularioVacuna extends StatefulWidget {
   final Map<String, dynamic>? vacuna; // datos existentes para editar
+  final String? mascotaIdFija;
 
-  const FormularioVacuna({Key? key, this.vacuna}) : super(key: key);
+  const FormularioVacuna({Key? key, this.vacuna, this.mascotaIdFija}) : super(key: key);
 
   @override
   State<FormularioVacuna> createState() => _FormularioVacunaState();
@@ -37,7 +38,7 @@ class _FormularioVacunaState extends State<FormularioVacuna> {
       _descripcionController.text = (v['observaciones'] ?? v['descripcion'] ?? '').toString();
       _ubicacionController.text = (v['ubicacion'] ?? '').toString();
       // Obtener id de mascota de la vacuna (puede venir como string o como objeto anidado)
-      final mascotaData = v['mascota'];
+      final mascotaData = v['mascota'] ?? v['mascotaId'];
       if (mascotaData is Map) {
         _mascotaSeleccionadaId = (mascotaData['_id'] ?? mascotaData['id'])?.toString();
       } else if (mascotaData != null) {
@@ -58,6 +59,9 @@ class _FormularioVacunaState extends State<FormularioVacuna> {
           _horaRecordatorio = TimeOfDay(hour: fechaRecordatorioLocal.hour, minute: fechaRecordatorioLocal.minute);
         }
       }
+    }
+    if (widget.mascotaIdFija != null && widget.mascotaIdFija!.isNotEmpty) {
+      _mascotaSeleccionadaId = widget.mascotaIdFija;
     }
     // Cargar mascotas y seleccionar una por defecto si es creación
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -170,6 +174,7 @@ class _FormularioVacunaState extends State<FormularioVacuna> {
           mensajeError = 'ID de vacuna no válido';
         } else {
           final ok = await vacProv.actualizarVacuna(id.toString(), {
+            'mascotaId': mascotaId,
             'nombre': _nombreController.text.trim(),
             'fechaAplicacion': _fechaSeleccionada,
             'observaciones': _descripcionController.text.trim().isEmpty ? null : _descripcionController.text.trim(),
@@ -377,7 +382,7 @@ class _FormularioVacunaState extends State<FormularioVacuna> {
               
               // Campo: ¿Cuál es la vacuna?
               // Selector de Mascota (solo creación)
-              _buildSelectorMascota(context, esEdicion),
+              _buildSelectorMascota(context),
 
               _buildTextField(
                 controller: _nombreController,
@@ -532,10 +537,20 @@ class _FormularioVacunaState extends State<FormularioVacuna> {
     );
   }
 
-  Widget _buildSelectorMascota(BuildContext context, bool esEdicion) {
+  Widget _buildSelectorMascota(BuildContext context) {
     final mascotasProv = context.watch<MascotasProvider>();
     final mascotas = mascotasProv.mascotas;
     final cargando = mascotasProv.cargando && mascotas.isEmpty;
+    final Map<String, Map<String, dynamic>> mascotasUnicas = {};
+    for (final m in mascotas) {
+      final id = (m['_id'] ?? m['id'])?.toString();
+      if (id == null || id.isEmpty) continue;
+      mascotasUnicas.putIfAbsent(id, () => m);
+    }
+    final mascotaSeleccionadaValida = (_mascotaSeleccionadaId != null &&
+            mascotasUnicas.containsKey(_mascotaSeleccionadaId))
+        ? _mascotaSeleccionadaId
+        : null;
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
@@ -562,7 +577,7 @@ class _FormularioVacunaState extends State<FormularioVacuna> {
               ),
               child: const Center(child: CircularProgressIndicator()),
             )
-          else if (mascotas.isEmpty)
+          else if (mascotasUnicas.isEmpty)
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -576,8 +591,9 @@ class _FormularioVacunaState extends State<FormularioVacuna> {
             )
           else
             DropdownButtonFormField<String>(
-              value: _mascotaSeleccionadaId,
-              onChanged: esEdicion ? null : (val) {
+              value: mascotaSeleccionadaValida,
+              isExpanded: true,
+              onChanged: widget.mascotaIdFija != null ? null : (val) {
                 setState(() { _mascotaSeleccionadaId = val; });
               },
               validator: (val) => val == null ? 'Selecciona una mascota' : null,
@@ -590,12 +606,16 @@ class _FormularioVacunaState extends State<FormularioVacuna> {
                 ),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
-              items: mascotas.map((m) {
-                final id = (m['_id'] ?? m['id']).toString();
-                final nombre = (m['nombre'] ?? 'Mascota').toString();
+              items: mascotasUnicas.entries.map((entry) {
+                final id = entry.key;
+                final nombre = (entry.value['nombre'] ?? 'Mascota').toString();
                 return DropdownMenuItem<String>(
                   value: id,
-                  child: Text(nombre, style: const TextStyle(color: Colors.black)),
+                  child: Text(
+                    nombre,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Colors.black),
+                  ),
                 );
               }).toList(),
             ),

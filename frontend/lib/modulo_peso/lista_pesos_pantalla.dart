@@ -17,7 +17,7 @@ class ListaPesosPantalla extends StatefulWidget {
 class _ListaPesosPantallaState extends State<ListaPesosPantalla> {
   List<Map<String, dynamic>> _registrosPeso = [];
   List<Map<String, dynamic>> _registrosFiltrados = [];
-  String _filtroSeleccionado = 'Hoy';
+  String _filtroSeleccionado = '1 año';
   String? _mascotaSeleccionada;
   bool _cargandoInicial = true;
   late final ScrollController _scrollController;
@@ -41,6 +41,25 @@ class _ListaPesosPantallaState extends State<ListaPesosPantalla> {
       if (_mascotaSeleccionada != null) {
         await pesoProv.cargar(mascotaId: _mascotaSeleccionada);
         _refrescarDesdeProvider();
+
+        // Si no se especificó mascota y la primera no tiene registros,
+        // intentar seleccionar automáticamente otra mascota con historial.
+        if (widget.mascotaId == null && _registrosPeso.isEmpty && mascProv.mascotas.length > 1) {
+          for (final m in mascProv.mascotas) {
+            final mid = (m['_id'] ?? m['id']).toString();
+            if (mid == _mascotaSeleccionada) continue;
+            await pesoProv.cargar(mascotaId: mid);
+            final regs = pesoProv.registros(mid);
+            if (regs.isNotEmpty) {
+              setState(() {
+                _mascotaSeleccionada = mid;
+              });
+              _refrescarDesdeProvider();
+              break;
+            }
+          }
+        }
+
         // Escuchar cambios futuros (creación/actualización/eliminación)
         _pesoListener = () {
           if (!mounted) return;
@@ -79,54 +98,53 @@ class _ListaPesosPantallaState extends State<ListaPesosPantalla> {
       'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
     ];
     
-    return '${fecha.day} ${meses[fecha.month]} ${fecha.year} - ${fecha.hour.toString().padLeft(2, '0')}:${fecha.minute.toString().padLeft(2, '0')}';
+    final local = fecha.toLocal();
+    return '${local.day} ${meses[local.month]} ${local.year} - ${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
   }
 
   void _aplicarFiltro() {
     final ahora = DateTime.now();
-    final hoy = DateTime(ahora.year, ahora.month, ahora.day);
     DateTime? _parseFecha(dynamic raw) {
       if (raw is DateTime) return raw;
       if (raw is String) return DateTime.tryParse(raw);
       return null;
     }
+
+    double? _edadDias(Map<String, dynamic> registro) {
+      final fechaRegistro = _parseFecha(registro['fecha']) ??
+          _parseFecha(registro['createdAt']) ??
+          _parseFecha(registro['fechaCreacion']);
+      if (fechaRegistro == null) return null;
+      final local = fechaRegistro.toLocal();
+      final diff = ahora.difference(local);
+      if (diff.isNegative) return 0; // si está en el futuro por desajuste de reloj, tratar como reciente
+      return diff.inMinutes / (60 * 24);
+    }
+
     setState(() {
       switch (_filtroSeleccionado) {
         case 'Hoy':
           _registrosFiltrados = _registrosPeso.where((registro) {
-            final fechaRegistro = _parseFecha(registro['fecha']);
-            if (fechaRegistro == null) return false;
-            // Convertir a local si viene en UTC
-            final local = fechaRegistro.toLocal();
-            final diaRegistro = DateTime(local.year, local.month, local.day);
-            return diaRegistro.isAtSameMomentAs(hoy);
+            final dias = _edadDias(registro);
+            return dias != null && dias <= 1.0;
           }).toList();
           break;
         case '1 sem.':
-          final unaSemanaAtras = hoy.subtract(const Duration(days: 7));
           _registrosFiltrados = _registrosPeso.where((registro) {
-            final fechaRegistro = _parseFecha(registro['fecha']);
-            if (fechaRegistro == null) return false;
-            final local = fechaRegistro.toLocal();
-            return local.isAfter(unaSemanaAtras) && local.isBefore(ahora.add(const Duration(days: 1)));
+            final dias = _edadDias(registro);
+            return dias != null && dias > 1.0 && dias <= 8.0;
           }).toList();
           break;
         case '1 mes':
-          final unMesAtras = DateTime(ahora.year, ahora.month - 1, ahora.day);
           _registrosFiltrados = _registrosPeso.where((registro) {
-            final fechaRegistro = _parseFecha(registro['fecha']);
-            if (fechaRegistro == null) return false;
-            final local = fechaRegistro.toLocal();
-            return local.isAfter(unMesAtras) && local.isBefore(ahora.add(const Duration(days: 1)));
+            final dias = _edadDias(registro);
+            return dias != null && dias > 8.0 && dias <= 62.0;
           }).toList();
           break;
         case '1 año':
-          final unAnoAtras = DateTime(ahora.year - 1, ahora.month, ahora.day);
           _registrosFiltrados = _registrosPeso.where((registro) {
-            final fechaRegistro = _parseFecha(registro['fecha']);
-            if (fechaRegistro == null) return false;
-            final local = fechaRegistro.toLocal();
-            return local.isAfter(unAnoAtras) && local.isBefore(ahora.add(const Duration(days: 1)));
+            final dias = _edadDias(registro);
+            return dias != null && dias > 62.0 && dias <= 370.0;
           }).toList();
           break;
         case 'Personalizado':
@@ -166,15 +184,16 @@ class _ListaPesosPantallaState extends State<ListaPesosPantalla> {
         _filtroSeleccionado = 'Personalizado';
         _registrosFiltrados = _registrosPeso.where((registro) {
           DateTime? fechaRegistro;
-          final raw = registro['fecha'];
+          final raw = registro['fecha'] ?? registro['createdAt'] ?? registro['fechaCreacion'];
           if (raw is DateTime) {
-            fechaRegistro = raw;
+            fechaRegistro = raw.toLocal();
           } else if (raw is String) {
-            fechaRegistro = DateTime.tryParse(raw);
+            fechaRegistro = DateTime.tryParse(raw)?.toLocal();
           }
           if (fechaRegistro == null) return false;
-          return fechaRegistro.isAfter(rango.start.subtract(const Duration(days: 1))) &&
-                 fechaRegistro.isBefore(rango.end.add(const Duration(days: 1)));
+          final inicio = DateTime(rango.start.year, rango.start.month, rango.start.day);
+          final fin = DateTime(rango.end.year, rango.end.month, rango.end.day, 23, 59, 59, 999);
+          return !fechaRegistro.isBefore(inicio) && !fechaRegistro.isAfter(fin);
         }).toList();
       });
     }
@@ -250,6 +269,7 @@ class _ListaPesosPantallaState extends State<ListaPesosPantalla> {
           ),
           child: DropdownButton<String>(
             value: _mascotaSeleccionada,
+            isExpanded: true,
             dropdownColor: const Color(0xFF4CAF50),
             iconEnabledColor: Colors.white,
             style: const TextStyle(color: Colors.white, fontSize: 14),
@@ -258,7 +278,12 @@ class _ListaPesosPantallaState extends State<ListaPesosPantalla> {
               final nombre = m['nombre']?.toString() ?? 'Mascota';
               return DropdownMenuItem<String>(
                 value: id,
-                child: Text(nombre, style: const TextStyle(color: Colors.white)),
+                child: Text(
+                  nombre,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: Colors.white),
+                ),
               );
             }).toList(),
             onChanged: (nuevo) async {
@@ -384,7 +409,7 @@ class _ListaPesosPantallaState extends State<ListaPesosPantalla> {
                       itemCount: _registrosFiltrados.length,
                       itemBuilder: (context, index) {
                         final registro = _registrosFiltrados[index];
-            final fechaRaw = registro['fecha'];
+            final fechaRaw = registro['fecha'] ?? registro['createdAt'] ?? registro['fechaCreacion'];
             final fecha = (fechaRaw is DateTime)
               ? fechaRaw
               : (fechaRaw is String ? DateTime.tryParse(fechaRaw) ?? DateTime.now() : DateTime.now());

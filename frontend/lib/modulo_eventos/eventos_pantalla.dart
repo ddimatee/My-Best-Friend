@@ -11,7 +11,10 @@ import 'detalle_evento.dart';
 import 'formulario_evento.dart';
 
 class EventosPantalla extends StatefulWidget {
-  const EventosPantalla({Key? key}) : super(key: key);
+  final String? mascotaId;
+  final bool bloquearMascota;
+
+  const EventosPantalla({Key? key, this.mascotaId, this.bloquearMascota = false}) : super(key: key);
 
   @override
   State<EventosPantalla> createState() => _EventosPantallaState();
@@ -50,7 +53,7 @@ class _EventosPantallaState extends State<EventosPantalla> {
         }
         
         if (masc.mascotas.isNotEmpty) {
-          _mascotaSeleccionada = (masc.mascotas.first['_id'] ?? masc.mascotas.first['id']).toString();
+          _mascotaSeleccionada = widget.mascotaId ?? (masc.mascotas.first['_id'] ?? masc.mascotas.first['id']).toString();
           print('Mascota seleccionada: $_mascotaSeleccionada');
           print('Cargando eventos (todos) ...');
           await _cargarEventos();
@@ -286,7 +289,7 @@ class _EventosPantallaState extends State<EventosPantalla> {
                     child: Text(nombre, style: const TextStyle(fontWeight: FontWeight.w600)),
                   );
                 }).toList(),
-                onChanged: (val) {
+                onChanged: widget.bloquearMascota ? null : (val) {
                   if (val == null) return;
                   setState(() { _mascotaSeleccionada = val; });
                   _cargarEventos();

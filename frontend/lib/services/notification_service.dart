@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tzdata;
@@ -13,6 +13,8 @@ class NotificationService {
 
   Future<void> init() async {
     if (_initialized) return;
+    // Las notificaciones locales no están soportadas en web
+    if (kIsWeb) { _initialized = true; return; }
     tzdata.initializeTimeZones();
     const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
     const initializationSettings = InitializationSettings(android: androidInit);
@@ -21,11 +23,9 @@ class NotificationService {
       // Manejar taps futuros (deep link) si se quiere
     });
 
-    if (Platform.isAndroid) {
-      final androidImplementation = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-      await androidImplementation?.requestNotificationsPermission();
-      await androidImplementation?.requestExactAlarmsPermission();
-    }
+    final androidImplementation = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    await androidImplementation?.requestNotificationsPermission();
+    await androidImplementation?.requestExactAlarmsPermission();
     _initialized = true;
   }
 

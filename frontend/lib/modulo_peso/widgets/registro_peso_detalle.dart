@@ -20,8 +20,16 @@ class _RegistroPesoDetallePantallaState extends State<RegistroPesoDetallePantall
   @override
   void initState() {
     super.initState();
-    _pesoCtrl = TextEditingController(text: (widget.registro['peso']?.toString() ?? ''));
-    _obsCtrl = TextEditingController(text: (widget.registro['observaciones'] ?? '').toString());
+    final dynamic p = widget.registro['peso'] ?? widget.registro['pesoNumerico'] ?? widget.registro['valor'];
+    String pesoTxt = '';
+    if (p is num) {
+      final d = p.toDouble();
+      pesoTxt = (d == d.roundToDouble()) ? d.toInt().toString() : d.toString();
+    } else if (p is String) {
+      pesoTxt = p;
+    }
+    _pesoCtrl = TextEditingController(text: pesoTxt);
+    _obsCtrl = TextEditingController(text: (widget.registro['observaciones'] ?? widget.registro['notas'] ?? '').toString());
   }
 
   @override
@@ -139,6 +147,7 @@ class _RegistroPesoDetallePantallaState extends State<RegistroPesoDetallePantall
       f = DateTime.tryParse(raw);
     }
     f ??= DateTime.now();
-    return '${f.day.toString().padLeft(2,'0')}/${f.month.toString().padLeft(2,'0')}/${f.year} ${f.hour.toString().padLeft(2,'0')}:${f.minute.toString().padLeft(2,'0')}';
+    final local = f.toLocal();
+    return '${local.day.toString().padLeft(2,'0')}/${local.month.toString().padLeft(2,'0')}/${local.year} ${local.hour.toString().padLeft(2,'0')}:${local.minute.toString().padLeft(2,'0')}';
   }
 }

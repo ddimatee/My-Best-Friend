@@ -53,7 +53,17 @@ class EventosProvider with ChangeNotifier {
       if (resp['success']) {
         final data = resp['data'];
         if (data is List) {
-          final lista = data.cast<Map<String, dynamic>>();
+          final listaBase = data.cast<Map<String, dynamic>>();
+          final lista = (mascotaId == null)
+              ? listaBase
+              : listaBase.where((ev) {
+                  final mid = (ev['mascotaId'] ??
+                          ((ev['mascota'] is Map)
+                              ? (ev['mascota']['_id'] ?? ev['mascota']['id'])
+                              : ev['mascota']))
+                      ?.toString();
+                  return mid == mascotaId;
+                }).toList();
           print('✅ Eventos obtenidos: ${lista.length}');
           _eventosPorDia[key] = lista;
           notifyListeners();
@@ -93,7 +103,17 @@ class EventosProvider with ChangeNotifier {
       if (resp['success']) {
         final data = resp['data'];
         if (data is List) {
-          final lista = data.cast<Map<String,dynamic>>();
+          final listaBase = data.cast<Map<String,dynamic>>();
+          final lista = (mascotaId == null)
+              ? listaBase
+              : listaBase.where((ev) {
+                  final mid = (ev['mascotaId'] ??
+                          ((ev['mascota'] is Map)
+                              ? (ev['mascota']['_id'] ?? ev['mascota']['id'])
+                              : ev['mascota']))
+                      ?.toString();
+                  return mid == mascotaId;
+                }).toList();
           // Ordenar por fecha + hora
             lista.sort((a,b){
               DateTime fa = DateTime.tryParse(a['fecha']?.toString() ?? '') ?? DateTime.now();

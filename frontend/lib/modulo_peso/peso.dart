@@ -39,7 +39,7 @@ class _PesoPantallaState extends State<PesoPantalla> {
     }
     // Mascota inicial si viene por parámetro
     _mascotaSeleccionada = widget.mascotaId;
-    // Intentar cargar mascotas si no hay
+    // Intentar cargar mascotas y registros al inicializar
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final mascProv = context.read<MascotasProvider>();
       if (mascProv.mascotas.isEmpty) {
@@ -49,6 +49,9 @@ class _PesoPantallaState extends State<PesoPantalla> {
         setState(() {
           _mascotaSeleccionada = (mascProv.mascotas.first['_id'] ?? mascProv.mascotas.first['id']).toString();
         });
+      }
+      // Siempre cargar registros si hay mascota seleccionada
+      if (_mascotaSeleccionada != null) {
         await _cargarRegistrosDeMascota();
       }
     });
@@ -163,8 +166,12 @@ class _PesoPantallaState extends State<PesoPantalla> {
 
   @override
   Widget build(BuildContext context) {
-    // Mostrar estado vacío solo si no hay registros Y no se está mostrando el formulario Y no hay registros existentes
-    if (_registrosPeso.isEmpty && !_showForm && widget.registrosExistentes == null) {
+    final pesoProv = context.watch<PesoProvider>();
+    final tieneRegistros = _mascotaSeleccionada != null &&
+        pesoProv.registros(_mascotaSeleccionada!).isNotEmpty;
+    // Mostrar estado vacío solo si no hay registros EN EL PROVIDER ni en lista local,
+    // Y no se está mostrando el formulario, Y no hay registros existentes pasados por parámetro
+    if (!tieneRegistros && _registrosPeso.isEmpty && !_showForm && widget.registrosExistentes == null) {
       return _buildEmptyState();
     }
     
@@ -548,11 +555,11 @@ class _PesoPantallaState extends State<PesoPantalla> {
           const SizedBox(height: 12),
           ...registros.take(5).map((r) {
             final fechaStr = _formatFecha(r['fecha'] ?? r['createdAt']);
-            final peso = r['peso']?.toString() ?? '-';
+            final peso = _pesoDesdeRegistro(r);
             return ListTile(
               contentPadding: EdgeInsets.zero,
               dense: true,
-              title: Text('$peso kg', style: const TextStyle(fontWeight: FontWeight.w600)),
+              title: Text('${peso ?? '-'} kg', style: const TextStyle(fontWeight: FontWeight.w600)),
               subtitle: Text(fechaStr),
               trailing: const Icon(Icons.chevron_right),
               onTap: () {
@@ -610,9 +617,9 @@ class _PesoPantallaState extends State<PesoPantalla> {
                       itemBuilder: (c, i) {
                         final r = registros[i];
                         final fechaStr = _formatFecha(r['fecha'] ?? r['createdAt']);
-                        final peso = r['peso']?.toString() ?? '-';
+                        final peso = _pesoDesdeRegistro(r);
                         return ListTile(
-                          title: Text('$peso kg'),
+                          title: Text('${peso ?? '-'} kg'),
                           subtitle: Text(fechaStr),
                           onTap: () {
                             Navigator.pop(ctx);
@@ -644,7 +651,21 @@ class _PesoPantallaState extends State<PesoPantalla> {
       f = DateTime.tryParse(raw);
     }
     f ??= DateTime.now();
-    return '${f.day.toString().padLeft(2,'0')}/${f.month.toString().padLeft(2,'0')}/${f.year} ${f.hour.toString().padLeft(2,'0')}:${f.minute.toString().padLeft(2,'0')}';
+    final local = f.toLocal();
+    return '${local.day.toString().padLeft(2,'0')}/${local.month.toString().padLeft(2,'0')}/${local.year} ${local.hour.toString().padLeft(2,'0')}:${local.minute.toString().padLeft(2,'0')}';
+  }
+
+  String? _pesoDesdeRegistro(Map<String, dynamic> r) {
+    final dynamic p = r['peso'] ?? r['pesoNumerico'] ?? r['valor'];
+    double? v;
+    if (p is num) {
+      v = p.toDouble();
+    } else if (p is String) {
+      v = double.tryParse(p.replaceAll(',', '.'));
+    }
+    if (v == null) return null;
+    if (v == v.roundToDouble()) return v.toInt().toString();
+    return v.toStringAsFixed(2).replaceAll(RegExp(r'0+$'), '').replaceAll(RegExp(r'\.$'), '');
   }
 
   Widget _buildSelectorMascota() {
@@ -692,6 +713,7 @@ class _PesoPantallaState extends State<PesoPantalla> {
           else
             DropdownButtonFormField<String>(
               value: _mascotaSeleccionada,
+              isExpanded: true,
               decoration: InputDecoration(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -707,7 +729,11 @@ class _PesoPantallaState extends State<PesoPantalla> {
                 }
                 return DropdownMenuItem<String>(
                   value: id,
-                  child: Text(nombre),
+                  child: Text(
+                    nombre,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 );
               }).toList(),
               onChanged: (val) async {

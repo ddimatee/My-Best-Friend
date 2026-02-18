@@ -15,6 +15,9 @@ class PushService {
 
   Future<void> init({bool solicitarPermisos = true}) async {
     if (_initialized) return;
+    // En web, Firebase necesita opciones explícitas (google-services no aplica).
+    // Saltamos completamente en web para no bloquear el arranque.
+    if (kIsWeb) { _initialized = true; return; }
     await Firebase.initializeApp();
 
     // En Web evitamos inicializar flutter_local_notifications (no tiene soporte completo / service worker maneja push).

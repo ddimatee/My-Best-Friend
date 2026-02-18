@@ -14,9 +14,23 @@ class CalendarioService {
     if (eventosJson == null || eventosJson.isEmpty) {
       return [];
     }
-    
-    final List<dynamic> eventosList = json.decode(eventosJson);
-    final todos = eventosList.map((json) => EventoCalendario.fromJson(json)).toList();
+
+    List<dynamic> eventosList;
+    try {
+      final decoded = json.decode(eventosJson);
+      eventosList = decoded is List ? decoded : <dynamic>[];
+    } catch (_) {
+      await prefs.remove(_keyEventosCalendario);
+      return [];
+    }
+
+    final todos = eventosList
+        .whereType<Map>()
+        .map((raw) => Map<String, dynamic>.from(raw))
+        .where((item) => item['id'] != null && item['fechaHora'] != null)
+        .map((item) => EventoCalendario.fromJson(item))
+      .where((e) => (e.mascotaId ?? '').toString().isNotEmpty)
+        .toList();
     if (currentUserId == null) return todos;
     // Filtrar solo eventos del usuario actual; eventos antiguos sin userId se consideran "huérfanos" y se descartan
     return todos.where((e) => e.userId == null ? false : e.userId == currentUserId).toList();

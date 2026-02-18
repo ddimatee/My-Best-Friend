@@ -7,6 +7,7 @@ import 'formulario_descripcion_calendario.dart';
 import 'detalle_recordatorio_calendario.dart';
 import 'servicios/calendario_service.dart';
 import 'modelos/evento_calendario.dart';
+import '../providers/auth_provider.dart';
 
 class CalendarioModuloPantalla extends StatefulWidget {
   final Map<String, dynamic>? mascota; // Información de la mascota seleccionada
@@ -55,7 +56,9 @@ class _CalendarioModuloPantallaState extends State<CalendarioModuloPantalla> wit
 
   Future<void> _cargarRecordatorios() async {
     try {
-      final recordatorios = await CalendarioService.obtenerEventos();
+      final auth = context.read<AuthProvider>();
+      final currentUserId = auth.user?['_id']?.toString();
+      final recordatorios = await CalendarioService.obtenerEventos(currentUserId: currentUserId);
       print('📅 Total recordatorios cargados: ${recordatorios.length}');
       
       // Filtrar recordatorios por mascota si hay una mascota seleccionada
@@ -78,13 +81,7 @@ class _CalendarioModuloPantallaState extends State<CalendarioModuloPantalla> wit
         
         recordatoriosFiltrados = recordatorios.where((recordatorio) {
           print('📝 Recordatorio: ${recordatorio.descripcion}, MascotaID: ${recordatorio.mascotaId}');
-          // Mostrar también recordatorios legacy (mascotaId null) para que el usuario pueda editarlos y asignar mascota.
-          final coincide = recordatorio.mascotaId == mascotaId;
-          final legacy = recordatorio.mascotaId == null; 
-          if (legacy) {
-            print('⚠️  Recordatorio legacy sin mascotaId, se mostrará temporalmente.');
-          }
-          return coincide || legacy;
+          return recordatorio.mascotaId == mascotaId;
         }).toList();
         
         print('🔍 Recordatorios filtrados para ${widget.mascota!['nombre']}: ${recordatoriosFiltrados.length}');

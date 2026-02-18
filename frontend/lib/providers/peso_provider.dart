@@ -16,20 +16,61 @@ class PesoProvider with ChangeNotifier {
 
   List<Map<String, dynamic>> registros(String mascotaId) => List.unmodifiable(_registros[mascotaId] ?? const []);
 
+  Map<String, dynamic> _normalizarRegistro(Map<String, dynamic> raw) {
+    final map = Map<String, dynamic>.from(raw);
+
+    final dynamic rawId = map['_id'] ?? map['id'];
+    final String id = rawId?.toString() ?? '';
+
+    double? peso;
+    final dynamic p = map['peso'] ?? map['pesoNumerico'] ?? map['valor'];
+    if (p is num) {
+      peso = p.toDouble();
+    } else if (p is String) {
+      peso = double.tryParse(p.replaceAll(',', '.'));
+    }
+
+    final dynamic fechaRaw = map['fecha'] ?? map['createdAt'] ?? map['fechaCreacion'];
+    DateTime? fecha;
+    if (fechaRaw is DateTime) {
+      fecha = fechaRaw;
+    } else if (fechaRaw is String) {
+      fecha = DateTime.tryParse(fechaRaw);
+    }
+
+    final dynamic mascotaRaw = map['mascotaId'] ?? map['mascota'];
+    final String mascotaId = (mascotaRaw is Map)
+        ? (mascotaRaw['_id'] ?? mascotaRaw['id'] ?? '').toString()
+        : (mascotaRaw?.toString() ?? '');
+
+    return {
+      ...map,
+      '_id': id,
+      'id': id,
+      if (peso != null) 'peso': peso,
+      if (fecha != null) 'fecha': fecha.toIso8601String(),
+      if (mascotaId.isNotEmpty) 'mascotaId': mascotaId,
+      'observaciones': map['observaciones'] ?? map['notas'] ?? '',
+      'notas': map['notas'] ?? map['observaciones'] ?? '',
+    };
+  }
+
   Future<void> cargar({String? mascotaId, bool forzar = false}) async {
     if (_cargando) return;
     _setCargando(true); _setError(null);
     final resp = await _api.obtenerRegistrosPeso(mascotaId: mascotaId);
     if (resp['success']) {
-      final lista = (resp['data'] as List).cast<Map<String, dynamic>>();
+      final lista = (resp['data'] as List)
+          .map((e) => _normalizarRegistro(Map<String, dynamic>.from(e as Map)))
+          .toList();
       if (mascotaId != null) {
-        _registros[mascotaId] = lista;
+        _registros[mascotaId] = lista.where((r) => r['mascotaId']?.toString() == mascotaId).toList();
       } else {
         // distribuir
         _registros.clear();
         for (final r in lista) {
-          final mid = (r['mascota'] is Map) ? r['mascota']['_id'] : r['mascota'];
-          if (mid != null) {
+          final mid = r['mascotaId']?.toString();
+          if (mid != null && mid.isNotEmpty) {
             _registros.putIfAbsent(mid, () => []).add(r);
           }
         }
@@ -59,7 +100,8 @@ class PesoProvider with ChangeNotifier {
     if (resp['success']) {
       final reg = resp['data']['registro'] ?? resp['data'];
       if (reg is Map<String, dynamic>) {
-        _registros.putIfAbsent(mascotaId, () => []).insert(0, reg); // más reciente al inicio
+        final normalizado = _normalizarRegistro(reg);
+        _registros.putIfAbsent(mascotaId, () => []).insert(0, normalizado); // más reciente al inicio
         notifyListeners();
       }
       _setSincronizando(false);
@@ -81,7 +123,10 @@ class PesoProvider with ChangeNotifier {
       tipoRegistro: cambios['tipoRegistro'],
     );
     if (resp['success']) {
-      _replace(registroId, resp['data']['registro'] ?? resp['data']);
+      final regActualizado = resp['data']['registro'] ?? resp['data'];
+      if (regActualizado is Map<String, dynamic>) {
+        _replace(registroId, _normalizarRegistro(regActualizado));
+      }
       _setSincronizando(false);
       return true;
     } else {
@@ -96,7 +141,7 @@ class PesoProvider with ChangeNotifier {
     final resp = await _api.eliminarRegistroPeso(registroId);
     if (resp['success']) {
       for (final lista in _registros.values) {
-        lista.removeWhere((r) => r['_id'] == registroId);
+        lista.removeWhere((r) => (r['_id']?.toString() == registroId || r['id']?.toString() == registroId));
       }
       notifyListeners();
       _setSincronizando(false);
@@ -110,7 +155,7 @@ class PesoProvider with ChangeNotifier {
 
   void _replace(String id, Map<String, dynamic> nuevo) {
     for (final lista in _registros.values) {
-      final idx = lista.indexWhere((r) => r['_id'] == id);
+      final idx = lista.indexWhere((r) => (r['_id']?.toString() == id || r['id']?.toString() == id));
       if (idx != -1) {
         lista[idx] = nuevo;
         notifyListeners();

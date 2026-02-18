@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../modulo_general/widgets/bottom_nav_global.dart';
-import 'dart:io';
+import 'dart:io' show File;
 import 'package:flutter/foundation.dart';
 import 'subir_foto_pantalla.dart';
 import 'package:provider/provider.dart';
@@ -8,7 +8,10 @@ import '../../providers/album_provider.dart';
 import '../../providers/mascotas_provider.dart';
 
 class AlbumModuloPantalla extends StatefulWidget {
-  const AlbumModuloPantalla({Key? key}) : super(key: key);
+  final String? mascotaId;
+  final bool bloquearMascota;
+
+  const AlbumModuloPantalla({Key? key, this.mascotaId, this.bloquearMascota = false}) : super(key: key);
 
   @override
   State<AlbumModuloPantalla> createState() => _AlbumModuloPantallaState();
@@ -33,7 +36,7 @@ class _AlbumModuloPantallaState extends State<AlbumModuloPantalla> {
         if (mounted) setState(() => _cargandoMascotas = false);
       }
       if (mascProv.mascotas.isNotEmpty) {
-        _mascotaSeleccionada = (mascProv.mascotas.first['_id'] ?? mascProv.mascotas.first['id']).toString();
+        _mascotaSeleccionada = widget.mascotaId ?? (mascProv.mascotas.first['_id'] ?? mascProv.mascotas.first['id']).toString();
         await context.read<AlbumProvider>().cargar(mascotaId: _mascotaSeleccionada);
         _refrescar();
       }
@@ -190,7 +193,7 @@ class _AlbumModuloPantallaState extends State<AlbumModuloPantalla> {
                     child: Text(nombre, style: const TextStyle(fontWeight: FontWeight.w600)),
                   );
                 }).toList(),
-                onChanged: (val) async {
+                onChanged: widget.bloquearMascota ? null : (val) async {
                   if (val == null) return;
                   setState(() { _mascotaSeleccionada = val; _cargando = true; });
                   await context.read<AlbumProvider>().cargar(mascotaId: _mascotaSeleccionada);
@@ -463,6 +466,8 @@ class _AlbumModuloPantallaState extends State<AlbumModuloPantalla> {
           );
         },
       );
+    } else if (kIsWeb) {
+      return _buildPlaceholderContent();
     } else {
       // En móvil, usamos File
       return Image.file(

@@ -8,7 +8,10 @@ import 'formulario_vacuna.dart';
 import '../modulo_general/widgets/bottom_nav_global.dart';
 
 class VacunasPantalla extends StatefulWidget {
-  const VacunasPantalla({Key? key}) : super(key: key);
+  final String? mascotaId;
+  final bool bloquearMascota;
+
+  const VacunasPantalla({Key? key, this.mascotaId, this.bloquearMascota = false}) : super(key: key);
 
   @override
   State<VacunasPantalla> createState() => _VacunasPantallaState();
@@ -21,10 +24,10 @@ class _VacunasPantallaState extends State<VacunasPantalla> {
   @override
   void initState() {
     super.initState();
+    _mascotaSeleccionada = widget.mascotaId;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final vacProv = context.read<VacunasProvider>();
-      // Cargar todas (o podrías decidir esperar a que el usuario seleccione una mascota)
-      vacProv.cargarVacunas();
+      vacProv.cargarVacunas(mascotaId: _mascotaSeleccionada);
     });
   }
 
@@ -32,7 +35,7 @@ class _VacunasPantallaState extends State<VacunasPantalla> {
     final resultado = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => const FormularioVacuna(),
+        builder: (context) => FormularioVacuna(mascotaIdFija: widget.bloquearMascota ? _mascotaSeleccionada : null),
       ),
     );
     if (resultado == true) {
@@ -207,9 +210,19 @@ class _VacunasPantallaState extends State<VacunasPantalla> {
     final vacProv = context.watch<VacunasProvider>();
     final mascotasProv = context.watch<MascotasProvider>();
     final listaMascotas = mascotasProv.mascotas;
+    final Map<String, Map<String, dynamic>> mascotasUnicas = {};
+    for (final m in listaMascotas) {
+      final id = (m['_id'] ?? m['id'])?.toString();
+      if (id == null || id.isEmpty) continue;
+      mascotasUnicas.putIfAbsent(id, () => m);
+    }
+    final mascotaFiltroValida = (_mascotaSeleccionada != null &&
+            mascotasUnicas.containsKey(_mascotaSeleccionada))
+        ? _mascotaSeleccionada
+        : null;
     
     // Si no hay mascota seleccionada ("Todas"), obtener todas las vacunas
-    final vacunas = (_mascotaSeleccionada == null)
+    final vacunas = (_mascotaSeleccionada == null && !widget.bloquearMascota)
         ? vacProv.todasLasVacunas() // Obtener todas las vacunas
         : vacProv.vacunasDe(_mascotaSeleccionada!);
 
@@ -255,11 +268,12 @@ class _VacunasPantallaState extends State<VacunasPantalla> {
       body: Column(
         children: [
           // Selector de mascota (simple dropdown)
-            if (listaMascotas.isNotEmpty)
+            if (mascotasUnicas.isNotEmpty && !widget.bloquearMascota)
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                 child: DropdownButtonFormField<String>(
-                  value: _mascotaSeleccionada,
+                  value: mascotaFiltroValida,
+                  isExpanded: true,
                   decoration: const InputDecoration(
                     labelText: 'Filtrar por mascota',
                     filled: true,
@@ -268,9 +282,9 @@ class _VacunasPantallaState extends State<VacunasPantalla> {
                   ),
                   items: [
                     const DropdownMenuItem<String>(value: null, child: Text('Todas', overflow: TextOverflow.ellipsis)),
-                    ...listaMascotas.map((m) => DropdownMenuItem<String>(
-                          value: m['_id'] ?? m['id'],
-                          child: Text(m['nombre'] ?? 'Mascota', overflow: TextOverflow.ellipsis),
+                    ...mascotasUnicas.entries.map((entry) => DropdownMenuItem<String>(
+                      value: entry.key,
+                      child: Text((entry.value['nombre'] ?? 'Mascota').toString(), overflow: TextOverflow.ellipsis),
                         ))
                   ].cast<DropdownMenuItem<String>>(),
                   onChanged: (val) {
