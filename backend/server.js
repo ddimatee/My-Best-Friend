@@ -47,6 +47,22 @@ const toObjectId = (id) => {
   try { return new ObjectId(id); } catch { return null; }
 };
 
+const getAuthTokenFromRequest = (req) =>
+  (req.headers.authorization || '').replace('Bearer ', '').trim();
+
+const getAuthenticatedUser = async (req) => {
+  const token = getAuthTokenFromRequest(req);
+  if (!token) return null;
+  const db = await connectDB();
+  return db.collection('usuarios').findOne({ authToken: token });
+};
+
+const getOwnerCandidates = (user) => {
+  if (!user || !user._id) return [];
+  const idAsString = user._id.toString();
+  return [user._id, idAsString];
+};
+
 // Serialización segura para enviar a la UI
 const serialize = (doc) => {
   if (!doc) return doc;
@@ -81,7 +97,25 @@ const coerceMascota = (payload, { isCreate = false } = {}) => {
   }
   const fields = ['nombre', 'imagenPath', 'situacion', 'sexo', 'raza', 'rol'];
   for (const f of fields) if (payload[f] !== undefined) data[f] = payload[f];
+  if (!data.situacion && typeof payload.descripcion === 'string') {
+    const desc = payload.descripcion.trim();
+    if (desc === 'Acabo de tener un perro' || desc === 'Ya conozco bien a mi perro') {
+      data.situacion = desc;
+    }
+  }
+  if (!data.cumpleanos && payload.fechaNacimiento) data.cumpleanos = new Date(payload.fechaNacimiento);
+  if (!data.cumpleanos && payload.fecha_nac) data.cumpleanos = new Date(payload.fecha_nac);
   if (payload.cumpleanos) data.cumpleanos = new Date(payload.cumpleanos);
+  if (typeof data.sexo === 'string') {
+    const s = data.sexo.trim().toLowerCase();
+    if (s === 'macho') data.sexo = 'Macho';
+    if (s === 'hembra') data.sexo = 'Hembra';
+  }
+  if (typeof data.rol === 'string') {
+    const r = data.rol.trim().toLowerCase();
+    if (r === 'dueno' || r === 'dueño') data.rol = 'Dueño';
+    if (r === 'cuidador') data.rol = 'Cuidador';
+  }
   if (payload.seguimiento !== undefined) data.seguimiento = Boolean(payload.seguimiento);
   if (payload.coCuidado !== undefined) data.coCuidado = Boolean(payload.coCuidado);
   if (payload.oculto !== undefined) data.oculto = Boolean(payload.oculto);
@@ -199,7 +233,7 @@ app.post('/api/usuarios/registro', async (req, res) => {
 
 // GET /api/usuarios/perfil — perfil del usuario autenticado por token
 app.get('/api/usuarios/perfil', async (req, res) => {
-  const token = (req.headers.authorization || '').replace('Bearer ', '').trim();
+  const token = getAuthTokenFromRequest(req);
   if (!token) return res.status(401).json({ success: false, message: 'Token requerido' });
   try {
     const db = await connectDB();
@@ -305,13 +339,11 @@ app.delete('/api/usuarios/:id', async (req, res) => {
 // CRUD Mascotas
 app.get('/api/mascotas', async (req, res) => {
   try {
+    const usuario = await getAuthenticatedUser(req);
+    if (!usuario) return res.status(401).json({ error: 'No autenticado' });
+
     const db = await connectDB();
-    const query = {};
-    if (req.query.userId) {
-      const uid = toObjectId(req.query.userId);
-      if (!uid) return res.status(400).json({ error: 'userId inválido' });
-      query.userId = uid;
-    }
+    const query = { userId: { $in: getOwnerCandidates(usuario) } };
     const items = await db.collection('mascotas').find(query).sort({ fechaCreacion: -1 }).toArray();
     res.json(items.map(serialize));
   } catch (err) {
@@ -324,11 +356,15 @@ app.get('/api/mascotas/:id', async (req, res) => {
   const _id = toObjectId(rawId);
   if (!_id) return res.status(400).json({ error: 'ID inválido' });
   try {
+    const usuario = await getAuthenticatedUser(req);
+    if (!usuario) return res.status(401).json({ error: 'No autenticado' });
+
     const db = await connectDB();
+    const ownerCandidates = getOwnerCandidates(usuario);
     // Intento 1: buscar por ObjectId
-    let item = await db.collection('mascotas').findOne({ _id });
+    let item = await db.collection('mascotas').findOne({ _id, userId: { $in: ownerCandidates } });
     // Intento 2: en algunos entornos el _id pudo guardarse como string
-    if (!item) item = await db.collection('mascotas').findOne({ _id: rawId });
+    if (!item) item = await db.collection('mascotas').findOne({ _id: rawId, userId: { $in: ownerCandidates } });
     if (!item) {
       console.warn(`GET /api/mascotas/:id no encontrada -> id=${rawId}`);
       return res.status(404).json({ error: `Mascota no encontrada (id: ${rawId})` });
@@ -341,8 +377,11 @@ app.get('/api/mascotas/:id', async (req, res) => {
 
 app.post('/api/mascotas', async (req, res) => {
   try {
+    const usuario = await getAuthenticatedUser(req);
+    if (!usuario) return res.status(401).json({ error: 'No autenticado' });
+
     const data = coerceMascota(req.body, { isCreate: true });
-    if (!data.userId || !ObjectId.isValid(data.userId)) return res.status(400).json({ error: 'userId requerido o inválido' });
+    data.userId = usuario._id;
     if (!data.nombre) return res.status(400).json({ error: 'Campo requerido: nombre' });
     const db = await connectDB();
     const result = await db.collection('mascotas').insertOne(data);
@@ -360,20 +399,21 @@ app.put('/api/mascotas/:id', async (req, res) => {
   const rawId = (req.params.id || '').trim();
   const _id = toObjectId(rawId);
   if (!_id) return res.status(400).json({ error: 'ID inválido' });
-  // Validar userId si viene en la carga útil
-  if (req.body.userId !== undefined && typeof req.body.userId === 'string' && !ObjectId.isValid(req.body.userId.trim())) {
-    return res.status(400).json({ error: 'userId inválido (formato ObjectId requerido)' });
-  }
   try {
+    const usuario = await getAuthenticatedUser(req);
+    if (!usuario) return res.status(401).json({ error: 'No autenticado' });
+
     const data = coerceMascota(req.body);
+    delete data.userId;
     data.fechaActualizacion = new Date();
     const db = await connectDB();
+    const ownerCandidates = getOwnerCandidates(usuario);
 
-    let result = await db.collection('mascotas').findOneAndUpdate({ _id }, { $set: data }, { returnDocument: 'after' });
+    let result = await db.collection('mascotas').findOneAndUpdate({ _id, userId: { $in: ownerCandidates } }, { $set: data }, { returnDocument: 'after' });
     let updated = result && (result.value !== undefined ? result.value : result);
 
     if (!updated) {
-      result = await db.collection('mascotas').findOneAndUpdate({ _id: rawId }, { $set: data }, { returnDocument: 'after' });
+      result = await db.collection('mascotas').findOneAndUpdate({ _id: rawId, userId: { $in: ownerCandidates } }, { $set: data }, { returnDocument: 'after' });
       updated = result && (result.value !== undefined ? result.value : result);
     }
     if (!updated) {
@@ -397,10 +437,14 @@ app.delete('/api/mascotas/:id', async (req, res) => {
   const _id = toObjectId(rawId);
   if (!_id) return res.status(400).json({ error: 'ID inválido' });
   try {
+    const usuario = await getAuthenticatedUser(req);
+    if (!usuario) return res.status(401).json({ error: 'No autenticado' });
+
     const db = await connectDB();
-    let result = await db.collection('mascotas').deleteOne({ _id });
+    const ownerCandidates = getOwnerCandidates(usuario);
+    let result = await db.collection('mascotas').deleteOne({ _id, userId: { $in: ownerCandidates } });
     if (result.deletedCount === 0) {
-      result = await db.collection('mascotas').deleteOne({ _id: rawId });
+      result = await db.collection('mascotas').deleteOne({ _id: rawId, userId: { $in: ownerCandidates } });
     }
     if (result.deletedCount === 0) return res.status(404).json({ error: 'Mascota no encontrada' });
     res.json({ ok: true });

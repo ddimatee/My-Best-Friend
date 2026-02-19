@@ -160,7 +160,7 @@ class AuthProvider with ChangeNotifier {
       final result = await _apiService.obtenerPerfil();
 
       if (result['success']) {
-        _user = result['data'];
+        _user = result['data']['usuario'];
         _isAuthenticated = true;
         notifyListeners();
         return true;
