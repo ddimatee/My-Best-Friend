@@ -53,7 +53,9 @@ class ApiService {
   // Obtener token de SharedPreferences
   Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('auth_token');
+    final token = prefs.getString('auth_token');
+    debugPrint('[API TOKEN] getToken auth_token=${token != null ? "set" : "null"}');
+    return token;
   }
 
   // Formatear fecha en hora local sin conversión a UTC
@@ -86,12 +88,14 @@ class ApiService {
   Future<void> saveToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('auth_token', token);
+    debugPrint('[API TOKEN] saveToken auth_token=set');
   }
 
   // Eliminar token
   Future<void> removeToken() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_token');
+    debugPrint('[API TOKEN] removeToken auth_token=removed');
   }
 
   // =============== USUARIOS ===============
@@ -172,6 +176,9 @@ class ApiService {
         if (rt is String && rt.isNotEmpty) {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('remember_token', rt);
+          debugPrint('[API TOKEN] remember_token=set');
+        } else {
+          debugPrint('[API TOKEN] remember_token not provided');
         }
       }
       

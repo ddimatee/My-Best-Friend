@@ -64,6 +64,13 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   bool _loadingPref = true;
   bool _showOnboarding = true;
+  String _lastStartupDecision = '';
+
+  void _logStartupDecision(String decision, AuthProvider auth) {
+    if (_lastStartupDecision == decision) return;
+    _lastStartupDecision = decision;
+    debugPrint('[STARTUP] decision=$decision loadingPref=$_loadingPref authBootstrapDone=${auth.authBootstrapDone} isAuthenticated=${auth.isAuthenticated} showOnboarding=$_showOnboarding');
+  }
 
   @override
   void initState() {
@@ -86,14 +93,6 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loadingPref) {
-      return const MaterialApp(
-        home: Scaffold(
-          body: Center(child: CircularProgressIndicator()),
-        ),
-      );
-    }
-
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
@@ -121,7 +120,24 @@ class _MyAppState extends State<MyApp> {
           Locale('es', ''),
         ],
         locale: const Locale('es'),
-  home: _showOnboarding ? OnboardingScreens(onFinish: _marcarOnboardingVisto) : LoginScreen(),
+        home: Consumer<AuthProvider>(
+          builder: (context, auth, _) {
+            if (_loadingPref || !auth.authBootstrapDone) {
+              _logStartupDecision('LOADING', auth);
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            }
+            if (auth.isAuthenticated) {
+              _logStartupDecision('MENU', auth);
+              return const MenuPrincipal();
+            }
+            _logStartupDecision(_showOnboarding ? 'ONBOARDING' : 'LOGIN', auth);
+            return _showOnboarding
+                ? OnboardingScreens(onFinish: _marcarOnboardingVisto)
+                : LoginScreen();
+          },
+        ),
         routes: {
           '/menu': (_) => const MenuPrincipal(),
           '/buscar': (_) => const BuscarPantalla(),

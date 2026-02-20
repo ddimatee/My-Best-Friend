@@ -1,0 +1,18 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Flutter Web (Chrome fixed port)",
+      "request": "launch",
+      "type": "dart",
+      "program": "frontend/lib/main.dart",
+      "cwd": "frontend",
+      "deviceId": "chrome",
+      "args": [
+        "--web-port",
+        "7357",
+        "--web-browser-flag=--user-data-dir=C:/Users/Braya/AppData/Local/MBFChromeProfile"
+      ]
+    }
+  ]
+}

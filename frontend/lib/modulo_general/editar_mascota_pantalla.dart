@@ -15,17 +15,14 @@ class EditarMascotaPantalla extends StatefulWidget {
 class _EditarMascotaPantallaState extends State<EditarMascotaPantalla> {
   final TextEditingController _nombreController = TextEditingController();
   final TextEditingController _razaController = TextEditingController();
-  final TextEditingController _descripcionController = TextEditingController();
 
   String? _sexo; // 'macho' | 'hembra'
   DateTime? _fechaNac;
   bool _cuidaConAlguien = false;
-  String _estiloVida = 'mixto'; // activo | tranquilo | mixto
   bool _cargando = true;
   bool _guardando = false;
 
   final List<String> _opcionesSexo = ['macho', 'hembra'];
-  final List<String> _opcionesEstiloVida = ['activo','tranquilo','mixto'];
 
   @override
   void initState() {
@@ -43,17 +40,14 @@ class _EditarMascotaPantallaState extends State<EditarMascotaPantalla> {
     setState(() {
       _nombreController.text = (m['nombre'] ?? '').toString();
       _razaController.text = (m['raza'] ?? '').toString();
-      _descripcionController.text = (m['descripcion'] ?? '').toString();
       _sexo = (m['sexo'] ?? '').toString().toLowerCase().isNotEmpty ? (m['sexo'] ?? '').toString().toLowerCase() : null;
-      final fechaStr = m['fechaNacimiento'] ?? m['fecha_nac'];
+      final fechaStr = m['fechaNacimiento'] ?? m['fecha_nac'] ?? m['cumpleanos'];
       if (fechaStr is String && fechaStr.isNotEmpty) {
         _fechaNac = DateTime.tryParse(fechaStr);
       } else if (fechaStr is DateTime) {
         _fechaNac = fechaStr;
       }
       _cuidaConAlguien = m['cuidaConAlguien'] == true;
-      final ev = (m['estiloVida'] ?? 'mixto').toString();
-      if (_opcionesEstiloVida.contains(ev)) _estiloVida = ev; else _estiloVida = 'mixto';
       _cargando = false;
     });
   }
@@ -65,11 +59,9 @@ class _EditarMascotaPantallaState extends State<EditarMascotaPantalla> {
     final data = <String,dynamic>{
       'nombre': _nombreController.text.trim().isEmpty ? null : _nombreController.text.trim(),
       'raza': _razaController.text.trim().isEmpty ? null : _razaController.text.trim(),
-      'descripcion': _descripcionController.text.trim().isEmpty ? null : _descripcionController.text.trim(),
       'sexo': _sexo,
       'fechaNacimiento': _fechaNac?.toIso8601String(),
       'cuidaConAlguien': _cuidaConAlguien,
-      'estiloVida': _estiloVida,
     }..removeWhere((k,v) => v == null);
     final ok = await prov.actualizarMascota(widget.mascotaId, data);
     if (!mounted) return;
@@ -179,39 +171,12 @@ class _EditarMascotaPantallaState extends State<EditarMascotaPantalla> {
               decoration: const InputDecoration(border: InputBorder.none, hintText: 'Raza'),
             )),
             const SizedBox(height: 20),
-            _titulo('Descripción'),
-            _caja(TextField(
-              controller: _descripcionController,
-              maxLines: 3,
-              decoration: const InputDecoration(border: InputBorder.none, hintText: 'Descripción (opcional)'),
-            )),
-            const SizedBox(height: 20),
             _titulo('¿Cuidas con alguien más?'),
             Row(children:[
               _opcionBool('Sí', _cuidaConAlguien, true),
               const SizedBox(width: 8),
               _opcionBool('No', !_cuidaConAlguien, false),
             ]),
-            const SizedBox(height: 20),
-            _titulo('Estilo de vida'),
-            Row(children: _opcionesEstiloVida.map((e){
-              final sel = _estiloVida==e;
-              return Expanded(child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal:4.0),
-                child: GestureDetector(
-                  onTap: ()=> setState(()=> _estiloVida=e),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical:12),
-                    decoration: BoxDecoration(
-                      color: sel? const Color(0xFF4CAF50): Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: sel? const Color(0xFF4CAF50): Colors.grey.shade400),
-                    ),
-                    child: Text(e, textAlign: TextAlign.center, style: TextStyle(color: sel? Colors.white: Colors.black87, fontWeight: FontWeight.w600)),
-                  ),
-                ),
-              ));
-            }).toList()),
             const SizedBox(height: 40),
           ],
         ),
@@ -248,7 +213,6 @@ class _EditarMascotaPantallaState extends State<EditarMascotaPantalla> {
   void dispose() {
     _nombreController.dispose();
     _razaController.dispose();
-    _descripcionController.dispose();
     super.dispose();
   }
 }

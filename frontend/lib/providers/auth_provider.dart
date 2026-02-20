@@ -19,6 +19,7 @@ class AuthProvider with ChangeNotifier {
   Map<String, dynamic>? _user;
   String? _errorMessage;
   bool _mantenerSesion = false;
+  bool _authBootstrapDone = false;
 
   // Getters
   bool get isLoading => _isLoading;
@@ -26,28 +27,53 @@ class AuthProvider with ChangeNotifier {
   Map<String, dynamic>? get user => _user;
   String? get errorMessage => _errorMessage;
   bool get mantenerSesion => _mantenerSesion;
+  bool get authBootstrapDone => _authBootstrapDone;
 
   // Constructor
   AuthProvider() {
     _checkAuthStatus();
   }
 
+  Future<void> _logRememberState(String tag) async {
+    final prefs = await SharedPreferences.getInstance();
+    final rememberCorreo = prefs.getString('remember_correo');
+    final rememberPassword = prefs.getString('remember_password');
+    final rememberToken = prefs.getString('remember_token');
+    final authToken = prefs.getString('auth_token');
+    final keepSession = prefs.getBool('keep_session');
+    debugPrint('[REMEMBER][$tag] authToken=${authToken != null ? "set" : "null"} rememberToken=${rememberToken != null ? "set" : "null"} correo=$rememberCorreo pass=${rememberPassword != null ? "set" : "null"} keep_session=$keepSession');
+  }
+
   // Verificar si el usuario está autenticado
   Future<void> _checkAuthStatus() async {
-    final token = await _apiService.getToken();
-    if (token != null) {
-      await obtenerPerfil();
-      return;
-    }
-    // Intentar remember token
-    final prefs = await SharedPreferences.getInstance();
-    final remember = prefs.getString('remember_token');
-    final correo = prefs.getString('remember_correo');
-    final password = prefs.getString('remember_password');
-    _mantenerSesion = prefs.getBool('keep_session') ?? false;
-    if (remember != null && correo != null && password != null) {
-      // Intentar login silencioso
-      await iniciarSesion(correo: correo, password: password, recordar: true, silencioso: true);
+    debugPrint('--- _checkAuthStatus START ---');
+    try {
+      final token = await _apiService.getToken();
+      debugPrint('Token from storage: $token');
+      await _logRememberState('bootstrap-start');
+      if (token != null) {
+        debugPrint('Calling obtenerPerfil()...');
+        final success = await obtenerPerfil();
+        debugPrint('obtenerPerfil() success: $success');
+        if (success) return;
+      }
+      // Intentar remember con credenciales guardadas
+      final prefs = await SharedPreferences.getInstance();
+      final correo = prefs.getString('remember_correo');
+      final password = prefs.getString('remember_password');
+      _mantenerSesion = prefs.getBool('keep_session') ?? false;
+      debugPrint('Remember credentials: correo=$correo, password=${password != null ? "***" : "null"}, keep_session=$_mantenerSesion');
+      if (correo != null && password != null) {
+        // Intentar login silencioso
+        debugPrint('Calling iniciarSesion silencioso...');
+        final success = await iniciarSesion(correo: correo, password: password, recordar: true, silencioso: true);
+        debugPrint('iniciarSesion silencioso success: $success');
+        await _logRememberState('bootstrap-after-silent-login');
+      }
+    } finally {
+      _authBootstrapDone = true;
+      debugPrint('--- _checkAuthStatus END (isAuthenticated: $_isAuthenticated) ---');
+      notifyListeners();
     }
   }
 
@@ -96,6 +122,8 @@ class AuthProvider with ChangeNotifier {
   }) async {
     _setLoading(true);
     if (!silencioso) _clearError();
+    debugPrint('[LOGIN] iniciarSesion correo=$correo recordar=$recordar silencioso=$silencioso mantenerSesion=$_mantenerSesion');
+    await _logRememberState('login-before-api');
 
     try {
       final result = await _apiService.iniciarSesion(
@@ -134,20 +162,25 @@ class AuthProvider with ChangeNotifier {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('remember_correo', correo);
           await prefs.setString('remember_password', password); // Nota: en producción usar cifrado
+          debugPrint('[LOGIN] remember guardado por checkbox');
         }
         if (_mantenerSesion) {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('remember_correo', correo);
           await prefs.setString('remember_password', password);
+          debugPrint('[LOGIN] remember guardado por mantener sesión');
         }
+        await _logRememberState('login-after-save');
         _setLoading(false);
         return true;
       } else {
+        debugPrint('[LOGIN] login fallido message=${result['message']}');
         if (!silencioso) _setError(result['message']);
         _setLoading(false);
         return false;
       }
     } catch (e) {
+      debugPrint('[LOGIN] excepción en iniciarSesion: $e');
       if (!silencioso) _setError('Error de conexión: $e');
       _setLoading(false);
       return false;
@@ -165,11 +198,11 @@ class AuthProvider with ChangeNotifier {
         notifyListeners();
         return true;
       } else {
-        _cerrarSesionLocal();
+        _cerrarSesionLocal(clearRemember: false);
         return false;
       }
     } catch (e) {
-      _cerrarSesionLocal();
+      _cerrarSesionLocal(clearRemember: false);
       return false;
     }
   }
@@ -182,22 +215,26 @@ class AuthProvider with ChangeNotifier {
       // No almacenamos el token local aún; podrías guardarlo en SharedPreferences si quieres eliminarlo con precisión
     } catch (_) {}
     await _apiService.cerrarSesion();
-    _cerrarSesionLocal(context: context);
+    _cerrarSesionLocal(context: context, clearRemember: true);
   }
 
   // Cerrar sesión local
-  void _cerrarSesionLocal({BuildContext? context}) {
+  void _cerrarSesionLocal({BuildContext? context, bool clearRemember = false}) {
     _isAuthenticated = false;
     _user = null;
-    // Limpiar datos remember
-    SharedPreferences.getInstance().then((prefs) {
-      prefs.remove('remember_correo');
-      prefs.remove('remember_password');
-      if (!_mantenerSesion) {
-        prefs.remove('keep_session');
-      }
-      // No borro remember_token para posible auditoría, pero se podría
-    });
+    debugPrint('[AUTH] _cerrarSesionLocal clearRemember=$clearRemember');
+    if (clearRemember) {
+      // Limpiar datos remember
+      SharedPreferences.getInstance().then((prefs) {
+        prefs.remove('remember_correo');
+        prefs.remove('remember_password');
+        prefs.remove('remember_token');
+        if (!_mantenerSesion) {
+          prefs.remove('keep_session');
+        }
+        debugPrint('[AUTH] remember limpiado en logout');
+      });
+    }
     _clearError();
     notifyListeners();
     // Limpiar otros providers para evitar fugas entre usuarios
@@ -221,7 +258,7 @@ class AuthProvider with ChangeNotifier {
   Future<void> handleUnauthorized({BuildContext? context}) async {
     if (!_isAuthenticated) return; // ya deslogueado
     await _apiService.removeToken();
-    _cerrarSesionLocal(context: context);
+    _cerrarSesionLocal(context: context, clearRemember: false);
   }
 
   // Métodos privados para manejar el estado
@@ -259,3 +296,4 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 }
+

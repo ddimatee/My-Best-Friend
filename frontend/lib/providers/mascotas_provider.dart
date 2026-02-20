@@ -9,6 +9,7 @@ class MascotasProvider with ChangeNotifier {
   String? _error;
   final List<Map<String, dynamic>> _mascotas = [];
   DateTime? _ultimaCarga;
+  String? _cacheToken;
 
   bool get cargando => _cargando;
   bool get sincronizando => _sincronizando;
@@ -17,6 +18,13 @@ class MascotasProvider with ChangeNotifier {
   DateTime? get ultimaCarga => _ultimaCarga;
 
   Future<void> cargarMascotas({bool forzar = false}) async {
+    final tokenActual = await _api.getToken();
+    if (tokenActual == null || tokenActual != _cacheToken) {
+      _mascotas.clear();
+      _ultimaCarga = null;
+      _cacheToken = tokenActual;
+    }
+
     if (_cargando) return;
     if (!forzar && _mascotas.isNotEmpty && _ultimaCarga != null && DateTime.now().difference(_ultimaCarga!).inMinutes < 5) {
       return; // cache fresca
@@ -28,6 +36,7 @@ class MascotasProvider with ChangeNotifier {
       _mascotas
         ..clear()
         ..addAll((resp['data'] as List).cast<Map<String, dynamic>>());
+      _cacheToken = tokenActual;
       if (kDebugMode) {
         // ignore: avoid_print
         print('🐕 Mascotas recibidas (${_mascotas.length}): ' + _mascotas.map((m)=>'${m['_id']}:${m['nombre']}').join(', '));
@@ -137,6 +146,7 @@ class MascotasProvider with ChangeNotifier {
   void clear() {
     _mascotas.clear();
     _ultimaCarga = null;
+    _cacheToken = null;
     _error = null;
     notifyListeners();
   }

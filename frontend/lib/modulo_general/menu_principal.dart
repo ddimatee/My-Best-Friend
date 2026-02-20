@@ -521,9 +521,10 @@ class _MenuPrincipalState extends State<MenuPrincipal> {
   }
 
   String _edadFormateada(Map<String,dynamic> m) {
-    final fechaStr = m['fechaNacimiento'] ?? m['fecha_nac'] ?? m['createdAt'];
+    final fechaStr = m['fechaNacimiento'] ?? m['fecha_nac'] ?? m['cumpleanos'] ?? m['createdAt'];
     DateTime? base;
     if (fechaStr is String) base = DateTime.tryParse(fechaStr);
+    if (fechaStr is DateTime) base = fechaStr;
     if (base == null) return '';
     final diff = DateTime.now().difference(base);
     final dias = diff.inDays;

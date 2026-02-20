@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../providers/vacunas_provider.dart';
-import '../../providers/mascotas_provider.dart';
 import 'detalle_vacuna.dart';
 import 'formulario_vacuna.dart';
 import '../modulo_general/widgets/bottom_nav_global.dart';
@@ -208,19 +207,7 @@ class _VacunasPantallaState extends State<VacunasPantalla> {
   @override
   Widget build(BuildContext context) {
     final vacProv = context.watch<VacunasProvider>();
-    final mascotasProv = context.watch<MascotasProvider>();
-    final listaMascotas = mascotasProv.mascotas;
-    final Map<String, Map<String, dynamic>> mascotasUnicas = {};
-    for (final m in listaMascotas) {
-      final id = (m['_id'] ?? m['id'])?.toString();
-      if (id == null || id.isEmpty) continue;
-      mascotasUnicas.putIfAbsent(id, () => m);
-    }
-    final mascotaFiltroValida = (_mascotaSeleccionada != null &&
-            mascotasUnicas.containsKey(_mascotaSeleccionada))
-        ? _mascotaSeleccionada
-        : null;
-    
+
     // Si no hay mascota seleccionada ("Todas"), obtener todas las vacunas
     final vacunas = (_mascotaSeleccionada == null && !widget.bloquearMascota)
         ? vacProv.todasLasVacunas() // Obtener todas las vacunas
@@ -267,32 +254,6 @@ class _VacunasPantallaState extends State<VacunasPantalla> {
       ),
       body: Column(
         children: [
-          // Selector de mascota (simple dropdown)
-            if (mascotasUnicas.isNotEmpty && !widget.bloquearMascota)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                child: DropdownButtonFormField<String>(
-                  value: mascotaFiltroValida,
-                  isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Filtrar por mascota',
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)), borderSide: BorderSide.none),
-                  ),
-                  items: [
-                    const DropdownMenuItem<String>(value: null, child: Text('Todas', overflow: TextOverflow.ellipsis)),
-                    ...mascotasUnicas.entries.map((entry) => DropdownMenuItem<String>(
-                      value: entry.key,
-                      child: Text((entry.value['nombre'] ?? 'Mascota').toString(), overflow: TextOverflow.ellipsis),
-                        ))
-                  ].cast<DropdownMenuItem<String>>(),
-                  onChanged: (val) {
-                    setState(() => _mascotaSeleccionada = val);
-                    context.read<VacunasProvider>().cargarVacunas(mascotaId: val, forzar: true);
-                  },
-                ),
-              ),
           Expanded(
             child: vacProv.cargando
                 ? const Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.white)))

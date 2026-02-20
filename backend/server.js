@@ -144,8 +144,11 @@ app.get('/api/usuarios/count', async (_req, res) => {
 
 // POST /api/usuarios/login — autenticación por correo + contraseña
 app.post('/api/usuarios/login', async (req, res) => {
-  const { correo, contraseña, recordar } = req.body || {};
-  if (!correo || !contraseña) {
+  const payload = req.body || {};
+  const correo = payload.correo;
+  const contrasena = payload['contraseña'] ?? payload.password;
+  const recordar = payload.recordar === true;
+  if (!correo || !contrasena) {
     return res.status(400).json({ success: false, message: 'Correo y contraseña son requeridos' });
   }
   try {
@@ -155,7 +158,7 @@ app.post('/api/usuarios/login', async (req, res) => {
       return res.status(401).json({ success: false, message: 'Correo no registrado' });
     }
     // Comparación simple (el seed guardó en campo 'password' — en producción usar bcrypt)
-    if (usuario.password !== contraseña) {
+    if (usuario.password !== contrasena) {
       return res.status(401).json({ success: false, message: 'Contraseña incorrecta' });
     }
     // Generar / reutilizar token de sesión
@@ -174,10 +177,14 @@ app.post('/api/usuarios/login', async (req, res) => {
     }
     const rememberToken = recordar ? crypto.randomBytes(32).toString('hex') : null;
     if (rememberToken) {
-      await db.collection('usuarios').updateOne(
-        { _id: usuario._id },
-        { $set: { rememberToken } }
-      );
+      try {
+        await db.collection('usuarios').updateOne(
+          { _id: usuario._id },
+          { $set: { rememberToken } }
+        );
+      } catch (errRemember) {
+        console.warn('Aviso login: no se pudo persistir rememberToken (continuando):', errRemember?.message || errRemember);
+      }
     }
     return res.json({
       success: true,

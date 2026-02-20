@@ -61,12 +61,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
 		try {
 			final authProvider = Provider.of<AuthProvider>(context, listen: false);
+			debugPrint('[UI LOGIN] submit recordar=$recordar correo=${correoController.text.trim()}');
 			
 			final exito = await authProvider.iniciarSesion(
 				correo: correoController.text.trim(),
 				password: contrasenaController.text,
+				recordar: recordar,
 				contextForProviders: context,
 			);
+			debugPrint('[UI LOGIN] resultado exito=$exito auth.isAuthenticated=${authProvider.isAuthenticated}');
 
 			if (exito) {
 				// Login exitoso
