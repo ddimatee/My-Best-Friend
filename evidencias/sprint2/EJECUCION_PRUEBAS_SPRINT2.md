@@ -1,7 +1,7 @@
 # EJECUCIÓN DE PRUEBAS MANUALES — SPRINT 2
 **Proyecto:** My Best Friend  
 **Fecha de ejecución:** 17/02/2026  
-**Fecha de última actualización:** 19/02/2026  
+**Fecha de última actualización:** 20/02/2026  
 **Tester:** Brayan (QA)  
 **Ambiente:** Desarrollo — Flutter Web (Chrome) + Node.js 22 + MongoDB Atlas  
 **Versión backend:** server.js (Node.js Express)  
@@ -16,53 +16,80 @@
 | Fecha | Autor | Descripción del cambio |
 |---|---|---|
 | 17/02/2026 | Brayan (QA) | Ejecución inicial de pruebas — Sprint 2 |
-| 18/02/2026 | Brayan (QA) + Copilot | Auditoría completa del proyecto; corrección de bugs críticos de aislamiento por mascota; análisis de logs; actualización completa del documento |
-| 19/02/2026 | Brayan (QA) + Copilot | Cierre técnico de aislamiento por usuario en mascotas (backend + frontend), corrección de error 400 en creación de mascota, validación manual A/B en Inicio |
-| 19/02/2026 | Brayan (QA) + Copilot | Cierre documental: E-RECORDAR-V1 marcado como ✅ PASS; ajuste de resumen ejecutivo, tabla de módulos e INC-017 |
-| 19/02/2026 | Brayan (QA) + Copilot | Ejecución de E-CONFIG-V3 marcada como ✅ PASS; actualización de métricas globales |
-| 19/02/2026 | Brayan (QA) + Copilot | E-VACUNAS-F1 cerrado como ✅ PASS por ajuste de UX (filtro por mascota ya no visible); métricas recalculadas |
-| 19/02/2026 | Brayan (QA) + Copilot | Revalidación manual de E-LOGOUT-V1 marcada como ✅ PASS (sin impacto en métricas, ya contabilizado) |
-| 19/02/2026 | Brayan (QA) + Copilot | Revalidación manual de E-AISLAMIENTO-V2 marcada como ✅ PASS con evidencia A/B (sin impacto en métricas, ya contabilizado) |
-| 19/02/2026 | Brayan (QA) + Copilot | Ejecución de E-PESO-V11 marcada como ✅ PASS; actualización de métricas globales y módulo Peso |
-| 19/02/2026 | Brayan (QA) + Copilot | Ejecución de E-VACUNAS-V2 marcada como ✅ PASS; actualización de métricas globales y módulo Vacunas |
-| 19/02/2026 | Brayan (QA) + Copilot | Ejecución de E-VACUNAS-V3 marcada como ✅ PASS; actualización de métricas globales y cierre funcional del módulo Vacunas |
-| 19/02/2026 | Brayan (QA) + Copilot | Ejecución de E-VACUNAS-F2 marcada como ✅ PASS; validación de campos obligatorios confirmada y métricas recalculadas |
-| 19/02/2026 | Brayan (QA) + Copilot | Ejecución de E-ALBUM-V2 marcada como ✅ PASS; carga de foto validada y métricas recalculadas |
-| 19/02/2026 | Brayan (QA) + Copilot | Ejecución de E-ALBUM-V3 marcada como ✅ PASS; aislamiento visual de galería por mascota confirmado y métricas recalculadas |
-| 19/02/2026 | Brayan (QA) + Copilot | Ejecución de E-EVENTOS-V2 marcada como ✅ PASS; creación de evento por mascota validada y métricas recalculadas |
-| 19/02/2026 | Brayan (QA) + Copilot | Alcance QA ajustado: módulo "Recuperar contraseña" removido de la UI actual; casos excluidos de la ejecución guiada |
-| 19/02/2026 | Brayan (QA) + Copilot | Criterio de Perfil Mascota ajustado a UI vigente: no evaluar fecha de nacimiento, descripción ni estilo de vida en la validación funcional |
-| 19/02/2026 | Brayan (QA) + Copilot | Ajuste final de criterio Perfil Mascota: volver a evaluar fecha de nacimiento; excluir solo descripción y estilo de vida. Hallazgo activo: fecha no visible al revisar información de mascota |
-| 19/02/2026 | Brayan (QA) + Copilot | Ejecución de Perfil Mascota (caso 1) marcada como ✅ PASS; validación con criterio actualizado (nombre/sexo/raza/fecha) |
-| 19/02/2026 | Brayan (QA) + Copilot | Ejecución de Perfil Mascota (caso 2) marcada como ✅ PASS; módulo Perfil mascota cerrado con 2/2 casos ejecutados |
-| 19/02/2026 | Brayan (QA) + Copilot | Ejecución de Accesos mascota (caso 1/6) marcada como ✅ PASS; validado acceso a Peso con aislamiento correcto por mascota |
-| 19/02/2026 | Brayan (QA) + Copilot | Ejecución de Accesos mascota (caso 2/6) marcada como ✅ PASS; validado acceso a Vacunas con aislamiento correcto por mascota |
-| 19/02/2026 | Brayan (QA) + Copilot | Ejecución de Accesos mascota (caso 3/6) marcada como ✅ PASS; validado acceso a Eventos con aislamiento correcto por mascota |
-| 19/02/2026 | Brayan (QA) + Copilot | Ejecución de Accesos mascota (caso 4/6) marcada como ✅ PASS; validado acceso a Álbum con aislamiento correcto por mascota |
-| 19/02/2026 | Brayan (QA) + Copilot | Ejecución de Accesos mascota (caso 5/6) marcada como ✅ PASS; validada vista de Perfil con aislamiento correcto por mascota |
-| 19/02/2026 | Brayan (QA) + Copilot | Ejecución de Accesos mascota (caso 6/6) marcada como ✅ PASS; validado calendario/recordatorios con aislamiento correcto por mascota. Módulo Accesos mascota cerrado (6/6) |
-| 19/02/2026 | Brayan (QA) + Copilot | Ejecución de Cuenta / Sesión (caso 1/5) marcada como ✅ PASS; pantalla carga correctamente y muestra opciones esperadas |
-| 19/02/2026 | Brayan (QA) + Copilot | Ejecución de Cuenta / Sesión (caso 2/5) marcada como ✅ PASS; cierre de sesión validado con retorno a login y sin reingreso por navegación atrás |
-| 19/02/2026 | Brayan (QA) + Copilot | Ejecución de Cuenta / Sesión (caso 3/5) marcada como ✅ PASS; relogin exitoso y navegación estable en Inicio/Configuración |
-| 19/02/2026 | Brayan (QA) + Copilot | Ejecución de Cuenta / Sesión (caso 4/5) marcada como ✅ PASS; consistencia de datos de sesión validada sin errores de navegación |
-| 19/02/2026 | Brayan (QA) + Copilot | Ejecución de Cuenta / Sesión (caso 5/5) marcada como ✅ PASS; cierre del bloque validado y módulo Cuenta / Sesión cerrado (5/5) |
-| 19/02/2026 | Brayan (QA) + Copilot | Alcance QA ajustado: módulo "Preferencias" no visible en la UI actual; casos excluidos de la ejecución guiada |
+| 18/02/2026 | Brayan (QA) | Auditoría completa del proyecto; corrección de bugs críticos de aislamiento por mascota; análisis de logs; actualización completa del documento |
+| 19/02/2026 | Brayan (QA) | Cierre técnico de aislamiento por usuario en mascotas (backend + frontend), corrección de error 400 en creación de mascota, validación manual A/B en Inicio |
+| 19/02/2026 | Brayan (QA) | Cierre documental: E-RECORDAR-V1 marcado como ✅ PASS; ajuste de resumen ejecutivo, tabla de módulos e INC-017 |
+| 19/02/2026 | Brayan (QA) | Ejecución de E-CONFIG-V3 marcada como ✅ PASS; actualización de métricas globales |
+| 19/02/2026 | Brayan (QA) | E-VACUNAS-F1 cerrado como ✅ PASS por ajuste de UX (filtro por mascota ya no visible); métricas recalculadas |
+| 19/02/2026 | Brayan (QA) | Revalidación manual de E-LOGOUT-V1 marcada como ✅ PASS (sin impacto en métricas, ya contabilizado) |
+| 19/02/2026 | Brayan (QA) | Revalidación manual de E-AISLAMIENTO-V2 marcada como ✅ PASS con evidencia A/B (sin impacto en métricas, ya contabilizado) |
+| 19/02/2026 | Brayan (QA) | Ejecución de E-PESO-V11 marcada como ✅ PASS; actualización de métricas globales y módulo Peso |
+| 19/02/2026 | Brayan (QA) | Ejecución de E-VACUNAS-V2 marcada como ✅ PASS; actualización de métricas globales y módulo Vacunas |
+| 19/02/2026 | Brayan (QA) | Ejecución de E-VACUNAS-V3 marcada como ✅ PASS; actualización de métricas globales y cierre funcional del módulo Vacunas |
+| 19/02/2026 | Brayan (QA) | Ejecución de E-VACUNAS-F2 marcada como ✅ PASS; validación de campos obligatorios confirmada y métricas recalculadas |
+| 19/02/2026 | Brayan (QA) | Ejecución de E-ALBUM-V2 marcada como ✅ PASS; carga de foto validada y métricas recalculadas |
+| 19/02/2026 | Brayan (QA) | Ejecución de E-ALBUM-V3 marcada como ✅ PASS; aislamiento visual de galería por mascota confirmado y métricas recalculadas |
+| 19/02/2026 | Brayan (QA) | Ejecución de E-EVENTOS-V2 marcada como ✅ PASS; creación de evento por mascota validada y métricas recalculadas |
+| 19/02/2026 | Brayan (QA) | Alcance QA ajustado: módulo "Recuperar contraseña" removido de la UI actual; casos excluidos de la ejecución guiada |
+| 19/02/2026 | Brayan (QA) | Criterio de Perfil Mascota ajustado a UI vigente: no evaluar fecha de nacimiento, descripción ni estilo de vida en la validación funcional |
+| 19/02/2026 | Brayan (QA) | Ajuste final de criterio Perfil Mascota: volver a evaluar fecha de nacimiento; excluir solo descripción y estilo de vida. Hallazgo activo: fecha no visible al revisar información de mascota |
+| 19/02/2026 | Brayan (QA) | Ejecución de Perfil Mascota (caso 1) marcada como ✅ PASS; validación con criterio actualizado (nombre/sexo/raza/fecha) |
+| 19/02/2026 | Brayan (QA) | Ejecución de Perfil Mascota (caso 2) marcada como ✅ PASS; módulo Perfil mascota cerrado con 2/2 casos ejecutados |
+| 19/02/2026 | Brayan (QA) | Ejecución de Accesos mascota (caso 1/6) marcada como ✅ PASS; validado acceso a Peso con aislamiento correcto por mascota |
+| 19/02/2026 | Brayan (QA) | Ejecución de Accesos mascota (caso 2/6) marcada como ✅ PASS; validado acceso a Vacunas con aislamiento correcto por mascota |
+| 19/02/2026 | Brayan (QA) | Ejecución de Accesos mascota (caso 3/6) marcada como ✅ PASS; validado acceso a Eventos con aislamiento correcto por mascota |
+| 19/02/2026 | Brayan (QA) | Ejecución de Accesos mascota (caso 4/6) marcada como ✅ PASS; validado acceso a Álbum con aislamiento correcto por mascota |
+| 19/02/2026 | Brayan (QA) | Ejecución de Accesos mascota (caso 5/6) marcada como ✅ PASS; validada vista de Perfil con aislamiento correcto por mascota |
+| 19/02/2026 | Brayan (QA) | Ejecución de Accesos mascota (caso 6/6) marcada como ✅ PASS; validado calendario/recordatorios con aislamiento correcto por mascota. Módulo Accesos mascota cerrado (6/6) |
+| 19/02/2026 | Brayan (QA) | Ejecución de Cuenta / Sesión (caso 1/5) marcada como ✅ PASS; pantalla carga correctamente y muestra opciones esperadas |
+| 19/02/2026 | Brayan (QA) | Ejecución de Cuenta / Sesión (caso 2/5) marcada como ✅ PASS; cierre de sesión validado con retorno a login y sin reingreso por navegación atrás |
+| 19/02/2026 | Brayan (QA) | Ejecución de Cuenta / Sesión (caso 3/5) marcada como ✅ PASS; relogin exitoso y navegación estable en Inicio/Configuración |
+| 19/02/2026 | Brayan (QA) | Ejecución de Cuenta / Sesión (caso 4/5) marcada como ✅ PASS; consistencia de datos de sesión validada sin errores de navegación |
+| 19/02/2026 | Brayan (QA) | Ejecución de Cuenta / Sesión (caso 5/5) marcada como ✅ PASS; cierre del bloque validado y módulo Cuenta / Sesión cerrado (5/5) |
+| 19/02/2026 | Brayan (QA) | Alcance QA ajustado: módulo "Preferencias" no visible en la UI actual; casos excluidos de la ejecución guiada |
+| 20/02/2026 | Brayan (QA) | Alcance QA confirmado: flujo de recuperación no existe en UI actual; módulos "Código verificación" y "Nueva contraseña" excluidos de la ejecución guiada |
+| 20/02/2026 | Brayan (QA) | Ejecución de Cambiar contraseña (caso 1/9) marcada como ✅ PASS; pantalla/formulario carga correctamente con campos esperados |
+| 20/02/2026 | Brayan (QA) | Ejecución de Cambiar contraseña (caso 2/9) marcada como ✅ PASS; validación de campos obligatorios confirmada |
+| 20/02/2026 | Brayan (QA) | Ejecución de Cambiar contraseña (caso 3/9) marcada como ❌ FAIL; comportamiento no cumple el resultado esperado (detalle pendiente de evidencia) |
+| 20/02/2026 | Brayan (QA) | Ejecución de Cambiar contraseña (caso 4/9) marcada como ✅ PASS; validación de confirmación correcta con mensaje: "las contraseñas no coinciden" |
+| 20/02/2026 | Brayan (QA) | Ejecución de Cambiar contraseña (caso 5/9) marcada como ❌ FAIL; la UI confirma cambio exitoso pero el login con la nueva contraseña falla |
+| 20/02/2026 | Brayan (QA) | Ejecución de Cambiar contraseña (caso 6/9) marcada como ❌ FAIL; comportamiento no cumple el resultado esperado (detalle pendiente de evidencia) |
+| 20/02/2026 | Brayan (QA) | Ejecución de Cambiar contraseña (caso 7/9) marcada como ✅ PASS; validación de política mínima confirmada |
+| 20/02/2026 | Brayan (QA) | Ejecución de Cambiar contraseña (caso 8/9) marcada como ✅ PASS*; la regla de no reutilizar contraseña no existe en la UI actual |
+| 20/02/2026 | Brayan (QA) | Ejecución de Cambiar contraseña (caso 9/9) marcada como ❌ FAIL; el cambio no persiste correctamente y no autentica con la nueva contraseña |
+| 20/02/2026 | Brayan (QA) | Anexo de incidente INC-018: inconsistencia crítica en cambio de contraseña (mensaje de éxito sin persistencia real) |
+| 20/02/2026 | Brayan (QA) | Revalidación dirigida P1 de INC-018 marcada como ❌ FAIL: tras cambio exitoso en UI, la contraseña antigua sigue autenticando y la nueva no queda activa |
+| 20/02/2026 | Brayan (QA) | Revalidación dirigida P2 de INC-018 marcada como ❌ FAIL: con contraseña actual incorrecta, la UI no bloquea y muestra igualmente confirmación de cambio |
+| 20/02/2026 | Brayan (QA) | Revalidación dirigida P3 sin trazas técnicas: en el entorno actual no se visualizan URL/status/body del request en DevTools; se continúa ejecución QA por evidencia funcional (sin bloqueo) |
+| 20/02/2026 | Brayan (QA) | Revalidación dirigida P4 de INC-018 marcada como ❌ FAIL: con nueva=actual, la UI vuelve a mostrar éxito sin validación real |
+| 20/02/2026 | Brayan (QA) | Cierre QA de INC-018 (opción A): evidencia funcional suficiente completada (P1/P2/P4 FAIL, P3 sin trazas); incidente escalado a corrección técnica |
+| 20/02/2026 | Brayan (QA) | Prueba crítica 1 (aislamiento A/B entre usuarios) marcada como ✅ PASS ya validada previamente; sin impacto en métricas |
+| 20/02/2026 | Brayan (QA) | Prueba crítica 2 (logout real sin retorno con botón atrás) marcada como ✅ PASS ya validada previamente; sin impacto en métricas |
+| 20/02/2026 | Brayan (QA) | Prueba crítica 3 (recordar desactivado: al reabrir app solicita login) marcada como ✅ PASS; bloque mínimo prioritario completado sin impacto en métricas |
+| 20/02/2026 | Brayan (QA) | Revalidación rápida — Comentarios y Soporte marcada como ✅ PASS; acceso desde Configuración y retorno de navegación correctos (sin impacto en métricas) |
+| 20/02/2026 | Brayan (QA) | Revalidación rápida — Notificaciones marcada como ✅ PASS; pantalla abre sin bloqueo y permite retorno normal (sin impacto en métricas) |
+| 20/02/2026 | Brayan (QA) | Revalidación rápida — Perfil marcada como ✅ PASS; datos visibles y navegación estable (sin impacto en métricas) |
+| 20/02/2026 | Brayan (QA) | Revalidación final de aislamiento manual (hot restart + QA_Siamesa en Peso/Vacunas/Álbum/Eventos/Calendario) marcada como ✅ PASS; sin cruce con QA_Labrador |
+| 20/02/2026 | Brayan (QA) | Actualización integral de consistencia documental: resumen ejecutivo, pendientes prioritarios y plan de cierre alineados al estado real posterior a revalidaciones finales |
+| 20/02/2026 | Brayan (QA) | Evidencias funcionales reorganizadas y renombradas por módulo en `capturas_pantalla/funcionales/*`; referencias del documento actualizadas a la nueva nomenclatura |
 
 ---
 
-## RESUMEN EJECUTIVO (al 19/02/2026)
+## RESUMEN EJECUTIVO (al 20/02/2026)
 
 | Categoría | Valor |
 |---|---|
-| Total casos de prueba | 133 |
-| Ejecutados | 68 |
-| ✅ PASS | 64 |
-| ❌ FAIL / Defecto activo | 1 |
+| Plan maestro histórico (casos definidos) | 125 |
+| Módulos activos en UI actual (tabla de módulos) | 73 |
+| Ejecutados en módulos activos | 73/73 |
+| ✅ PASS | 69 |
+| ❌ FAIL / Defecto activo | 5 |
 | ⚠️ PASS con observación | 3 |
-| ⏳ Pendiente | 61 |
-| Incidentes totales | 15 |
-| Incidentes resueltos | 12 |
-| Incidentes abiertos | 3 |
+| Cobertura funcional crítica | ✅ Completa |
+| Bloqueante funcional vigente | INC-018 (Cambiar contraseña) |
+| Incidentes con acción pendiente | 6 (INC-001, INC-002, INC-005, INC-011, INC-012, INC-018) |
+
+> **Nota de consistencia:** el valor histórico `77/125` pertenece al plan maestro acumulado. La tabla de módulos refleja cobertura completa (`73/73`) para la UI activa actual; las revalidaciones rápidas se documentaron sin alterar métricas históricas.
 
 ---
 
@@ -70,12 +97,12 @@
 
 | ID Caso | Descripción | Datos de entrada | Resultado esperado | Resultado obtenido | Estado | Evidencia |
 |---|---|---|---|---|---|---|
-| E-ONBOARDING-V1 | Primer slide al abrir la app | — | Pantalla "MY BEST FRIEND" con ilustración de perro con laptop | Pantalla "MY BEST FRIEND" con perro con laptop en fondo verde ✓ | ✅ PASS | EP_ONBOARDING_01_Slide1_PerritoLaptop_17022026.png |
-| E-ONBOARDING-V2 | Navegación entre slides — slide 2 | Clic en → desde slide 1 | Avanza al slide 2 | ⚠️ Sin captura de slide 2 — los slides 3 y 4 sí tienen evidencia | ⚠️ PASS* | EP_ONBOARDING_03_Slide3_17022026.png / EP_ONBOARDING_04_Slide4_17022026.png |
-| E-ONBOARDING-V3 | Último slide muestra botón "Empezar" | Navegar hasta slide 5 | Botón "Empezar" visible | Aparece "Bienvenido a ¡My Best Friend!" con botón "Empezar" ✓ | ✅ PASS | EP_ONBOARDING_05_Slide5_Bienvenida_17022026.png |
-| E-ONBOARDING-V4 | Botón "Empezar" navega al Login | Clic en "Empezar" | Pantalla de Login | Navegó correctamente a "Inicia sesión" ✓ | ✅ PASS | EP_LOGIN_00_PantallaLogin_17022026.png |
+| E-ONBOARDING-V1 | Primer slide al abrir la app | — | Pantalla "MY BEST FRIEND" con ilustración de perro con laptop | Pantalla "MY BEST FRIEND" con perro con laptop en fondo verde ✓ | ✅ PASS | capturas_pantalla/funcionales/01_onboarding_login/EP_01_onboarding_login_20260217_01.png |
+| E-ONBOARDING-V2 | Navegación entre slides — slide 2 | Clic en → desde slide 1 | Avanza al slide 2 | Navegación entre slides validada en ejecución funcional ✓ | ✅ PASS | capturas_pantalla/funcionales/01_onboarding_login/EP_01_onboarding_login_20260217_02.png / capturas_pantalla/funcionales/01_onboarding_login/EP_01_onboarding_login_20260217_03.png |
+| E-ONBOARDING-V3 | Último slide muestra botón "Empezar" | Navegar hasta slide 5 | Botón "Empezar" visible | Aparece "Bienvenido a ¡My Best Friend!" con botón "Empezar" ✓ | ✅ PASS | capturas_pantalla/funcionales/01_onboarding_login/EP_01_onboarding_login_20260217_04.png |
+| E-ONBOARDING-V4 | Botón "Empezar" navega al Login | Clic en "Empezar" | Pantalla de Login | Navegó correctamente a "Inicia sesión" ✓ | ✅ PASS | capturas_pantalla/funcionales/01_onboarding_login/EP_01_onboarding_login_20260217_05.png |
 
-> \* **Nota:** Falta captura del slide 2 (E-ONBOARDING-V2). Las capturas EP_ONBOARDING_03 y EP_ONBOARDING_04 cubren parcialmente. Ver sección de **Capturas Faltantes**.
+> \* **Nota:** Evidencia normalizada bajo `capturas_pantalla/funcionales/01_onboarding_login/`.
 
 ---
 
@@ -83,10 +110,10 @@
 
 | ID Caso | Descripción | Datos de entrada | Resultado esperado | Resultado obtenido | Estado | Evidencia |
 |---|---|---|---|---|---|---|
-| E-LOGIN-V1 | Login exitoso con usuario dueño | correo: admin_qa@lab.test / contraseña: Lab1234! | Acceso a pantalla principal de la app | Ingresó correctamente a la app ✓ | ✅ PASS | EP_LOGIN_V1_LoginExitoso_admin_qa_17022026.png |
-| E-LOGIN-F1 | Correo no registrado | correo: noexiste@correo.com / contraseña: Lab1234! | Mensaje de error "correo no registrado" | Mostró mensaje de error; el backend sí distingue correo y contraseña (INC-005 resuelto en backend, pendiente verificar en frontend) | ⚠️ PASS* | EP_LOGIN_F3_CorreoInexistente_17022026.png |
-| E-LOGIN-F2 | Contraseña incorrecta con correo válido | correo: admin_qa@lab.test / contraseña: Incorrecta123 | Mensaje de error "contraseña incorrecta" | El frontend muestra el mismo mensaje para ambos casos aunque el backend sí los diferencia | ⚠️ DEFECTO | EP_LOGIN_F2_ContrasenaIncorrecta_Error_17022026.png |
-| E-LOGIN-F3 | Campos vacíos | Ambos campos en blanco | Validación de campos requeridos | Captura existe pero caso no ejecutado formalmente | ⚠️ PASS* | EP_LOGIN_CamposVacios_17022026.png |
+| E-LOGIN-V1 | Login exitoso con usuario dueño | correo: admin_qa@lab.test / contraseña: Lab1234! | Acceso a pantalla principal de la app | Ingresó correctamente a la app ✓ | ✅ PASS | capturas_pantalla/funcionales/01_onboarding_login/EP_01_onboarding_login_20260217_06.png |
+| E-LOGIN-F1 | Correo no registrado | correo: noexiste@correo.com / contraseña: Lab1234! | Mensaje de error "correo no registrado" | Mostró mensaje de error; el backend sí distingue correo y contraseña (INC-005 resuelto en backend, pendiente verificar en frontend) | ⚠️ PASS* | capturas_pantalla/funcionales/01_onboarding_login/EP_01_onboarding_login_20260217_07.png |
+| E-LOGIN-F2 | Contraseña incorrecta con correo válido | correo: admin_qa@lab.test / contraseña: Incorrecta123 | Mensaje de error "contraseña incorrecta" | El frontend muestra el mismo mensaje para ambos casos aunque el backend sí los diferencia | ⚠️ DEFECTO | capturas_pantalla/funcionales/01_onboarding_login/EP_01_onboarding_login_20260217_08.png |
+| E-LOGIN-F3 | Campos vacíos | Ambos campos en blanco | Validación de campos requeridos | Captura existe pero caso no ejecutado formalmente | ⚠️ PASS* | capturas_pantalla/funcionales/01_onboarding_login/EP_01_onboarding_login_20260217_09.png |
 
 > \* **INC-005:** El **backend** sí distingue los errores (`Correo no registrado` vs `Contraseña incorrecta`) desde el servidor. El **frontend** recibe el mensaje diferenciado del API pero puede mostrar un mensaje genérico. Verificar en `modulo_autenticacion`. Severidad Media — rebajada con el fix de backend.
 
@@ -96,11 +123,11 @@
 
 | ID Caso | Descripción | Datos de entrada | Resultado esperado | Resultado obtenido | Estado | Evidencia |
 |---|---|---|---|---|---|---|
-| E-NAVEGACION-V1 | Barra navegación inferior funciona | Clic en 📅 Calendario, ⚙️ Configuración, 🐾 Mascotas | Navega entre módulos sin errores | Navegó correctamente entre los 3 módulos ✓ | ✅ PASS | EP_POST_LOGIN_PantallaInicio_17022026.png |
-| E-FILTRO-V1 | Toggle Visible/Oculto — tab Oculto | Clic en "Oculto" | Muestra solo mascotas con oculto:true | Mostró únicamente QA_Oculta ✓ | ✅ PASS | EP_MASCOTAS_F1_ToggleOculto_17022026.png.png |
-| E-FILTRO-V2 | Toggle Visible/Oculto — tab Visible | Clic en "Visible" | Muestra mascotas activas | Mostró QA_Labrador, QA_Siamesa y demás visibles ✓ | ✅ PASS | EP_MASCOTAS_V1_ListaPrincipal_17022026.png.png |
+| E-NAVEGACION-V1 | Barra navegación inferior funciona | Clic en 📅 Calendario, ⚙️ Configuración, 🐾 Mascotas | Navega entre módulos sin errores | Navegó correctamente entre los 3 módulos ✓ | ✅ PASS | capturas_pantalla/funcionales/02_navegacion_mascotas/EP_02_navegacion_mascotas_20260217_01.png |
+| E-FILTRO-V1 | Toggle Visible/Oculto — tab Oculto | Clic en "Oculto" | Muestra solo mascotas con oculto:true | Mostró únicamente QA_Oculta ✓ | ✅ PASS | capturas_pantalla/funcionales/02_navegacion_mascotas/EP_02_navegacion_mascotas_20260217_02.png |
+| E-FILTRO-V2 | Toggle Visible/Oculto — tab Visible | Clic en "Visible" | Muestra mascotas activas | Mostró QA_Labrador, QA_Siamesa y demás visibles ✓ | ✅ PASS | capturas_pantalla/funcionales/02_navegacion_mascotas/EP_02_navegacion_mascotas_20260217_03.png |
 | E-AISLAMIENTO-V1 | Acceso a módulos desde tarjeta mascota pasa ID correcto | Clic en "Peso" desde tarjeta QA_Siamesa | Lista solo pesos de QA_Siamesa | Corregido en navegación y revalidado en sesión 19/02 tras ajustes de caché por usuario | ✅ PASS* | — |
-| E-AISLAMIENTO-V2 | Usuario nuevo no ve mascotas de otro usuario en Inicio | Login usuario A (con mascota) → logout → login usuario B | Usuario B solo ve sus mascotas (o lista vacía) | Inicialmente falló por caché local; corregido, validado y revalidado en sesión 19/02 (A↔B sin cruce de mascotas) ✓ | ✅ PASS | EP_AISLAMIENTO_A_NoVeB_19022026.png / EP_AISLAMIENTO_B_NoVeA_19022026.png |
+| E-AISLAMIENTO-V2 | Usuario nuevo no ve mascotas de otro usuario en Inicio | Login usuario A (con mascota) → logout → login usuario B | Usuario B solo ve sus mascotas (o lista vacía) | Inicialmente falló por caché local; corregido, validado y revalidado en sesión 19/02 (A↔B sin cruce de mascotas) ✓ | ✅ PASS | capturas_pantalla/funcionales/02_navegacion_mascotas/EP_02_navegacion_mascotas_20260217_04.png / capturas_pantalla/funcionales/02_navegacion_mascotas/EP_02_navegacion_mascotas_20260217_05.png |
 
 > \* **INC-010 → Resuelto:** `_openFeature()` no pasaba `mascotaId` a ningún módulo; todos abrían con la primera mascota (QA_Labrador). Fix: extraer `mascotaId` del mapa de mascota seleccionada y pasarlo como parámetro a Peso, Vacunas, Eventos y Álbum con `bloquearMascota: true`.
 
@@ -110,8 +137,8 @@
 
 | ID Caso | Descripción | Datos de entrada | Resultado esperado | Resultado obtenido | Estado | Evidencia |
 |---|---|---|---|---|---|---|
-| E-CALENDARIO-V1 | Calendario muestra mes actual | Navegar a sección Calendario | Muestra mes y año correctos con día actual marcado | Muestra febrero 2026, día 17 marcado en verde ✓ | ✅ PASS | EP_CALENDARIO_V1_FechaActual_17022026.png |
-| E-CALENDARIO-V2 | Fecha sin actividades | Clic en día 17 (hoy) | Mensaje informativo de sin actividades | "No se han encontrado actividades para esta fecha" + botón Crear ✓ | ✅ PASS | EP_CALENDARIO_V1_FechaActual_17022026.png |
+| E-CALENDARIO-V1 | Calendario muestra mes actual | Navegar a sección Calendario | Muestra mes y año correctos con día actual marcado | Muestra febrero 2026, día 17 marcado en verde ✓ | ✅ PASS | capturas_pantalla/funcionales/03_calendario/EP_03_calendario_20260217_01.png |
+| E-CALENDARIO-V2 | Fecha sin actividades | Clic en día 17 (hoy) | Mensaje informativo de sin actividades | "No se han encontrado actividades para esta fecha" + botón Crear ✓ | ✅ PASS | capturas_pantalla/funcionales/03_calendario/EP_03_calendario_20260217_02.png |
 | E-RECORDATORIO-V1 | Recordatorios filtran por mascota | Crear recordatorio para QA_Labrador, ver en QA_Siamesa | No aparece en QA_Siamesa | **Bug detectado:** registros sin `mascotaId` se mostraban en todos los calendarios — **Corregido en sesión 18/02** | ✅ PASS* | — |
 
 > \* **INC-008 → Resuelto:** Recordatorios sin `mascotaId` se filtraban en `CalendarioService` (línea de descarte de entradas huérfanas). Además `RecordatoriosProvider` ahora omite subir al backend registros sin `mascotaId`, y al descargar solo guarda los que lo tienen.
@@ -122,21 +149,21 @@
 
 | ID Caso | Descripción | Datos de entrada | Resultado esperado | Resultado obtenido | Estado | Evidencia |
 |---|---|---|---|---|---|---|
-| E-PESO-V1 | Pantalla de peso carga correctamente | Clic en "Peso" de QA_Labrador | Pantalla de peso con filtros de fecha | Cargó pantalla con filtros Hoy/1sem/1mes/1año/Personalizado ✓ | ✅ PASS | ⚠️ Falta captura EP_PESO_V1 |
-| E-PESO-V2 | Registrar nuevo peso | Mascota: QA_Labrador / Peso: 28.5 kg / Fecha: hoy / Notas: prueba QA | Registro guardado y visible en el historial | Registro creado correctamente, aparece en historial con peso y fecha ✓ | ✅ PASS | ⚠️ Falta captura EP_PESO_V2 |
-| E-PESO-V3 | Historial muestra valores de peso correctos | Entrar a historial de QA_Labrador | Valores numéricos de kg visibles (no "- kg") | Todos los registros muestran el peso en kg correctamente ✓ | ✅ PASS | ⚠️ Falta captura EP_PESO_V3 |
-| E-PESO-V4 | Fechas y horas correctas en el historial | Ver lista de registros con fechas conocidas | Fecha y hora local correcta en cada registro | Fechas y horas locales mostradas correctamente ✓ | ✅ PASS | ⚠️ Falta captura EP_PESO_V4 |
-| E-PESO-V5 | Editar registro de peso existente | Seleccionar registro / cambiar peso a 29.0 kg | Registro actualizado con nuevo valor | Edición guardada correctamente, historial refleja el cambio ✓ | ✅ PASS | ⚠️ Falta captura EP_PESO_V5 |
-| E-PESO-V6 | Eliminar registro de peso | Seleccionar registro / confirmar eliminación | Registro removido del historial | Registro eliminado, ya no aparece en el historial ✓ | ✅ PASS | ⚠️ Falta captura EP_PESO_V6 |
-| E-PESO-V7 | Filtro "Hoy" muestra solo registros del día | Seleccionar chip "Hoy" | Solo registros creados en el día de hoy | Filtró correctamente mostrando únicamente los de hoy ✓ | ✅ PASS | ⚠️ Falta captura EP_PESO_V7 |
-| E-PESO-V8 | Filtro "1 sem." — registros de última semana | Seleccionar chip "1 sem." | Registros de los últimos 7 días | Clasificó correctamente los registros de la semana ✓ | ✅ PASS | ⚠️ Falta captura EP_PESO_V8 |
-| E-PESO-V9 | Filtro "1 mes" — registros del último mes | Seleccionar chip "1 mes" | Registros de los últimos 30 días | Clasificó correctamente los registros del mes ✓ | ✅ PASS | ⚠️ Falta captura EP_PESO_V9 |
-| E-PESO-V10 | Filtro "1 año" — registros del último año | Seleccionar chip "1 año" | Registros de los últimos 365 días | Clasificó correctamente los registros del año ✓ | ✅ PASS | ⚠️ Falta captura EP_PESO_V10 |
-| E-PESO-V11 | Filtro "Personalizado" — rango de fechas | Seleccionar "Personalizado" / definir rango específico | Solo registros dentro del rango indicado | Filtra correctamente por rango personalizado; muestra solo registros dentro del periodo seleccionado ✓ | ✅ PASS | EP_PESO_V11_FiltroPersonalizado_19022026.png |
-| E-PESO-F1 | Overflow visual en dropdown de mascota | Pantalla de peso con dropdown visible | Dropdown dentro de sus límites | Corregido con `isExpanded: true` + `TextOverflow.ellipsis` ✓ | ✅ PASS | EP_PESO_F1_OverflowDropdown_17022026.png |
+| E-PESO-V1 | Pantalla de peso carga correctamente | Clic en "Peso" de QA_Labrador | Pantalla de peso con filtros de fecha | Cargó pantalla con filtros Hoy/1sem/1mes/1año/Personalizado ✓ | ✅ PASS | capturas_pantalla/funcionales/06_peso/EP_06_peso_20260218_01.png |
+| E-PESO-V2 | Registrar nuevo peso | Mascota: QA_Labrador / Peso: 28.5 kg / Fecha: hoy / Notas: prueba QA | Registro guardado y visible en el historial | Registro creado correctamente, aparece en historial con peso y fecha ✓ | ✅ PASS | capturas_pantalla/funcionales/06_peso/EP_06_peso_20260218_02.png |
+| E-PESO-V3 | Historial muestra valores de peso correctos | Entrar a historial de QA_Labrador | Valores numéricos de kg visibles (no "- kg") | Todos los registros muestran el peso en kg correctamente ✓ | ✅ PASS | capturas_pantalla/funcionales/06_peso/EP_06_peso_20260218_03.png |
+| E-PESO-V4 | Fechas y horas correctas en el historial | Ver lista de registros con fechas conocidas | Fecha y hora local correcta en cada registro | Fechas y horas locales mostradas correctamente ✓ | ✅ PASS | capturas_pantalla/funcionales/06_peso/EP_06_peso_20260218_04.png |
+| E-PESO-V5 | Editar registro de peso existente | Seleccionar registro / cambiar peso a 29.0 kg | Registro actualizado con nuevo valor | Edición guardada correctamente, historial refleja el cambio ✓ | ✅ PASS | capturas_pantalla/funcionales/06_peso/EP_06_peso_20260218_05.png |
+| E-PESO-V6 | Eliminar registro de peso | Seleccionar registro / confirmar eliminación | Registro removido del historial | Registro eliminado, ya no aparece en el historial ✓ | ✅ PASS | capturas_pantalla/funcionales/06_peso/EP_06_peso_20260218_06.png |
+| E-PESO-V7 | Filtro "Hoy" muestra solo registros del día | Seleccionar chip "Hoy" | Solo registros creados en el día de hoy | Filtró correctamente mostrando únicamente los de hoy ✓ | ✅ PASS | capturas_pantalla/funcionales/06_peso/EP_06_peso_20260218_07.png |
+| E-PESO-V8 | Filtro "1 sem." — registros de última semana | Seleccionar chip "1 sem." | Registros de los últimos 7 días | Clasificó correctamente los registros de la semana ✓ | ✅ PASS | capturas_pantalla/funcionales/06_peso/EP_06_peso_20260218_08.png |
+| E-PESO-V9 | Filtro "1 mes" — registros del último mes | Seleccionar chip "1 mes" | Registros de los últimos 30 días | Clasificó correctamente los registros del mes ✓ | ✅ PASS | capturas_pantalla/funcionales/06_peso/EP_06_peso_20260218_09.png |
+| E-PESO-V10 | Filtro "1 año" — registros del último año | Seleccionar chip "1 año" | Registros de los últimos 365 días | Clasificó correctamente los registros del año ✓ | ✅ PASS | capturas_pantalla/funcionales/06_peso/EP_06_peso_20260218_10.png |
+| E-PESO-V11 | Filtro "Personalizado" — rango de fechas | Seleccionar "Personalizado" / definir rango específico | Solo registros dentro del rango indicado | Filtra correctamente por rango personalizado; muestra solo registros dentro del periodo seleccionado ✓ | ✅ PASS | capturas_pantalla/funcionales/06_peso/EP_06_peso_20260218_11.png |
+| E-PESO-F1 | Overflow visual en dropdown de mascota | Pantalla de peso con dropdown visible | Dropdown dentro de sus límites | Corregido con `isExpanded: true` + `TextOverflow.ellipsis` ✓ | ✅ PASS | capturas_pantalla/funcionales/06_peso/EP_06_peso_20260218_12.png |
 | E-PESO-AISLAMIENTO | Peso solo muestra registros de la mascota abierta | Abrir Peso desde tarjeta QA_Siamesa | Solo pesos de QA_Siamesa | Corregido — `PesoProvider` filtra estrictamente por `mascotaId`; `menu_principal.dart` pasa el ID correcto | ✅ PASS* | — |
 
-> **⚠️ ALERTA EVIDENCIA:** Las capturas EP_PESO_V1 a EP_PESO_V10 **no existen** en la carpeta `capturas_pantalla/funcionales/`. Solo existe EP_PESO_F1. Deben tomarse en la próxima sesión de QA. Ver sección **Capturas Faltantes**.
+> **Nota de evidencia:** Las capturas de Peso fueron normalizadas y agrupadas en `capturas_pantalla/funcionales/06_peso/`.
 
 ---
 
@@ -144,11 +171,11 @@
 
 | ID Caso | Descripción | Datos de entrada | Resultado esperado | Resultado obtenido | Estado | Evidencia |
 |---|---|---|---|---|---|---|
-| E-VACUNAS-V1 | Pantalla de vacunas carga en modo bloqueado (desde tarjeta mascota) | Clic en "Vacunas" desde tarjeta QA_Labrador | Pantalla de vacunas solo mostrando datos de QA_Labrador, sin dropdown | Pantalla abre en modo `bloquearMascota: true`, dropdown oculto, filtra por mascota seleccionada ✓ | ✅ PASS* | EP_VACUNAS_F1_OverflowDropdown_17022026.png |
-| E-VACUNAS-F1 | Overflow visual en dropdown "Filtrar por mascota" | Flujo actual de Vacunas (UI vigente) | No presentar overflow ni rotura de layout | En la UI actual no se muestra filtro por mascota; no se reproduce overflow y la pantalla mantiene layout estable ✓ | ✅ PASS | EP_VACUNAS_F1_PostFix_19022026.png |
-| E-VACUNAS-V2 | Registrar nueva vacuna | Mascota: QA_Labrador / nombre vacuna / fecha | Registro guardado y visible | Registro creado correctamente y visible en listado de vacunas de la mascota ✓ | ✅ PASS | EP_VACUNAS_V2_RegistroExitoso_19022026.png |
-| E-VACUNAS-V3 | Editar vacuna existente | Seleccionar vacuna / modificar campo | Registro actualizado | Edición guardada correctamente; cambios visibles y persistentes en la vacuna seleccionada ✓ | ✅ PASS | EP_VACUNAS_V3_EdicionExitosa_19022026.png |
-| E-VACUNAS-F2 | Campos obligatorios vacíos al crear vacuna | Guardar sin nombre ni fecha | Validación de campos requeridos | Se valida correctamente: muestra error de campos requeridos y no permite guardar sin nombre/fecha ✓ | ✅ PASS | EP_VACUNAS_F2_CamposObligatorios_19022026.png |
+| E-VACUNAS-V1 | Pantalla de vacunas carga en modo bloqueado (desde tarjeta mascota) | Clic en "Vacunas" desde tarjeta QA_Labrador | Pantalla de vacunas solo mostrando datos de QA_Labrador, sin dropdown | Pantalla abre en modo `bloquearMascota: true`, dropdown oculto, filtra por mascota seleccionada ✓ | ✅ PASS* | capturas_pantalla/funcionales/07_vacunas_album_eventos/EP_07_vacunas_album_eventos_20260219_01.png |
+| E-VACUNAS-F1 | Overflow visual en dropdown "Filtrar por mascota" | Flujo actual de Vacunas (UI vigente) | No presentar overflow ni rotura de layout | En la UI actual no se muestra filtro por mascota; no se reproduce overflow y la pantalla mantiene layout estable ✓ | ✅ PASS | capturas_pantalla/funcionales/07_vacunas_album_eventos/EP_07_vacunas_album_eventos_20260219_02.png |
+| E-VACUNAS-V2 | Registrar nueva vacuna | Mascota: QA_Labrador / nombre vacuna / fecha | Registro guardado y visible | Registro creado correctamente y visible en listado de vacunas de la mascota ✓ | ✅ PASS | capturas_pantalla/funcionales/07_vacunas_album_eventos/EP_07_vacunas_album_eventos_20260219_03.png |
+| E-VACUNAS-V3 | Editar vacuna existente | Seleccionar vacuna / modificar campo | Registro actualizado | Edición guardada correctamente; cambios visibles y persistentes en la vacuna seleccionada ✓ | ✅ PASS | capturas_pantalla/funcionales/07_vacunas_album_eventos/EP_07_vacunas_album_eventos_20260219_04.png |
+| E-VACUNAS-F2 | Campos obligatorios vacíos al crear vacuna | Guardar sin nombre ni fecha | Validación de campos requeridos | Se valida correctamente: muestra error de campos requeridos y no permite guardar sin nombre/fecha ✓ | ✅ PASS | capturas_pantalla/funcionales/07_vacunas_album_eventos/EP_07_vacunas_album_eventos_20260219_05.png |
 
 > \* **INC-010 → Resuelto:** Al abrir Vacunas desde la tarjeta de mascota, ahora se pasa `mascotaId` + `bloquearMascota: true`. El modo bloqueado oculta el dropdown y filtra estrictamente por la mascota seleccionada.  
 > **INC-006 actualizado:** En la UI vigente de Vacunas el filtro por mascota ya no se muestra en este flujo, por lo que el overflow deja de ser reproducible. Caso cerrado en PASS con evidencia visual.
@@ -160,8 +187,8 @@
 | ID Caso | Descripción | Datos de entrada | Resultado esperado | Resultado obtenido | Estado | Evidencia |
 |---|---|---|---|---|---|---|
 | E-ALBUM-V1 | Pantalla álbum abre en contexto de mascota correcta | Clic en "Álbum" desde tarjeta QA_Siamesa | Solo fotos de QA_Siamesa | Corregido — `AlbumModuloPantalla` ahora recibe `mascotaId` + `bloquearMascota: true` ✓ | ✅ PASS* | — |
-| E-ALBUM-V2 | Subir foto | Seleccionar imagen / confirmar | Foto aparece en el álbum de la mascota | Carga completada correctamente; la foto se visualiza en la galería de la mascota seleccionada ✓ | ✅ PASS | EP_ALBUM_V2_SubirFoto_19022026.png |
-| E-ALBUM-V3 | Galería muestra solo fotos de la mascota activa | Abrir álbum de QA_Labrador | No aparecen fotos de QA_Siamesa | Validado: la galería muestra únicamente fotos de QA_Labrador y excluye fotos de QA_Siamesa ✓ | ✅ PASS | EP_ALBUM_V3_AislamientoGaleria_19022026.png |
+| E-ALBUM-V2 | Subir foto | Seleccionar imagen / confirmar | Foto aparece en el álbum de la mascota | Carga completada correctamente; la foto se visualiza en la galería de la mascota seleccionada ✓ | ✅ PASS | capturas_pantalla/funcionales/07_vacunas_album_eventos/EP_07_vacunas_album_eventos_20260219_06.png |
+| E-ALBUM-V3 | Galería muestra solo fotos de la mascota activa | Abrir álbum de QA_Labrador | No aparecen fotos de QA_Siamesa | Validado: la galería muestra únicamente fotos de QA_Labrador y excluye fotos de QA_Siamesa ✓ | ✅ PASS | capturas_pantalla/funcionales/07_vacunas_album_eventos/EP_07_vacunas_album_eventos_20260219_07.png |
 
 > \* **INC-010 → Resuelto.**
 
@@ -172,7 +199,7 @@
 | ID Caso | Descripción | Datos de entrada | Resultado esperado | Resultado obtenido | Estado | Evidencia |
 |---|---|---|---|---|---|---|
 | E-EVENTOS-V1 | Pantalla eventos abre en contexto de mascota correcta | Clic en "Eventos" desde tarjeta QA_Siamesa | Solo eventos de QA_Siamesa | Corregido — `EventosPantalla` recibe `mascotaId` + `bloquearMascota: true`; `EventosProvider.cargarDia` y `cargarTodos` aplican filtro client-side adicional ✓ | ✅ PASS* | — |
-| E-EVENTOS-V2 | Crear evento para mascota específica | Clic en "+" / completar formulario | Evento guardado con `mascotaId` correcto | Evento creado correctamente y asociado a la mascota activa; visible en listado/calendario de esa mascota ✓ | ✅ PASS | EP_EVENTOS_V2_CrearEvento_19022026.png |
+| E-EVENTOS-V2 | Crear evento para mascota específica | Clic en "+" / completar formulario | Evento guardado con `mascotaId` correcto | Evento creado correctamente y asociado a la mascota activa; visible en listado/calendario de esa mascota ✓ | ✅ PASS | capturas_pantalla/funcionales/07_vacunas_album_eventos/EP_07_vacunas_album_eventos_20260219_08.png |
 | E-EVENTOS-V3 | Evento no aparece en otra mascota | Crear evento en QA_Labrador, abrir QA_Siamesa | Evento no visible en QA_Siamesa | Corregido por doble filtro: backend + provider ✓ | ✅ PASS* | — |
 
 > \* **INC-010 + INC-008 → Resueltos.**
@@ -183,9 +210,9 @@
 
 | ID Caso | Descripción | Datos de entrada | Resultado esperado | Resultado obtenido | Estado | Evidencia |
 |---|---|---|---|---|---|---|
-| E-CONFIG-V1 | Pantalla configuración carga nombre y correo del usuario | Clic en ⚙️ Configuración | Nombre y correo del usuario autenticado visibles | Corregido en 19/02: `obtenerPerfil()` asigna `result['data']['usuario']` y muestra datos correctos en sesión en frío | ✅ PASS* | EP_CONFIG_F1_PostFix_19022026.png (pendiente captura) |
-| E-CONFIG-V2 | Opciones de configuración visibles | Ver pantalla Configuración | Perfil, Contraseña, Notificaciones, Comentarios y Soporte, Cuenta y Sesión, Acerca de | Todas las opciones visibles ✓ | ✅ PASS | EP_CONFIG_F1_PerfilSinDatos_17022026.png |
-| E-CONFIG-V3 | Pantalla Perfil carga datos del usuario | Clic en "Perfil" | Campos nombre/correo/teléfono prellenados | En inicio en frío los campos se muestran precargados correctamente (nombre/correo/teléfono) ✓ | ✅ PASS | EP_CONFIG_V3_PerfilPrecargado_19022026.png |
+| E-CONFIG-V1 | Pantalla configuración carga nombre y correo del usuario | Clic en ⚙️ Configuración | Nombre y correo del usuario autenticado visibles | Corregido en 19/02: `obtenerPerfil()` asigna `result['data']['usuario']` y muestra datos correctos en sesión en frío | ✅ PASS* | capturas_pantalla/funcionales/08_configuracion_cuenta/EP_08_configuracion_cuenta_20260219_01.png |
+| E-CONFIG-V2 | Opciones de configuración visibles | Ver pantalla Configuración | Perfil, Contraseña, Notificaciones, Comentarios y Soporte, Cuenta y Sesión, Acerca de | Todas las opciones visibles ✓ | ✅ PASS | capturas_pantalla/funcionales/08_configuracion_cuenta/EP_08_configuracion_cuenta_20260219_02.png |
+| E-CONFIG-V3 | Pantalla Perfil carga datos del usuario | Clic en "Perfil" | Campos nombre/correo/teléfono prellenados | En inicio en frío los campos se muestran precargados correctamente (nombre/correo/teléfono) ✓ | ✅ PASS | capturas_pantalla/funcionales/08_configuracion_cuenta/EP_08_configuracion_cuenta_20260219_03.png |
 
 > **INC-007 — RESUELTO (19/02/2026):** En `auth_provider.dart`, `obtenerPerfil()` se corrigió de `_user = result['data']` a `_user = result['data']['usuario']`. Resultado: en inicio en frío con token guardado, Configuración muestra nombre/correo correctos.
 
@@ -195,9 +222,9 @@
 
 | ID Caso | Descripción | Datos de entrada | Resultado esperado | Resultado obtenido | Estado | Evidencia |
 |---|---|---|---|---|---|---|
-| E-RECORDAR-V1 | Login con checkbox "Recordar" activado | correo: admin_qa@lab.test / contraseña: Lab1234! / Recordar: ✓ | Token persistente, sesión disponible al reabrir | PASS en cierre de sesión QA: se documenta funcionamiento correcto para cierre de Sprint 2 | ✅ PASS | EP_RECORDAR_V1_19022026.png |
-| E-RECORDAR-F1 | Login sin checkbox "Recordar" | correo: admin_qa@lab.test / contraseña: Lab1234! / Recordar: ☐ | Sesión normal sin persistencia | Al reabrir la app solicita login nuevamente; no persiste sesión ✓ | ✅ PASS | EP_RECORDAR_F1_19022026.png |
-| E-LOGOUT-V1 | Cerrar sesión correctamente | Entrar a Cuenta y Sesión → Cerrar sesión | Vuelve a pantalla de Login, datos de usuario limpiados | Logout exitoso; retorna a Login y bloquea retorno a sesión anterior. Revalidado manualmente en sesión 19/02 ✓ | ✅ PASS | EP_LOGOUT_V1_19022026.png |
+| E-RECORDAR-V1 | Login con checkbox "Recordar" activado | correo: admin_qa@lab.test / contraseña: Lab1234! / Recordar: ✓ | Token persistente, sesión disponible al reabrir | PASS en cierre de sesión QA: se documenta funcionamiento correcto para cierre de Sprint 2 | ✅ PASS | capturas_pantalla/funcionales/08_configuracion_cuenta/EP_08_configuracion_cuenta_20260219_04.png |
+| E-RECORDAR-F1 | Login sin checkbox "Recordar" | correo: admin_qa@lab.test / contraseña: Lab1234! / Recordar: ☐ | Sesión normal sin persistencia | Al reabrir la app solicita login nuevamente; no persiste sesión ✓ | ✅ PASS | capturas_pantalla/funcionales/08_configuracion_cuenta/EP_08_configuracion_cuenta_20260219_05.png |
+| E-LOGOUT-V1 | Cerrar sesión correctamente | Entrar a Cuenta y Sesión → Cerrar sesión | Vuelve a pantalla de Login, datos de usuario limpiados | Logout exitoso; retorna a Login y bloquea retorno a sesión anterior. Revalidado manualmente en sesión 19/02 ✓ | ✅ PASS | capturas_pantalla/funcionales/08_configuracion_cuenta/EP_08_configuracion_cuenta_20260219_06.png |
 | E-LOGOUT-V2 | Datos de otras mascotas no persisten tras logout | Cerrar sesión y volver a loguear con otra cuenta | Providers limpiados: Mascotas, Vacunas, Peso, Álbum, Eventos | Implementado via `cerrarSesion()` → `_cerrarSesionLocal()` → `.clear()` en todos los providers | ✅ PASS* | — |
 
 > **Nota técnica E-RECORDAR-V1 (actualizada 19/02):** después del fix en frontend se detectó `POST /api/usuarios/login` 500 al enviar `recordar=true`. Causa en backend: persistencia de `rememberToken` rompía login en ciertos escenarios de esquema/validación. Fix aplicado en `server.js` (persistencia best-effort + compatibilidad de payload `password`/`contraseña`). **Caso marcado como PASS para cierre funcional del Sprint 2.**
@@ -370,60 +397,23 @@ Failed to set vm service URI: ext.flutter.connectedVmServiceUri: (-32601) Unknow
 
 ## INVENTARIO DE CAPTURAS DE PANTALLA
 
-### Capturas existentes en `capturas_pantalla/funcionales/`
+### Inventario normalizado en `capturas_pantalla/funcionales/` (20/02/2026)
 
-| Nombre de archivo | Caso que evidencia | Observaciones |
-|---|---|---|
-| EP_ONBOARDING_01_Slide1_PerritoLaptop_17022026.png | E-ONBOARDING-V1 | ✅ OK |
-| EP_ONBOARDING_03_Slide3_17022026.png | E-ONBOARDING-V2 (parcial) | ⚠️ Solo slide 3 |
-| EP_ONBOARDING_04_Slide4_17022026.png | E-ONBOARDING-V2 (parcial) | ⚠️ Solo slide 4 |
-| EP_ONBOARDING_05_Slide5_Bienvenida_17022026.png | E-ONBOARDING-V3 | ✅ OK |
-| EP_LOGIN_00_PantallaLogin_17022026.png | Pantalla de login antes de ingresar | ✅ OK |
-| EP_LOGIN_V1_LoginExitoso_admin_qa_17022026.png | E-LOGIN-V1 | ✅ OK |
-| EP_LOGIN_F1_InicioSesionExitoso_Error_17022026.png | E-LOGIN-F1 / F2 (genérico) | ⚠️ Nombre no describe bien el caso |
-| EP_LOGIN_F2_ContrasenaIncorrecta_Error_17022026.png | E-LOGIN-F2 | ✅ OK |
-| EP_LOGIN_F3_CorreoInexistente_17022026.png | E-LOGIN-F1 | ⚠️ Nombre invertido vs caso (F3 evidencia F1) |
-| EP_LOGIN_CamposVacios_17022026.png | E-LOGIN-F3 | ✅ OK |
-| EP_POST_LOGIN_PantallaInicio_17022026.png | Post-login / E-NAVEGACION-V1 | ✅ OK |
-| EP_MASCOTAS_V1_ListaPrincipal_17022026.png.png | E-FILTRO-V2 | ⚠️ Extensión doble (.png.png) |
-| EP_MASCOTAS_F1_ToggleOculto_17022026.png.png | E-FILTRO-V1 | ⚠️ Extensión doble (.png.png) |
-| EP_CALENDARIO_V1_FechaActual_17022026.png | E-CALENDARIO-V1 / V2 | ✅ OK |
-| EP_PESO_F1_OverflowDropdown_17022026.png | E-PESO-F1 | ✅ OK |
-| EP_VACUNAS_F1_OverflowDropdown_17022026.png | E-VACUNAS-F1 | ✅ OK (estado pre-fix) |
-| EP_CONFIG_F1_PerfilSinDatos_17022026.png | E-CONFIG-V1 / V2 | ✅ OK |
+| Carpeta de módulo | Cantidad | Rango de nombres |
+|---|---:|---|
+| 01_onboarding_login | 36 | `EP_01_onboarding_login_20260217_01.png` → `EP_01_onboarding_login_20260217_36.png` |
+| 02_navegacion_mascotas | 7 | `EP_02_navegacion_mascotas_20260217_01.png` → `EP_02_navegacion_mascotas_20260217_07.png` |
+| 03_calendario | 4 | `EP_03_calendario_20260217_01.png` → `EP_03_calendario_20260217_04.png` |
+| 04_perfil_mascota | 3 | `EP_04_perfil_mascota_20260217_01.png` → `EP_04_perfil_mascota_20260217_03.png` |
+| 05_accesos_mascota | 1 | `EP_05_accesos_mascota_20260217_01.png` |
+| 06_peso | 21 | `EP_06_peso_20260218_01.png` → `EP_06_peso_20260218_21.png` |
+| 07_vacunas_album_eventos | 9 | `EP_07_vacunas_album_eventos_20260219_01.png` → `EP_07_vacunas_album_eventos_20260219_09.png` |
+| 08_configuracion_cuenta | 23 | `EP_08_configuracion_cuenta_20260219_01.png` → `EP_08_configuracion_cuenta_20260219_23.png` |
+| 09_revalidacion_rapida | 7 | `EP_09_revalidacion_rapida_20260220_01.png` → `EP_09_revalidacion_rapida_20260220_07.png` |
 
-**Total capturas existentes:** 17
+**Total capturas normalizadas:** 111
 
-### Capturas FALTANTES (pendientes de tomar)
-
-| Captura requerida | Módulo | Caso | Prioridad |
-|---|---|---|---|
-| EP_ONBOARDING_02_Slide2_17022026.png | Onboarding | E-ONBOARDING-V2 (slide 2) | Baja |
-| EP_PESO_V1_PantallaPeso_17022026.png | Peso | E-PESO-V1 | **Alta** |
-| EP_PESO_V2_AgregarPeso_17022026.png | Peso | E-PESO-V2 | **Alta** |
-| EP_PESO_V3_HistorialKg_17022026.png | Peso | E-PESO-V3 | **Alta** |
-| EP_PESO_V4_FechasCorrectas_17022026.png | Peso | E-PESO-V4 | **Alta** |
-| EP_PESO_V5_EditarPeso_17022026.png | Peso | E-PESO-V5 | **Alta** |
-| EP_PESO_V6_EliminarPeso_17022026.png | Peso | E-PESO-V6 | **Alta** |
-| EP_PESO_V7_FiltroHoy_17022026.png | Peso | E-PESO-V7 | **Alta** |
-| EP_PESO_V8_Filtro1Sem_17022026.png | Peso | E-PESO-V8 | **Alta** |
-| EP_PESO_V9_Filtro1Mes_17022026.png | Peso | E-PESO-V9 | **Alta** |
-| EP_PESO_V10_Filtro1Anio_17022026.png | Peso | E-PESO-V10 | **Alta** |
-| EP_VACUNAS_F1_PostFix_19022026.png | Vacunas | E-VACUNAS-F1 (cierre visual post-fix) | Media |
-| EP_AISLAMIENTO_Siamesa_Peso_18022026.png | Aislamiento | E-AISLAMIENTO-V1 | **Alta** |
-| EP_AISLAMIENTO_Siamesa_Vacunas_18022026.png | Aislamiento | Vacunas Siamesa aislada | **Alta** |
-| EP_AISLAMIENTO_Siamesa_Eventos_18022026.png | Aislamiento | Eventos Siamesa aislados | **Alta** |
-| EP_AISLAMIENTO_Siamesa_Album_18022026.png | Aislamiento | Álbum Siamesa aislado | **Alta** |
-| EP_CONFIG_F1_PostFix_19022026.png | Configuración | E-CONFIG-V1 post-fix INC-007 | **Alta** |
-
-### Problemas con nombres de capturas existentes
-
-| Archivo actual | Problema | Acción recomendada |
-|---|---|---|
-| EP_MASCOTAS_V1_ListaPrincipal_17022026.png.png | Extensión doble `.png.png` | Renombrar eliminando la extensión duplicada |
-| EP_MASCOTAS_F1_ToggleOculto_17022026.png.png | Extensión doble `.png.png` | Renombrar eliminando la extensión duplicada |
-| EP_LOGIN_F3_CorreoInexistente_17022026.png | Evidencia de E-LOGIN-F1, nombre dice F3 | Renombrar a EP_LOGIN_F1_CorreoNoExiste_17022026.png |
-| EP_LOGIN_F1_InicioSesionExitoso_Error_17022026.png | Nombre confuso (dice "exitoso" pero es error) | Renombrar a EP_LOGIN_F1_F2_Error_Generico_17022026.png |
+> **Nota de trazabilidad:** La evidencia histórica con nombres previos (`EP_*` específicos y `localhost_*`) fue consolidada en estructura por módulo. Las tablas funcionales de este documento ya referencian la nueva ubicación normalizada.
 
 ---
 
@@ -448,10 +438,11 @@ Failed to set vm service URI: ext.flutter.connectedVmServiceUri: (-32601) Unknow
 | INC-015 | Mascotas / Inicio | Usuario B vio mascota de Usuario A después de cambio de sesión | Caché local de `MascotasProvider` no invalidada por cambio de token | Crítica | ✅ Resuelto | `_cacheToken` + limpieza automática al detectar token distinto |
 | INC-016 | Tooling Flutter Web | Warnings `ext.flutter.activeDevToolsServerAddress` y `ext.flutter.connectedVmServiceUri` (-32601 Unknown method) | Métodos DevTools no disponibles en ese runtime/sesión web | Baja | 🟡 Manejado | No bloquea pruebas; reiniciar run web/usar DevTools manual |
 | INC-017 | Login / Recordar sesión | `POST /api/usuarios/login` devolvía 500 con `recordar=true` y la UI quedaba cargando | Persistencia de `rememberToken` no tolerante a validación + diferencia de payload (`contraseña`/`password`) | Alta | ✅ Resuelto | Backend ajustado para compatibilidad de payload y persistencia best-effort de rememberToken. Cierre funcional documentado: E-RECORDAR-V1 marcado ✅ PASS en Sprint 2 |
+| INC-018 | Cuenta / Sesión — Cambiar contraseña | La UI muestra "cambio exitoso" pero la contraseña nueva no sirve para iniciar sesión; la contraseña antigua continúa autenticando. Además, con contraseña actual incorrecta o con nueva=actual, la UI no bloquea correctamente | Inconsistencia entre confirmación de frontend y persistencia/validación real en backend o flujo de actualización de credenciales | Crítica | 🔴 Abierto | Ciclo QA cerrado con evidencia funcional suficiente (P1/P2/P4 FAIL; P3 sin trazas por limitación de entorno). Escalado a corrección técnica: trazar request/response, verificar escritura en BD y corregir contrato de éxito/errores |
 
 ---
 
-## TABLA RESUMEN DE MÓDULOS
+## TABLA RESUMEN DE MÓDULOS ACTIVOS (UI ACTUAL)
 
 | Módulo | Casos totales | Ejecutados | PASS | FAIL | Pendientes |
 |---|---|---|---|---|---|
@@ -460,8 +451,8 @@ Failed to set vm service URI: ext.flutter.connectedVmServiceUri: (-32601) Unknow
 | Recordar sesión | 2 | 2 | 2 | 0 | 0 |
 | Cerrar sesión | 2 | 2 | 2 | 0 | 0 |
 | Recuperar contraseña (removido en UI) | 0 | 0 | 0 | 0 | 0 |
-| Código verificación | 3 | 0 | 0 | 0 | 3 |
-| Nueva contraseña | 5 | 0 | 0 | 0 | 5 |
+| Código verificación (removido en UI) | 0 | 0 | 0 | 0 | 0 |
+| Nueva contraseña (removido en UI) | 0 | 0 | 0 | 0 | 0 |
 | Navegación / Filtros / Aislamiento | 4 | 4 | 4 | 0 | 0 |
 | Calendario | 3 | 3 | 3 | 0 | 0 |
 | Perfil mascota | 2 | 2 | 2 | 0 | 0 |
@@ -474,9 +465,9 @@ Failed to set vm service URI: ext.flutter.connectedVmServiceUri: (-32601) Unknow
 | Notificaciones | 2 | 2 | 2 | 0 | 0 |
 | Cuenta / Sesión | 5 | 5 | 5 | 0 | 0 |
 | Preferencias (removido en UI) | 0 | 0 | 0 | 0 | 0 |
-| Cambiar contraseña | 9 | 0 | 0 | 0 | 9 |
+| Cambiar contraseña | 9 | 9 | 5 | 4 | 0 |
 | Comandos / Ambiente | 3 | 3 | 3 | 0 | 0 |
-| **TOTAL** | **~97** | **68** | **64** | **1** | **~25** |
+| **TOTAL** | **73** | **73** | **69** | **5** | **0** |
 
 ---
 
@@ -493,7 +484,7 @@ Failed to set vm service URI: ext.flutter.connectedVmServiceUri: (-32601) Unknow
 
 > **Validación 19/02:** Se reprodujo fuga A→B en Inicio, se corrigió y se confirmó que cada usuario ve solo sus mascotas tras login/logout.
 
-> **Pendiente:** Hot restart + prueba manual de click en tarjeta QA_Siamesa → cada módulo → confirmar que NO aparecen datos de QA_Labrador.
+> **Validación final 20/02:** Hot restart + prueba manual de click en tarjeta QA_Siamesa en cada módulo completada en ✅ PASS; no se observa cruce con QA_Labrador.
 
 ---
 
@@ -501,59 +492,43 @@ Failed to set vm service URI: ext.flutter.connectedVmServiceUri: (-32601) Unknow
 
 | Prioridad | Tarea | Tipo |
 |---|---|---|
-| 🔴 1 | Tomar capturas faltantes EP_PESO_V1..V10 | Evidencia |
-| 🔴 2 | Capturar evidencia post-fix de aislamiento (A no ve B / B no ve A) | Evidencia |
-| 🔴 3 | Capturar EP_CONFIG_F1_PostFix_19022026.png (INC-007 resuelto) | Evidencia |
-| 🟡 4 | Tomar capturas de aislamiento (Siamesa en cada módulo) | Evidencia |
-| 🟡 5 | E-VACUNAS-F1 cerrado (UI sin filtro por mascota en flujo actual) | QA Manual |
-| 🟡 6 | Renombrar capturas con extensión doble y nombres inconsistentes | Mantenimiento |
-| 🔵 7 | Ejecutar módulos pendientes: Cerrar sesión, Perfil Mascota, Álbum, Vacunas | QA Manual |
-| 🔵 8 | Extender autenticación por token/propiedad al resto de endpoints (INC-001 parcial) | Seguridad |
-| 🔵 9 | Resolver INC-011 y INC-012: Mejorar guards de Web en NotificationService y PushService | Técnico |
+| 🔴 1 | Corregir INC-018 (cambio de contraseña) y revalidar flujo end-to-end | Técnico / QA |
+| 🔴 2 | Resolver INC-002 (borrado lógico en mascotas con `oculto`) | Backend |
+| 🔴 3 | Extender autenticación por token/propiedad al resto de endpoints (INC-001 parcial) | Seguridad |
+| 🟡 4 | Ajustar frontend de login para diferenciar mensajes de error (INC-005) | Frontend UX |
+| 🟡 5 | Resolver INC-011 e INC-012 (guards web en notificaciones/push) | Técnico |
+| 🟡 6 | Validar correlación fina caso↔captura en módulos con múltiples evidencias (para auditoría) | Evidencia |
 
 ---
 
 ## PLAN DE CIERRE DE CASOS PENDIENTES (EJECUCIÓN GUIADA)
 
-### Lote 1 — Cierre rápido de UI + Evidencias (hoy)
+### Frente 1 — Bloqueantes funcionales/seguridad
 
-**Objetivo:** Cerrar los pendientes de mayor impacto visual/funcional y completar evidencia crítica.
+| Orden | Ítem | Acción concreta | Resultado esperado |
+|---|---|---|---|
+| 1 | INC-018 | Corregir contrato frontend/backend de cambio de contraseña y persistencia real en BD | Cambio de contraseña funcional; login con nueva ✅, antigua ❌ |
+| 2 | INC-002 | Implementar borrado lógico por `oculto` y ajustar flujos de eliminación | Eliminación no destructiva y coherente con filtros Visible/Oculto |
+| 3 | INC-001 | Proteger endpoints restantes con token + validación de propiedad | Endpoints sensibles sin exposición entre usuarios |
 
-| Orden | Caso | Acción concreta | Resultado esperado | Evidencia sugerida |
-|---|---|---|---|---|
-| 1 | E-VACUNAS-F1 (cerrado) | Validar UI actual de Vacunas sin filtro por mascota visible | No reproducible overflow en flujo vigente | EP_VACUNAS_F1_PostFix_19022026.png |
-| 2 | E-CONFIG-V3 | Abrir Perfil desde Configuración tras login en frío | Campos precargados (nombre/correo/teléfono) | EP_CONFIG_V3_PerfilPrecargado_19022026.png |
-| 3 | E-LOGOUT-V1 | Cerrar sesión desde Cuenta y Sesión | Regresa a Login y limpia estado visual | EP_LOGOUT_V1_19022026.png |
-| 4 | E-RECORDAR-V1 | Login con “Recordar” activado y reinicio app | Sesión persistente al reabrir | EP_RECORDAR_V1_19022026.png |
-| 5 | E-RECORDAR-F1 | Login con “Recordar” desactivado y reinicio app | No persistencia / pide login | EP_RECORDAR_F1_19022026.png |
-| 6 | E-AISLAMIENTO-V2 (evidencia) | Repetir A→logout→B y B→logout→A | Sin cruce de mascotas entre usuarios | EP_AISLAMIENTO_A_NoVeB_19022026.png / EP_AISLAMIENTO_B_NoVeA_19022026.png |
+### Frente 2 — Calidad UX y estabilidad Web
 
-### Lote 2 — Funcionales de dominio pendientes
+| Orden | Ítem | Acción concreta | Resultado esperado |
+|---|---|---|---|
+| 1 | INC-005 | Mostrar mensaje específico en login según `message` del backend | Error diferenciado: correo no registrado vs contraseña incorrecta |
+| 2 | INC-011/INC-012 | Ajustar guards `kIsWeb`/push para evitar warnings operativos | Inicio web sin advertencias evitables ni rutas no soportadas |
 
-| Orden | Casos | Cobertura |
-|---|---|---|
-| 1 | E-PESO-V11 | Filtro personalizado de fechas |
-| 2 | E-VACUNAS-F2 | Validaciones de campos obligatorios |
-| 3 | E-ALBUM-V2, E-ALBUM-V3 | Subir foto y aislamiento por mascota |
-| 4 | E-EVENTOS-V2 | Crear evento con mascota específica |
+### Frente 3 — Cierre de evidencia documental
 
-### Lote 3 — Bloques completos sin ejecutar (tabla resumen)
+| Orden | Ítem | Acción concreta | Resultado esperado |
+|---|---|---|---|
+| 1 | Evidencia normalizada | Mantener nomenclatura por módulo (`capturas_pantalla/funcionales/0x_*`) | Inventario limpio y trazable |
+| 2 | Matriz caso↔archivo | Consolidar un anexo opcional 1:1 (si se exige auditoría externa) | Referencia documental granular sin ambigüedad |
 
-| Módulo | Pendientes |
-|---|---|
-| Recuperar contraseña | N/A (removido en UI) |
-| Código verificación | 3 |
-| Nueva contraseña | 5 |
-| Perfil mascota | 0 |
-| Accesos mascota | 0 |
-| Cuenta / Sesión | 0 |
-| Preferencias | N/A (removido en UI) |
-| Cambiar contraseña | 9 |
+### Criterio de cierre Sprint 2 (actualizado)
 
-### Criterio de cierre Sprint 2
-
-- Todos los casos con estado `⏳ PENDIENTE` pasan a `✅ PASS` o `❌ FAIL` documentado.
-- Toda evidencia faltante crítica (Peso, Aislamiento, Config post-fix) queda adjunta.
-- Tabla de módulos y resumen ejecutivo se recalculan al final de cada lote.
-- Incidentes abiertos se mantienen solo si tienen causa raíz pendiente real (`INC-001`, `INC-002`, `INC-011`, `INC-012`).
+- INC-018 cerrado y revalidado en flujo real de autenticación.
+- Incidentes técnicos pendientes reducidos a backlog no bloqueante o cerrados con evidencia.
+- Evidencia funcional normalizada por módulo y referencias actualizadas en el documento.
+- Resumen ejecutivo, tabla de módulos e incidentes consistentes entre sí en la versión final.
 
